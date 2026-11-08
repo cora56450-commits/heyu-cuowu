@@ -102,6 +102,8 @@ export function refreshHud() {
 }
 export function setScene(loc = G.s.loc) {
   const b = bgFor(loc, G.s.slot); G.R.bg.src = b.src; G.R.bg.style.filter = b.filter;
+  const ev = G.s.curEvent && G.events.find(e => e.id === G.s.curEvent);   // 事件自带背景（第 40 天黄昏溪岸）
+  if (ev?.bg && hasAsset(`bg/${ev.bg}.webp`)) { G.R.bg.src = A(`bg/${ev.bg}.webp`); G.R.bg.style.filter = 'none'; }
   pickBgm();
 }
 // BGM：缝合、牠、后山 → 不安；夜里和河独处 → 夜；其他 → 日常
