@@ -523,3 +523,11 @@ body.compact .garble-hint { font-size: 22px; }
 #scr-title .gname.has-logo::before { content: ''; position: absolute; left: -30px; right: -30px; top: -20px; bottom: 10px; background: radial-gradient(ellipse at center, rgba(236,231,220,.6) 0%, rgba(236,231,220,.33) 48%, rgba(236,231,220,0) 74%); filter: blur(8px); z-index: -1; pointer-events: none; }
 #scr-title .gname .logo { width: 560px; display: block; filter: drop-shadow(0 0 8px rgba(240,236,226,.35)) contrast(1.08); }
 #scr-title .gname.has-logo small { margin-right: 40px; }
+/* 信箱 */
+.mail-box { width: 640px; display: flex; flex-direction: column; gap: 12px; }
+.mail-text { height: 220px; resize: none; padding: 12px; font-size: 17px; line-height: 1.7; border: 1px solid rgba(94,90,83,.45); background: rgba(255,255,255,.5); color: var(--ink); user-select: text; -webkit-user-select: text; }
+.mail-who { height: 44px; padding: 0 12px; font-size: 16px; border: 1px solid rgba(94,90,83,.45); background: rgba(255,255,255,.5); color: var(--ink); user-select: text; }
+.mail-box .row { display: flex; align-items: center; gap: 14px; }
+.mail-box .btn { min-width: 120px; height: 50px; text-align: center; display: flex; align-items: center; justify-content: center; letter-spacing: 6px; }
+body.compact .mail-text { font-size: 22px; height: 240px; }
+body.compact .mail-who { font-size: 20px; height: 54px; }

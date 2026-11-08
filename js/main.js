@@ -57,7 +57,8 @@ function showTitle() {
   for (const o of [...$('#overlays').children]) o.remove();
   const active = hasActiveRun();
   const items = [
-    ['开始', start], ['继续', cont, !active], ['读档', loadMenu, !hasManualSave()], ['结局', () => P.openGallery(), !Object.keys(getGallery().endings || {}).length], ['回想', () => P.openMemories()], ['设置', () => P.openSettings()],   // 结局：一个都没打出来时点不开
+    // 继续：只有自动存档就直接进；有手动存档就打开存档列表。结局：一个都没打出来时点不开。信箱：给作者写建议
+    ['开始', start], ['继续', cont, !active && !hasManualSave()], ['结局', () => P.openGallery(), !Object.keys(getGallery().endings || {}).length], ['回想', () => P.openMemories()], ['设置', () => P.openSettings()], ['信箱', () => P.openMailbox()],
   ];
   const st = getSettings();
   // 菜单：选中项两侧的针 + 红线从两边滑进来；点击时红线抖一下、按钮下沉，再进入下一个界面
@@ -120,7 +121,8 @@ function hasManualSave() { return ['slot1', 'slot2', 'slot3'].some(id => { const
 async function loadMenu() { if (await needKey()) P.openSaves('load'); }
 async function cont() {
   if (!(await needKey())) return;
-  const s = loadRun('auto'); if (!s) return;
+  if (hasManualSave()) return P.openSaves('load');   // 有手动存档：让玩家选（自动存档排第一个）
+  const s = loadRun('auto'); if (!s || s.ended) return;
   const off = bootOffline; bootOffline = 0;
   await continueRun(s, off);
 }

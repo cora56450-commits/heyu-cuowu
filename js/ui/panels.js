@@ -11,6 +11,7 @@ import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags } from '
 import { rollMeta } from '../meta.js';
 import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm } from '../game.js';
 import { openOrgan } from './organ.js';
+import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js';
 
 // 系统样式的提示框（冷冰冰的电子界面，不是河说的）
 export function systemNotice(text, buttons) {
@@ -364,4 +365,27 @@ function openDebug() {
     h('label', {}, '牠屋子次数 ', h('input', { type: 'number', min: 0, value: s.c.taVisits || 0, onchange: e => { s.c.taVisits = +e.target.value; } })),
     h('pre', { style: { fontSize: '13px', whiteSpace: 'pre-wrap' } }, JSON.stringify({ c: s.c, f: s.f, done: s.done, madTier: tierOf(s), meta: s.meta }, null, 1)));
   modal('debug', '调试', box, { buttons: [{ label: '关闭', value: null }] }).then(() => { saveRun(s); refreshHud(); });
+}
+
+// ———————————————— 信箱：给作者写建议（Web3Forms） ————————————————
+export function openMailbox() {
+  const ready = !!WEB3FORMS_KEY;
+  const msg = h('textarea', { class: 'mail-text', maxlength: 1500, placeholder: ready ? '想对作者说的话：建议、bug、哪里玩不下去……' : '', disabled: !ready });
+  const who = h('input', { class: 'mail-who', type: 'text', maxlength: 60, placeholder: '怎么称呼你 / 联系方式（可以不填）', disabled: !ready });
+  const status = h('span', { class: 'note' }, ready ? '' : '信箱还没开通。');
+  const send = h('button', { class: 'btn', disabled: !ready, onclick: async () => {
+    const text = msg.value.trim(); if (!text) { status.textContent = '还没写内容。'; return; }
+    const last = store.get('mail_last', 0); if (Date.now() - last < 60e3) { status.textContent = '寄得太快了，过一分钟再寄。'; return; }
+    send.disabled = true; status.textContent = '寄出中……';
+    try {
+      const s = loadRun('auto');
+      const r = await fetch('https://api.web3forms.com/submit', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ access_key: WEB3FORMS_KEY, subject: MAIL_SUBJECT, from_name: who.value.trim() || '匿名玩家', message: text,
+          进度: s ? `第 ${s.day} 天` : '还没开始', 设备: navigator.userAgent }) }).then(x => x.json());
+      if (!r.success) throw new Error(r.message || '寄不出去');
+      store.set('mail_last', Date.now()); msg.value = ''; status.textContent = '寄出去了。谢谢你。';
+    } catch (e) { status.textContent = '没寄出去，过一会儿再试试。'; }
+    finally { send.disabled = false; }
+  } }, '寄出');
+  modal('mail', '信箱', h('div', { class: 'mail-box' }, h('p', { class: 'note' }, '写给作者的信。会连同你现在的进度（第几天）一起寄出，不会带上你的 Key 和存档内容。'), msg, who, h('div', { class: 'row' }, send, status)));
 }
