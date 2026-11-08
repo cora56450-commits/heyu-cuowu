@@ -141,7 +141,7 @@ function setSprite(who, expr) {
   const c = charSrc(who, expr); if (!c) return;
   c.who = who;
   if (who === '河') { if (R.sprite.dataset.key !== c.key) { R.sprite.src = c.src; R.sprite.dataset.key = c.key; } R.chars.he = c; R.curSprite = c.src; }
-  else { if (R.sprite2.dataset.key !== c.key) { R.sprite2.src = c.src; R.sprite2.dataset.key = c.key; } R.chars.other = c; }
+  else { if (R.sprite2.dataset.key !== c.key) { R.sprite2.style.visibility = 'hidden'; R.sprite2.onload = () => { R.sprite2.style.visibility = ''; }; R.sprite2.src = c.src; R.sprite2.dataset.key = c.key; } R.chars.other = c; }   // 新图加载好再显示，不闪上一个人
   layoutChars();
 }
 // 抽动：失焦 / 失神 / 牠发疯一定有；疯子档时河其他立绘偶尔抽（「减少画面晃动」打开时关掉）
