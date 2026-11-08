@@ -1,6 +1,6 @@
 // 一局游戏的状态、数值结算、存档 / 读档
 import { store } from './store.js';
-import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier } from './config/values.js';
+import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN } from './config/values.js';
 import { AP_PER_SLOT } from './config/world.js';
 
 export function newRun(outfit = 'initial', loop = 0) {
@@ -20,9 +20,13 @@ const clamp = x => Math.max(0, Math.min(100, x));
 export const tierOf = s => madTier(s.madness);
 
 // 应用一组标签 + 河的标记 + 额外数值，返回本轮实际的变化（调试 / 记录用）
-export function applyTags(s, tags = [], heFlags = [], extra = null) {
-  const d = {};
-  const add = (k, x) => { d[k] = (d[k] || 0) + x; };
+// 标签和河的状态受「每天 ±3」上限（加、减分开算）；extra（固定剧情、选项、每天自然变化）不受限，除非 opts.capExtra（村里的衣服）
+export function applyTags(s, tags = [], heFlags = [], extra = null, opts = {}) {
+  tags = [...new Set(tags)];
+  for (const grp of EXCLUSIVE_TAGS) { const hit = tags.filter(t => grp.includes(t)); if (hit.length > 1) tags = tags.filter(t => !grp.includes(t) || t === hit[0]); }
+  tags = tags.slice(0, MAX_TAGS_PER_TURN);
+  const dc = {}, de = {};
+  const add = (o, k, x) => { o[k] = (o[k] || 0) + x; };
   let warm = false;
   for (const t of tags) {
     const m = TAGS[t]; if (!m) continue;
@@ -30,24 +34,35 @@ export function applyTags(s, tags = [], heFlags = [], extra = null) {
     for (const [k, x] of Object.entries(m)) {
       if (k === 'counter') s.c[x] = (s.c[x] || 0) + 1;
       else if (k === 'madness') s.madness += x;
-      else add(k, x);
+      else add(dc, k, x);
     }
+    if (t === '提到外面' && s.v.hope < 30) add(dc, 'resent', 1);   // 他还不信你的时候，听你说外面只会更羡慕
   }
   for (const t of heFlags) {
     const m = HE_FLAGS[t]; if (!m) continue;
     for (const [k, x] of Object.entries(m)) {
       if (k === 'counter') s.c[x] = (s.c[x] || 0) + 1;
       else if (k === 'madness') s.madness += x;
-      else add(k, x);
+      else add(dc, k, x);
     }
   }
   // 回避型依恋：连续热烈回应
-  if (warm) { s.c.warmStreak = (s.c.warmStreak || 0) + 1; WARM_STREAK.apply(s.c.warmStreak, d); }
-  else s.c.warmStreak = Math.max(0, (s.c.warmStreak || 0) - WARM_STREAK.decay);
-  if (extra) for (const [k, x] of Object.entries(extra)) add(k, x);
-  for (const k of VALUE_KEYS) if (d[k]) s.v[k] = clamp(s.v[k] + d[k]);
+  if (warm) { s.c.warmStreak = (s.c.warmStreak || 0) + 1; WARM_STREAK.apply(s.c.warmStreak, dc); }
+  else if (tags.length) s.c.warmStreak = Math.max(0, (s.c.warmStreak || 0) - WARM_STREAK.decay);
+  if (extra) for (const [k, x] of Object.entries(extra)) add(opts.capExtra ? dc : de, k, x);
+  // 每天上限：今天已经加了多少、减了多少
+  if (opts.noCap) { for (const [k, x] of Object.entries(dc)) add(de, k, x); for (const k in dc) delete dc[k]; }   // 固定剧情的选项：不受每天上限
+  if (!s.c.cap || s.c.cap.day !== s.day) s.c.cap = { day: s.day, up: {}, down: {} };
+  const out = {};
+  for (const k of VALUE_KEYS) {
+    let x = dc[k] || 0;
+    if (x > 0) { const room = Math.max(0, DAILY_CAP - (s.c.cap.up[k] || 0)); x = Math.min(x, room); s.c.cap.up[k] = (s.c.cap.up[k] || 0) + x; }
+    else if (x < 0) { const room = Math.max(0, DAILY_CAP - (s.c.cap.down[k] || 0)); x = Math.max(x, -room); s.c.cap.down[k] = (s.c.cap.down[k] || 0) - x; }
+    x += de[k] || 0;
+    if (x) { s.v[k] = clamp(s.v[k] + x); out[k] = x; }
+  }
   s.madness = Math.max(-5, Math.min(5, s.madness));
-  return d;
+  return out;
 }
 
 // —— 存档 ——

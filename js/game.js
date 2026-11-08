@@ -4,7 +4,7 @@ import { getSettings, store, unlock, getGallery, organsOpen } from './store.js';
 import { chat, ApiError } from './api.js';
 import { buildSystem, summaryPrompt } from './prompt.js';
 import { normTurn, LineStreamer, looseJson } from './parse.js';
-import { SLOTS, LOCATIONS, TOTAL_DAYS, AP_PER_SLOT, heLocation, OUTFITS, SPRITE_DIR, DEFAULT_EXPR, FIRST_LINE, EXPR, SPRITE_FIT, spriteBox, NPC_SPRITES, NPC_FIT, DUO, EXPR_FALLBACK, FEIGN_PATCH, PINCH, PINCH_BOX } from './config/world.js';
+import { SLOTS, LOCATIONS, TOTAL_DAYS, AP_PER_SLOT, heLocation, OUTFITS, SPRITE_DIR, DEFAULT_EXPR, FIRST_LINE, EXPR, SPRITE_FIT, spriteBox, NPC_SPRITES, NPC_FIT, DUO, EXPR_FALLBACK, FEIGN_PATCH, PINCH, PINCH_BOX, VILLAGERS } from './config/world.js';
 import { DAILY, VILLAGE_OUTFIT_ASSIM, WARM_STREAK, madTier } from './config/values.js';
 import { ENDINGS, judgeFinal, MID, AFTERMATH, LOOP_LINE } from './config/endings.js';
 import { newRun, applyTags, saveRun, loadRun, clone, tierOf, knows } from './state.js';
@@ -271,7 +271,8 @@ async function showLine(line, opts = {}) {
   const R = G.R, s = G.s;
   const narr = line.speaker === 'narration';
   R.name.classList.toggle('hidden', narr);
-  const shown = line.speaker.startsWith('村民') ? (line.name || '村民') : !knows(G.s, line.speaker) ? '？？？' : line.speaker;
+  const vn = VILLAGERS[line.speaker];   // 村民名字固定：AI 写的小名（小芳）保留，别的名字一律换回名单里的
+  const shown = line.speaker.startsWith('村民') ? (vn ? (line.name && line.name.replace(/^小/, '') === vn ? line.name : vn) : (line.name || '村民')) : !knows(G.s, line.speaker) ? '？？？' : line.speaker;
   R.name.textContent = narr ? '' : shown;
   if (line.know && G.s) G.s.f[line.know] = true;   // 自我介绍这一句还显示 ？？？，之后才有名字
   R.text.classList.toggle('narr', narr);
@@ -620,7 +621,7 @@ async function sleepToMorning() {
 export async function endSlot() {
   const s = G.s;
   s.phase = 'map'; if (!D40_NAMES.includes(s.saveName)) s.saveName = null; s.f.d40_atChoice = false;
-  if (s.outfit === 'village') applyTags(s, [], [], { assim: VILLAGE_OUTFIT_ASSIM });
+  if (s.outfit === 'village') applyTags(s, [], [], { assim: VILLAGE_OUTFIT_ASSIM }, { capExtra: true });   // 衣服加的同化也算进每天上限
   s.slot++;
   if (s.slot >= SLOTS.length) {
     s.slot = 0; s.day++; s.phoneToday = 0;
@@ -659,7 +660,7 @@ export async function runEvent(ev, opts = {}) {
     const i = ev.special === 'd40' ? await d40Choose(ev) : await choose(ev.choices);
     const c = ev.choices[i];
     renderActions('none');
-    applyTags(s, c.tags || [], [], c.delta);
+    applyTags(s, c.tags || [], [], c.delta, { noCap: true });   // 固定事件的选项不受每天上限
     if (c.counter) s.c[c.counter] = (s.c[c.counter] || 0) + 1;
     Object.assign(s.f, c.set || {});
     // 特殊判定

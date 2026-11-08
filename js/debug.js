@@ -48,7 +48,7 @@ export async function makeTestSaves() {
   // 存档 3：第 42 天清晨，直接进结局判定（数值在中间、拼过牠年轻时的照片、触发过后山事件 → 隐藏结局）
   saveRun(mk(42, 0, 'room', { love: 60, resent: 50, hope: 50, restraint: 50, assim: 50 }, {
     outfit: 'glasses', done: [...(await eventsBefore(42, 0)), 'tomb_ta_secret'],
-    c: { taVisits: 12, taLine: 4 }, f: { puzzle_ta_young: true, ta_secret: true },
+    c: { taVisits: 16, taLine: 8 }, f: { puzzle_ta_young: true, ta_secret: true },
     summary: '第四十二天。你常去牠那里，在后山看见过牠不弯着背的样子。',
   }), 'slot3');
 }
