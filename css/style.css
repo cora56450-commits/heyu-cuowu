@@ -518,3 +518,8 @@ body.compact .pinch-held { font-size: 27px; }
 .garble-hint { position: absolute; left: 0; right: 0; top: 46%; text-align: center; z-index: 3; color: rgba(163,36,42,.0); font-size: 17px; letter-spacing: 6px; pointer-events: none; animation: ghint 4.2s ease forwards; }
 @keyframes ghint { 0% { color: rgba(163,36,42,0); } 25%, 70% { color: rgba(163,36,42,.45); } 100% { color: rgba(163,36,42,0); } }
 body.compact .garble-hint { font-size: 22px; }
+/* 标题 logo：后面垫一层很淡的雾，深绿的字在河水上才看得清 */
+#scr-title .gname.has-logo { right: 60px; top: 96px; }
+#scr-title .gname.has-logo::before { content: ''; position: absolute; left: -30px; right: -30px; top: -20px; bottom: 10px; background: radial-gradient(ellipse at center, rgba(232,226,214,.55) 0%, rgba(232,226,214,.28) 45%, rgba(232,226,214,0) 72%); filter: blur(6px); z-index: -1; pointer-events: none; }
+#scr-title .gname .logo { width: 560px; display: block; }
+#scr-title .gname.has-logo small { margin-right: 40px; }

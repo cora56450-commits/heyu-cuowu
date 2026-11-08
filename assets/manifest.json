@@ -116,5 +116,6 @@
  "sprite/he/alert.webp": "v3 河 警觉",
  "sprite/he/pinch_hand.webp": "河 捏住选项的手指（由 pinch 生成）",
  "sprite/he/pinch_box.webp": "捏住选项框前两次.png（框截短）",
- "sprite/he/pinch_box3.webp": "捏住选项框第三次.png（框截短）"
+ "sprite/he/pinch_box3.webp": "捏住选项框第三次.png（框截短）",
+ "ui/logo.webp": "logo_河边的错误.webp（去倒影）"
 }

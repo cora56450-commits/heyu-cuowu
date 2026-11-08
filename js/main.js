@@ -69,7 +69,7 @@ function showTitle() {
   }, h('i', { class: 'orn l' }), label, h('i', { class: 'orn r' }))));
   showScreen('title', h('div', {},
     ...titleCover(),
-    h('div', { class: 'gname' }, h('b', {}, '河边的错误'), h('small', {}, '他在等你回来')),
+    h('div', { class: 'gname' + (hasAsset('ui/logo.webp') ? ' has-logo' : '') }, hasAsset('ui/logo.webp') ? h('img', { class: 'logo', src: A('ui/logo.webp'), alt: '河边的错误' }) : h('b', {}, '河边的错误'), h('small', {}, '他在等你回来')),
     menu,
     h('div', { class: 'hint' }, st.apiKey || st.mock ? null : h('div', {}, '首次进入请先在「设置」里填写 API Key'), h('div', {}, '建议分几天玩，体验更好。')),
     h('div', { class: 'ver' }, 'v0.3')));
