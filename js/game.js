@@ -832,6 +832,7 @@ async function wakeInner(ms) {
   const s = G.s;
   s.meta.offlineMs = ms; s.meta.feignTurns = 3;
   s.c.offlineCount = (s.c.offlineCount || 0) + 1;
+  if (ms >= 24 * 3600e3) s.c.longOffline = (s.c.longOffline || 0) + 1;   // 离开过一天以上（隐藏结局要求从没有过）
   const scr = $('#scr-main'); scr.classList.add('waking');
   // 假死：左下角的你换成闭眼的脸
   G.feign = true;
