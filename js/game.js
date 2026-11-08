@@ -281,6 +281,11 @@ async function showLine(line, opts = {}) {
   if (s.log.length > 300) s.log.splice(0, s.log.length - 300);
   R.next.classList.add('hidden');
   await typeInto(R.text, segs);
+  // 乱码句：前两次在对话框中间隐约浮出一句提示，让玩家想到去复制（复制出来才是真话）
+  if (segs.some(x => x.g) && (s.c.garbleHint || 0) < 2 && !s.meta.copySeen) {
+    s.c.garbleHint = (s.c.garbleHint || 0) + 1;
+    const f = h('div', { class: 'garble-hint' }, '……这句话，好像能复制下来看看。'); R.dialog.append(f); setTimeout(() => f.remove(), 4200);
+  }
 }
 function waitAdvance(textLen = 20) {
   G.R.next.classList.remove('hidden');

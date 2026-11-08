@@ -163,7 +163,7 @@ body.loose .dialog::before { filter: contrast(.92); transform: rotate(-.25deg); 
 
 /* —— 数值页 —— */
 #ov-stats { background: #121212; color: #E9E4DA; }
-#ov-stats .user { position: absolute; left: 720px; top: 20px; height: 900px; filter: grayscale(1) contrast(1.15) brightness(.8); }
+#ov-stats .user { position: absolute; left: 973px; top: 35px; height: 900px; filter: grayscale(1) contrast(1.15) brightness(.8); }
 #ov-stats .thread { position: absolute; left: -40px; top: 172px; width: 1360px; height: 170px; }
 #ov-stats .eye { position: absolute; transform: translate(-50%, -50%); top: 257px; transition: width .6s, height .6s; }
 #ov-stats .lb { position: absolute; top: 350px; width: 100px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; padding: 2px 0; background: #121212; }
@@ -514,3 +514,7 @@ body.compact .sysbox .btn { min-width: 170px; height: 64px; font-size: 22px; }
 .pinch-others .pinch-opt { width: 100%; }
 body.compact .pinch-held { font-size: 27px; }
 #rotate-go { margin-top: 10px; padding: 12px 22px; font-size: 16px; letter-spacing: 3px; color: #f3ece2; background: var(--red); border: 0; border-radius: 4px; font-family: var(--serif); }
+/* 乱码句提示：在对话框中间隐约浮出来 */
+.garble-hint { position: absolute; left: 0; right: 0; top: 46%; text-align: center; z-index: 3; color: rgba(163,36,42,.0); font-size: 17px; letter-spacing: 6px; pointer-events: none; animation: ghint 4.2s ease forwards; }
+@keyframes ghint { 0% { color: rgba(163,36,42,0); } 25%, 70% { color: rgba(163,36,42,.45); } 100% { color: rgba(163,36,42,0); } }
+body.compact .garble-hint { font-size: 22px; }

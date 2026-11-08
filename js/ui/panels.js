@@ -130,8 +130,16 @@ export async function fetchOfflineMessages(ms) {
 
 // ———————————————— 数值页 ————————————————
 const EYE_X = [150, 345, 540, 735, 930];
+const STATS_HELP = `这五个数，是他看你的方式。
+· 爱慕：他有多在意你。陪着他、在他靠近的时候接住他，会慢慢变高；冷淡和推开会让它降下来。
+· 怨恨：他有多羡慕、多恨你能离开。冷淡、拒绝、总说要走会让它变高；温柔一点、答应他的事，还有时间，都会让它慢慢消下去。
+· 希望：他有多相信你能带他走。说起外面、许下承诺会让它变高。
+· 克制：他还能忍住自己多少。他冲动的时候你怎么回应，会决定它往哪边走。
+· 同化：你有多像这里的人。在村里待着、做村里的事，它会自己慢慢涨。
+没有哪个数是越高越好。`;
 export function openStats() {
   const s = G.s; if (!s) return;
+  if (!store.get('stats_help')) { store.set('stats_help', 1); setTimeout(() => modal('statshelp', '他看你的方式', h('div', { class: 'how-text' }, STATS_HELP), { buttons: [{ label: '知道了', value: 1 }] }), 400); }
   const kids = [];
   VALUE_KEYS.forEach((k, i) => {
     const v = Math.round(s.v[k]); const size = 90 + v * 0.9;   // 眼球大小跟数值走
@@ -140,7 +148,7 @@ export function openStats() {
   });
   const close = () => { closeOv('stats'); s.meta.sawStats = true; saveRun(s); };
   const ov = h('div', {},
-    h('img', { class: 'user', src: A(`sprite/user/${s.outfit}.webp`), alt: '你的样子，灰色' }),
+    h('img', { class: 'user', src: A(`sprite/user/${s.outfit}.webp`), alt: '你的样子，灰色', style: outfitNorm(s.outfit) }),   // 按脸对齐：眼睛正好在红线上
     h('img', { class: 'thread', src: A('ui/thread.webp'), alt: '' }),
     ...kids,
     h('div', { class: 'head' }, h('b', {}, '你在他眼里'), h('span', {}, '眼球越大，数值越高；太低时会转开，不再看你')),
