@@ -1,7 +1,7 @@
 // 一局游戏的状态、数值结算、存档 / 读档
-import { store } from './store.js?v=1794174270';
-import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794174270';
-import { AP_PER_SLOT } from './config/world.js?v=1794174270';
+import { store } from './store.js?v=1794174817';
+import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794174817';
+import { AP_PER_SLOT } from './config/world.js?v=1794174817';
 
 export function newRun(outfit = 'initial', loop = 0) {
   return {
