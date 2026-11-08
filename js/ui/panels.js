@@ -349,8 +349,11 @@ function openDebug() {
     ...VALUE_KEYS.map(k => h('label', { style: { display: 'flex', gap: '10px', alignItems: 'center' } }, h('span', { style: { width: '60px' } }, VALUE_NAMES[k]),
       h('input', { type: 'range', min: 0, max: 100, value: s.v[k], oninput: e => { s.v[k] = +e.target.value; e.target.nextSibling.textContent = e.target.value; } }), h('span', {}, s.v[k]))),
     h('label', {}, '疯神 ', h('input', { type: 'range', min: -5, max: 5, step: 0.5, value: s.madness, oninput: e => { s.madness = +e.target.value; } })),
-    h('label', {}, '跳到第几天 ', h('input', { type: 'number', min: 1, max: 42, value: s.day, onchange: e => { s.day = +e.target.value; s.slot = 0; } })),
+    h('label', {}, '跳到第几天 ', h('input', { type: 'number', min: 1, max: 42, value: s.day, onchange: e => {
+      s.day = +e.target.value; s.slot = 0;
+      for (const ev of G.events) if (!ev.trigger && ev.day < s.day && !s.done.includes(ev.id)) s.done.push(ev.id);   // 跳过去的天数里的固定事件算已经发生
+    } })),
     h('label', {}, '牠屋子次数 ', h('input', { type: 'number', min: 0, value: s.c.taVisits || 0, onchange: e => { s.c.taVisits = +e.target.value; } })),
     h('pre', { style: { fontSize: '13px', whiteSpace: 'pre-wrap' } }, JSON.stringify({ c: s.c, f: s.f, done: s.done, madTier: tierOf(s), meta: s.meta }, null, 1)));
-  modal('debug', '调试', box).then(() => { saveRun(s); refreshHud(); });
+  modal('debug', '调试', box, { buttons: [{ label: '关闭', value: null }] }).then(() => { saveRun(s); refreshHud(); });
 }

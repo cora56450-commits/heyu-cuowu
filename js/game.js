@@ -18,6 +18,17 @@ import { showEnding, showLock } from './ui/ending.js';
 export const G = { s: null, R: null, events: [], busy: false, last: null, backTitle: null };
 const SIZE_COST = { small: 1, medium: 2, large: 3 };
 const HISTORY_KEEP = 12;
+// 血腥限频（目标：恋爱六成、血腥三成）：前 4 天两天最多一次，之后每天最多一次。主线事件本身不受限，但写了也会记一次
+const GORE_RE = /内脏|器官|胃|肺|肝|肾|脾|胰|胆囊|大肠|小肠|肠子|膀胱|心脏|开膛|剖开|血|缝合|伤口/;
+function goreAllowed(s) {
+  const g = s.c.goreDays || {};
+  if (s.day <= 4) return !(g[s.day] || g[s.day - 1]);
+  return !(g[s.day] >= 1);
+}
+const GORE_HOLD = '今天已经写过内脏、血或缝合了。这一轮不要再写这些，也不要让河主动说起内脏或画；把注意力放在人、日常和你们之间。';
+// 一个时段的最后一件事：让 AI 把场景收住，不要停在河刚问完一句话
+const LAST_ACTION_NOTE = '这是这个时段的最后一件事。写完这件事以后把场景收住（河说完话、各自去忙、或者自然地分开），最后一条不要是等玩家回答的问题。';
+const SLOT_CLOSE = ['日头升高了一些。', '到晌午了。', '日影斜了。', '天暗下来了。', '夜深了。'];
 // 「河的第一次」之后那一天：回避型，越界之后会自省
 const HE_FIRST_AFTER = '昨晚你们越过了那条线。今天河有点别扭：躲着你、话比平时更少，不提昨晚，也不说任何占有的话。他在跟自己较劲，不是在生你的气。';
 
@@ -312,12 +323,12 @@ export function renderActions(mode = 'free', choices = null) {
   const L = LOCATIONS[s.loc];
   R.actHead.textContent = `在${L.name}能做的事`;
   const list = [...(s.lastSugg || []).map(x => ({ ...x, kind: 'ai' })), ...locationActions(s)];
-  R.actList.replaceChildren(...list.map(a => h('button', { class: 'btn', onclick: () => doAction(a) }, h('span', {}, a.text), h('span', { class: 'cost' }, a.cost ? a.cost + ' 点' : '不花'))));
+  R.actList.replaceChildren(...list.map(a => h('button', { class: 'btn', 'data-over': (a.cost || 0) > s.ap ? '1' : null, title: (a.cost || 0) > s.ap ? '这个时段剩下的行动点不够了' : null, onclick: () => doAction(a) }, h('span', {}, a.text), h('span', { class: 'cost' }, a.cost ? a.cost + ' 点' : '不花'))));
   setBusy(G.busy);
 }
 export function setBusy(b) {
   G.busy = b; const R = G.R; if (!R) return;
-  for (const el of R.actions.querySelectorAll('button,input')) el.disabled = b;
+  for (const el of R.actions.querySelectorAll('button,input')) el.disabled = b || el.dataset.over === '1';
   R.regenBtn.disabled = b || !G.last;
   R.regenBtn.style.opacity = b || !G.last ? .35 : 1;
 }
@@ -346,8 +357,9 @@ function ctxFor(s, kind, ev) {
   const allowGarble = madTier(s.madness) === 'mad' || s.meta.feignTurns > 0;
   const extra = (s.c.warmStreak || 0) >= 2 ? [WARM_STREAK.scaredNote] : [];
   if (s.f.he_first_day === s.day) extra.push(HE_FIRST_AFTER);
+  const rules = kind !== 'event' && kind !== 'choice' && !goreAllowed(s) ? [GORE_HOLD] : [];
   const inject = collectInjections(s, extra);
-  return { heHere, allowMeta, allowGarble, inject, outfitName: OUTFITS[s.outfit]?.name + '（' + OUTFITS[s.outfit]?.note + '）' };
+  return { heHere, allowMeta, allowGarble, inject, rules, outfitName: OUTFITS[s.outfit]?.name + '（' + OUTFITS[s.outfit]?.note + '）' };
 }
 function userMsg(s, req) {
   const L = LOCATIONS[s.loc];
@@ -358,11 +370,12 @@ function userMsg(s, req) {
         (from ? `「你」刚从${from}走到${L.name}，人现在在${L.name}，已经不在${from}了。` : `「你」现在在${L.name}。`) +
         `${L.name}：${L.desc}\n不要接着写上一段，只写「你」到达${L.name}时看到的场景（2–4 条）。旁白里的位置必须是${L.name}，不要写成别的地方。必须给出 suggestions。`;
     }
-    case 'action': return `【玩家行动】${req.free ? '（玩家自己输入的）' : ''}${req.text}${req.note ? '\n（' + req.note + '）' : ''}\n写这次行动的经过和结果。`;
+    case 'action': return `【玩家行动】${req.free ? '（玩家自己输入的）' : ''}${req.text}${req.note ? '\n（' + req.note + '）' : ''}\n写这次行动的经过和结果。` +
+      (req.last ? '\n' + LAST_ACTION_NOTE : req.free ? `\n（这个时段还剩 ${req.apLeft} 点行动。small=1、medium=2、large=3；如果这次的规模会把点数用完，${LAST_ACTION_NOTE}）` : '');
     case 'wake': return `【醒来】「你」从假死中醒过来，地点：${L.name}，${SLOTS[s.slot]}。写醒来那一刻（2–5 条），给出建议行动。`;
     case 'event': {
       const ev = req.event;
-      return `【主线事件】${ev.scene}\n刚才已经出现的固定台词：\n${(ev.lines || []).map(l => (l.speaker === 'narration' ? '' : l.speaker + '：') + l.text.replace('{FIRST_LINE}', FIRST_LINE)).join('\n')}\n接着往下写 3–6 条。${ev.choices ? '写到玩家需要做选择之前停住。suggestions 给空数组。' : ''}`;
+      return `【主线事件】${ev.scene}\n刚才已经出现的固定台词：\n${(ev.lines || []).map(l => (l.speaker === 'narration' ? '' : l.speaker + '：') + l.text.replace('{FIRST_LINE}', FIRST_LINE)).join('\n')}\n接着往下写 3–6 条，上面这些固定台词不要再写一遍。${ev.choices ? '写到玩家需要做选择之前停住。suggestions 给空数组。' : ''}`;
     }
     case 'choice': return `【玩家选择】${req.text}\n${req.event.after || '写这个选择的结果，然后收住场景。'}\nsuggestions 给空数组。`;
   }
@@ -407,12 +420,14 @@ export async function doTurn(req) {
     const d = applyTags(s, tags, turn.he_flags);
     if (getSettings().debug) console.log('tags', tags, turn.he_flags, d, s.v);
   }
+  if (turn.lines.some(l => GORE_RE.test(l.text || ''))) { s.c.goreDays ||= {}; s.c.goreDays[s.day] = (s.c.goreDays[s.day] || 0) + 1; }
   if (s.meta.feignTurns > 0) s.meta.feignTurns--;
   s.turns++;
   s.history.push({ role: 'user', content: um }, { role: 'assistant', content: JSON.stringify({ lines: turn.lines, tags: turn.tags, action_size: turn.action_size, suggestions: turn.suggestions, he_flags: turn.he_flags, cg: null }) });
   if (s.history.length > HISTORY_KEEP) compressHistory(s);
   if (turn.organ && organsOpen() && !ownedDrawings().includes(turn.organ)) await giveDrawing(turn.organ, 'he');
   if (turn.suggestions.length) s.lastSugg = turn.suggestions;
+  else if (req.kind === 'action') { s.lastSugg = s.lastSugg.filter(x => x.text !== req.text); if (!s.lastSugg.length) s.lastSugg = [{ text: '四处看看', cost: 1 }, { text: '去找河', cost: 2 }]; }
   else if (req.kind !== 'event' && req.kind !== 'choice' && !s.lastSugg.length) s.lastSugg = [{ text: '四处看看', cost: 1 }, { text: '去找河', cost: 2 }];
   setBusy(false);
   saveRun(s);
@@ -465,13 +480,13 @@ async function regenerate() {
 async function doAction(a) {
   if (G.busy) return;
   if (a.kind === 'local') { setBusy(true); try { await a.fn(); } finally { if (!G.inTurn) setBusy(false); } return; }
-  const req = { kind: 'action', text: a.text, cost: a.cost };
+  const req = { kind: 'action', text: a.text, cost: a.cost, last: G.s.ap - (a.cost || 1) <= 0 };
   await afterTurn(await doTurn(req), req);
 }
 async function freeAct() {
   const t = G.R.input.value.trim(); if (!t || G.busy) return;
   G.R.input.value = ''; G.R.inputMax = 0;
-  const req = { kind: 'action', text: t, free: true };
+  const req = { kind: 'action', text: t, free: true, apLeft: G.s.ap };
   await afterTurn(await doTurn(req), req);
 }
 async function afterTurn(turn, req) {
@@ -484,7 +499,7 @@ async function afterTurn(turn, req) {
   }
   saveRun(s);
   refreshHud();
-  if (s.ap <= 0) { await sleep(400); await waitAdvance(); return endSlot(); }
+  if (s.ap <= 0) { await sleep(400); await waitAdvance(); await playLines([{ speaker: 'narration', text: SLOT_CLOSE[s.slot] || '时间过去了。' }]); return endSlot(); }
   renderActions('free');
 }
 async function spendLocal(cost, lines) {
