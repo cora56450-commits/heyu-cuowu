@@ -1,6 +1,6 @@
 // 启动：缩放、读设置、离线判定、标题画面
 import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js';
-import { store, getSettings, saveSettings } from './store.js';
+import { store, getSettings, saveSettings, getGallery } from './store.js';
 import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, hasAsset } from './game.js';
 import { newRun, loadRun, hasActiveRun } from './state.js';
 import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js';
@@ -57,7 +57,7 @@ function showTitle() {
   for (const o of [...$('#overlays').children]) o.remove();
   const active = hasActiveRun();
   const items = [
-    ['开始', start], ['继续', cont, !active], ['读档', loadMenu, !hasManualSave()], ['结局', () => P.openGallery()], ['回想', () => P.openMemories()], ['设置', () => P.openSettings()],
+    ['开始', start], ['继续', cont, !active], ['读档', loadMenu, !hasManualSave()], ['结局', () => P.openGallery(), !Object.keys(getGallery().endings || {}).length], ['回想', () => P.openMemories()], ['设置', () => P.openSettings()],   // 结局：一个都没打出来时点不开
   ];
   const st = getSettings();
   // 菜单：选中项两侧的针 + 红线从两边滑进来；点击时红线抖一下、按钮下沉，再进入下一个界面
