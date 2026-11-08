@@ -5,7 +5,7 @@ import { chat, testConnection, ApiError } from '../api.js';
 import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js';
 import { looseJson } from '../parse.js';
 import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS } from '../config/world.js';
-import { VALUE_KEYS, VALUE_NAMES } from '../config/values.js';
+import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js';
 import { ENDINGS, GROUP_ORDER } from '../config/endings.js';
 import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags } from '../state.js';
 import { rollMeta } from '../meta.js';
@@ -29,7 +29,7 @@ export function openMap(fromButton) {
   if (fromButton && (G.busy || s.phase === 'event')) { toast('现在走不开。'); return; }
   const mustChoose = s.phase === 'map';
   const heAt = heLocation(s.day, s.slot);
-  let sel = mustChoose ? heAt : s.loc;
+  let sel = mustChoose ? (heAt || (s.loc && LOCATIONS[s.loc] && !(LOCATIONS[s.loc].unlockDay > s.day) ? s.loc : 'yard')) : s.loc;   // 河不在的时段：默认选你现在待的地方
   const isLocked = id => { const L = LOCATIONS[id]; return L.unlockDay && s.day < L.unlockDay && !(id === 'border' && s.f.border_found); };
   const pins = Object.entries(LOCATIONS).map(([id, L]) => {
     const here = id === s.loc && !mustChoose;
@@ -81,12 +81,16 @@ export function openPhone() {
     }));
     msgs.scrollTop = 1e6;
   };
-  const input = h('input', { type: 'text', placeholder: '给河发消息', 'aria-label': '给河发消息', maxlength: 70, onkeydown: e => { if (e.key === 'Enter') send(); } });
-  const sendBtn = h('button', { onclick: () => send() }, '发送');
+  // 只有不在一起的时候才能聊：他就在你身边时，手机发不出去
+  const together = s.phase === 'free' && heLocation(s.day, s.slot) === s.loc;
+  const input = h('input', { type: 'text', placeholder: together ? '他就在你旁边。' : '给河发消息', 'aria-label': '给河发消息', maxlength: 70, disabled: together, onkeydown: e => { if (e.key === 'Enter') send(); } });
+  const sendBtn = h('button', { onclick: () => send(), disabled: together }, '发送');
   async function send() {
     const t = input.value.trim(); if (!t) return;
-    input.value = ''; s.phone.push({ from: 'me', text: t, ts: Date.now() }); render(); saveRun(s);
-    if ((s.phoneToday || 0) >= 4) return; // 他今天不回了
+    input.value = ''; s.phone.push({ from: 'me', text: t, ts: Date.now() }); s.f.pingAnswered = true; render(); saveRun(s);
+    // 第 39 天约见：不管回什么，他只回一句
+    if (s.day === 39 && s.f.d39_phone && !s.f.d39_replied) { s.f.d39_replied = true; await sleep(1800); s.phone.push({ from: 'he', text: '嗯。睡吧。', ts: Date.now() }); render(); saveRun(s); return; }
+    if ((s.phoneToday || 0) >= 3) return; // 他今天不回了（每天最多 3 条，避免刷）
     s.phoneToday = (s.phoneToday || 0) + 1;
     sendBtn.disabled = true;
     try {
@@ -94,6 +98,8 @@ export function openPhone() {
       const raw = await chat({ messages: [{ role: 'system', content: phoneChatPrompt(s, { heHere: false, outfitName: OUTFITS[s.outfit].name, allowMeta: rollMeta(s) }) }, ...recent], stream: false, maxTokens: 300 });
       const j = looseJson(raw);
       const reps = (j?.replies || [String(raw).slice(0, 40)]).slice(0, 3);
+      const tags = (Array.isArray(j?.tags) ? j.tags : []).filter(x => AI_TAGS.includes(x));
+      if (tags.length) applyTags(s, tags);   // 聊天也改数值，和当面一样受每天 ±3 上限
       for (const r of reps) { await sleep(900 + r.length * 120); s.phone.push({ from: 'he', text: String(r), ts: Date.now() }); render(); }
       saveRun(s);
     } catch (e) { toast(e instanceof ApiError ? e.message : '发送失败'); }

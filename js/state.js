@@ -5,7 +5,7 @@ import { AP_PER_SLOT } from './config/world.js';
 
 export function newRun(outfit = 'initial', loop = 0) {
   return {
-    ver: 1, day: 1, slot: 0, loc: 'creek', ap: AP_PER_SLOT, phase: 'map',
+    ver: 2, day: 1, slot: 0, loc: 'creek', ap: AP_PER_SLOT, phase: 'map',
     v: { ...INITIAL }, madness: INITIAL_MADNESS,
     c: {}, f: {}, done: [],
     outfit, loop,
@@ -72,7 +72,13 @@ export function saveRun(s, id = 'auto') {
   s.savedAt = Date.now();
   store.set('save_' + id, s);
 }
-export function loadRun(id = 'auto') { return store.get('save_' + id); }
+export function loadRun(id = 'auto') {
+  const s = store.get('save_' + id); if (!s) return s;
+  // 旧存档（5 段 × 3 点）：时段 −1（清晨并进上午），行动点不超过 2
+  if ((s.ver || 1) < 2) { s.slot = Math.max(0, (s.slot || 0) - 1); s.ver = 2; }
+  if (s.ap > AP_PER_SLOT) s.ap = AP_PER_SLOT;
+  return s;
+}
 export function delRun(id) { store.del('save_' + id); }
 export function hasActiveRun() { const s = loadRun('auto'); return !!(s && !s.ended); }
 export function slotInfo(id) { const s = loadRun(id); return s ? { day: s.day, slot: s.slot, loc: s.loc, savedAt: s.savedAt, ended: s.ended, saveName: s.saveName } : null; }

@@ -36,13 +36,13 @@ function mk(day, slot, loc, v, extra = {}) {
 
 export async function makeTestSaves() {
   // 存档 1：第 18 天上午，受伤事件前（克制偏低，可以试‘入殓师’）
-  saveRun(mk(18, 1, 'fields', { love: 58, resent: 35, hope: 40, restraint: 28, assim: 30 }, {
-    done: await eventsBefore(18, 1), madness: 1.5,
+  saveRun(mk(18, 0, 'fields', { love: 58, resent: 35, hope: 40, restraint: 28, assim: 30 }, {
+    done: await eventsBefore(18, 0), madness: 1.5,
     summary: '你在村里住了半个多月。看过牠缝人，看过河学缝纫，过了花开的节日。河对你越来越不设防，有几次话说到一半停住。',
   }), 'slot1');
   // 存档 2：第 40 天黄昏，「第四十天的问题」之前（往‘楚门的世界’走）
-  saveRun(mk(40, 3, 'creek', { love: 76, resent: 30, hope: 68, restraint: 48, assim: 22 }, {
-    outfit: 'redthread', done: await eventsBefore(40, 3),
+  saveRun(mk(40, 2, 'creek', { love: 76, resent: 30, hope: 68, restraint: 48, assim: 22 }, {
+    outfit: 'redthread', done: await eventsBefore(40, 2),
     summary: '快四十天了。河给你缝过伤口，第一次越界之后自己躲了好几天。牠发疯那天你去找了河。你们去过村界，他说起过他记得的外面：会亮的车。',
   }), 'slot2');
   // 存档 3：第 42 天清晨，直接进结局判定（数值在中间、拼过牠年轻时的照片、触发过后山事件 → 隐藏结局）
