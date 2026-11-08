@@ -513,3 +513,4 @@ body.compact .sysbox .btn { min-width: 170px; height: 64px; font-size: 22px; }
 .pinch-others { position: absolute; left: 885px; top: 150px; width: 360px; display: flex; flex-direction: column; gap: 12px; pointer-events: auto; }
 .pinch-others .pinch-opt { width: 100%; }
 body.compact .pinch-held { font-size: 27px; }
+#rotate-go { margin-top: 10px; padding: 12px 22px; font-size: 16px; letter-spacing: 3px; color: #f3ece2; background: var(--red); border: 0; border-radius: 4px; font-family: var(--serif); }

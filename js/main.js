@@ -34,6 +34,15 @@ if (!LOCAL) {
   addEventListener('dragstart', e => { if (e.target.tagName === 'IMG') e.preventDefault(); });
 }
 
+// 竖屏提示页上的按钮：全屏并锁定横屏（安卓 Chrome 支持，关了自动旋转也有效）；不支持就提示去打开自动旋转
+document.getElementById('rotate-go')?.addEventListener('click', async () => {
+  try {
+    const el = document.documentElement;
+    if (!document.fullscreenElement && el.requestFullscreen) await el.requestFullscreen({ navigationUI: 'hide' });
+    await screen.orientation.lock('landscape');
+  } catch { document.getElementById('rotate-tip').style.display = 'block'; }
+});
+
 // 键盘推进对话
 addEventListener('keydown', e => {
   if (e.target.matches('input,textarea')) return;
