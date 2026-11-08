@@ -25,7 +25,8 @@ function goreAllowed(s) {
   if (s.day <= 4) return !(g[s.day] || g[s.day - 1]);
   return !(g[s.day] >= 1);
 }
-const GORE_HOLD = '今天已经写过内脏、血或缝合了。这一轮不要再写这些，也不要让河主动说起内脏或画；把注意力放在人、日常和你们之间。';
+const GORE_HOLD = '今天已经写过内脏、血或缝合了。这一轮不要再写这些，也不要让河主动说起内脏或画；就算玩家问起，也只一笔带过、岔开，不说出器官名字，不描写。把注意力放在人、日常和你们之间。';
+const DRAWINGS_HIDDEN = '河的解剖画还没给「你」看过：被问起就收起来、岔开，不说画的是什么。';
 // 一个时段的最后一件事：让 AI 把场景收住，不要停在河刚问完一句话
 const LAST_ACTION_NOTE = '这是这个时段的最后一件事。写完这件事以后把场景收住（河说完话、各自去忙、或者自然地分开），最后一条不要是等玩家回答的问题。';
 const SLOT_CLOSE = ['日头升高了一些。', '到晌午了。', '日影斜了。', '天暗下来了。', '夜深了。'];
@@ -358,6 +359,7 @@ function ctxFor(s, kind, ev) {
   const extra = (s.c.warmStreak || 0) >= 2 ? [WARM_STREAK.scaredNote] : [];
   if (s.f.he_first_day === s.day) extra.push(HE_FIRST_AFTER);
   const rules = kind !== 'event' && kind !== 'choice' && !goreAllowed(s) ? [GORE_HOLD] : [];
+  if (kind !== 'event' && kind !== 'choice' && !organsOpen()) rules.push(DRAWINGS_HIDDEN);   // 第 12 天拼图之前
   const inject = collectInjections(s, extra);
   return { heHere, allowMeta, allowGarble, inject, rules, outfitName: OUTFITS[s.outfit]?.name + '（' + OUTFITS[s.outfit]?.note + '）' };
 }
