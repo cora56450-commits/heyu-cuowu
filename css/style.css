@@ -2,7 +2,9 @@
   --ink: #2B2A28; --ink2: #5E5A53; --paper: #EEEAE2; --red: #A3242A; --red2: #c0383c;
   --green: #14211b; --serif: 'Noto Serif SC', 'Songti SC', 'STSong', serif; --sans: 'Noto Sans SC', 'PingFang SC', sans-serif;
   --s: 1;
+  color-scheme: only light;   /* 不让手机浏览器的「强制深色模式」把字反成白色 */
 }
+html, body, #stage { forced-color-adjust: none; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; background: #000; overflow: hidden; overscroll-behavior: none; }
 body { font-family: var(--serif); color: var(--ink); touch-action: manipulation; }
