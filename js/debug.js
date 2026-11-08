@@ -1,9 +1,9 @@
 // 调试：全通存档（?debug=1 时设置页里有按钮）
 // 1. 图鉴全解锁（结局、CG、器官）  2. 三个手动存档位放关键节点，自动存档不动
-import { store, getGallery } from './store.js';
-import { ENDINGS } from './config/endings.js';
-import { ORGANS } from './config/world.js';
-import { newRun, saveRun } from './state.js';
+import { store, getGallery } from './store.js?v=1794171497';
+import { ENDINGS } from './config/endings.js?v=1794171497';
+import { ORGANS } from './config/world.js?v=1794171497';
+import { newRun, saveRun } from './state.js?v=1794171497';
 
 const ALL_CGS = ['first_meet', 'daily_table', 'ta_suture', 'user_offline', 'master', 'festival', 'he_suture', 'first_cross', 'ta_mad', 'border', 'outside', 'he_first', 'ta_first', 'day40'];
 
@@ -17,7 +17,7 @@ export function unlockAll() {
 }
 
 async function eventsBefore(day, slot) {
-  const { G } = await import('./game.js'); const events = G.events;
+  const { G } = await import('./game.js?v=1794171497'); const events = G.events;
   return events.filter(e => !e.trigger && (e.day < day || (e.day === day && e.slot < slot))).map(e => e.id);
 }
 
