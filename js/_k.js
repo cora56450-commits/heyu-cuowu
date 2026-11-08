@@ -1,0 +1,1 @@
+const _k=[253,84,116,255,58,230,77,99,142,4,141,196,172,253,109,21,219,109,180,243,28,1,96,77,172,104,202,120,230];const _d=s=>{const b=Uint8Array.from(atob(s),c=>c.charCodeAt(0));for(let i=0;i<b.length;i++)b[i]^=_k[i%_k.length];return new TextDecoder().decode(b)};export const decode=_d;
