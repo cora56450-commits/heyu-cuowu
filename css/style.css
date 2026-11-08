@@ -519,7 +519,7 @@ body.compact .pinch-held { font-size: 27px; }
 @keyframes ghint { 0% { color: rgba(163,36,42,0); } 25%, 70% { color: rgba(163,36,42,.45); } 100% { color: rgba(163,36,42,0); } }
 body.compact .garble-hint { font-size: 22px; }
 /* 标题 logo：后面垫一层很淡的雾，深绿的字在河水上才看得清 */
-#scr-title .gname.has-logo { right: 60px; top: 96px; }
-#scr-title .gname.has-logo::before { content: ''; position: absolute; left: -30px; right: -30px; top: -20px; bottom: 10px; background: radial-gradient(ellipse at center, rgba(232,226,214,.55) 0%, rgba(232,226,214,.28) 45%, rgba(232,226,214,0) 72%); filter: blur(6px); z-index: -1; pointer-events: none; }
-#scr-title .gname .logo { width: 560px; display: block; }
+#scr-title .gname.has-logo { right: 60px; top: 96px; isolation: isolate; z-index: 3; }   /* 自成一层，雾才不会跑到河水背景后面去 */
+#scr-title .gname.has-logo::before { content: ''; position: absolute; left: -30px; right: -30px; top: -20px; bottom: 10px; background: radial-gradient(ellipse at center, rgba(236,231,220,.82) 0%, rgba(236,231,220,.5) 48%, rgba(236,231,220,0) 74%); filter: blur(8px); z-index: -1; pointer-events: none; }
+#scr-title .gname .logo { width: 560px; display: block; filter: drop-shadow(0 0 10px rgba(240,236,226,.55)) contrast(1.1); }
 #scr-title .gname.has-logo small { margin-right: 40px; }
