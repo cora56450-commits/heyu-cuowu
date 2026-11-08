@@ -1,17 +1,17 @@
 // 各个浮层：地图、手机、数值页、菜单、记录、存读档、设置、选装扮、图鉴
-import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794171497';
-import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen } from '../store.js?v=1794171497';
-import { chat, testConnection, ApiError } from '../api.js?v=1794171497';
-import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794171497';
-import { looseJson } from '../parse.js?v=1794171497';
-import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS } from '../config/world.js?v=1794171497';
-import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794171497';
-import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794171497';
-import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags } from '../state.js?v=1794171497';
-import { rollMeta } from '../meta.js?v=1794171497';
-import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm } from '../game.js?v=1794171497';
-import { openOrgan } from './organ.js?v=1794171497';
-import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794171497';
+import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794172711';
+import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen } from '../store.js?v=1794172711';
+import { chat, testConnection, ApiError } from '../api.js?v=1794172711';
+import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794172711';
+import { looseJson } from '../parse.js?v=1794172711';
+import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS } from '../config/world.js?v=1794172711';
+import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794172711';
+import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794172711';
+import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags } from '../state.js?v=1794172711';
+import { rollMeta } from '../meta.js?v=1794172711';
+import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm } from '../game.js?v=1794172711';
+import { openOrgan } from './organ.js?v=1794172711';
+import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794172711';
 
 // 系统样式的提示框（冷冰冰的电子界面，不是河说的）
 export function systemNotice(text, buttons) {
@@ -77,6 +77,7 @@ export function openPhone() {
       if (m.ts - lastTs > 30 * 60e3) out.push(h('div', { class: 'ts' }, fmtTs(m.ts)));
       lastTs = m.ts;
       if (m.text) out.push(h('div', { class: 'msg ' + (m.from === 'me' ? 'me' : 'he') }, m.text));
+      if (m.note) out.push(h('div', { class: 'msg-note' }, m.note));
       return out;
     }));
     msgs.scrollTop = 1e6;
@@ -85,25 +86,18 @@ export function openPhone() {
   const together = s.phase === 'free' && heLocation(s.day, s.slot) === s.loc;
   const input = h('input', { type: 'text', placeholder: together ? '他就在你旁边。' : '给河发消息', 'aria-label': '给河发消息', maxlength: 70, disabled: together, onkeydown: e => { if (e.key === 'Enter') send(); } });
   const sendBtn = h('button', { onclick: () => send(), disabled: together }, '发送');
+  // 他不秒回：发出去显示「已送达」，下一个时段他才回（game.js 的 phoneReplies）；第 39 天约见那一句除外
   async function send() {
     const t = input.value.trim(); if (!t) return;
-    input.value = ''; s.phone.push({ from: 'me', text: t, ts: Date.now() }); s.f.pingAnswered = true; render(); saveRun(s);
-    // 第 39 天约见：不管回什么，他只回一句
-    if (s.day === 39 && s.f.d39_phone && !s.f.d39_replied) { s.f.d39_replied = true; await sleep(1800); s.phone.push({ from: 'he', text: '嗯。睡吧。', ts: Date.now() }); render(); saveRun(s); return; }
-    if ((s.phoneToday || 0) >= 3) return; // 他今天不回了（每天最多 3 条，避免刷）
-    s.phoneToday = (s.phoneToday || 0) + 1;
-    sendBtn.disabled = true;
-    try {
-      const recent = s.phone.slice(-12).filter(m => m.text).map(m => ({ role: m.from === 'me' ? 'user' : 'assistant', content: m.text }));
-      const raw = await chat({ messages: [{ role: 'system', content: phoneChatPrompt(s, { heHere: false, outfitName: OUTFITS[s.outfit].name, allowMeta: rollMeta(s) }) }, ...recent], stream: false, maxTokens: 300 });
-      const j = looseJson(raw);
-      const reps = (j?.replies || [String(raw).slice(0, 40)]).slice(0, 3);
-      const tags = (Array.isArray(j?.tags) ? j.tags : []).filter(x => AI_TAGS.includes(x));
-      if (tags.length) applyTags(s, tags);   // 聊天也改数值，和当面一样受每天 ±3 上限
-      for (const r of reps) { await sleep(900 + r.length * 120); s.phone.push({ from: 'he', text: String(r), ts: Date.now() }); render(); }
-      saveRun(s);
-    } catch (e) { toast(e instanceof ApiError ? e.message : '发送失败'); }
-    sendBtn.disabled = false;
+    input.value = '';
+    const last = s.phone[s.phone.length - 1]; if (last?.from === 'me') delete last.note;
+    s.phone.push({ from: 'me', text: t, ts: Date.now(), note: '已送达' }); s.f.pingAnswered = true;
+    if (s.day === 39 && s.f.d39_phone && !s.f.d39_replied) { s.f.d39_replied = true; render(); saveRun(s); await sleep(1800); s.phone[s.phone.length - 1].note = '已读'; s.phone.push({ from: 'he', text: '嗯。睡吧。', ts: Date.now() }); render(); saveRun(s); return; }
+    if (!s.phonePending) {
+      if ((s.phoneToday || 0) >= 3) s.phone[s.phone.length - 1].note = '已送达 · 他今天不会再回了';   // 每天最多回 3 次
+      else { s.phoneToday = (s.phoneToday || 0) + 1; s.phonePending = { day: s.day, slot: s.slot }; }
+    }
+    render(); saveRun(s);
   }
   const scr = h('div', { class: 'screen-area' },
     h('div', { class: 'bar' }, h('span', {}, '‹ 信息'), '河'), msgs, h('div', { class: 'inp' }, input, sendBtn));
@@ -232,7 +226,7 @@ export function openSettings() {
     if (key === 'apiKey' && st.apiKey && st.mock) { st.mock = false; if (boxes.mock) boxes.mock.checked = false; }
     saveSettings(st);
   } });
-  const after = () => { import('../audio.js?v=1794171497').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
+  const after = () => { import('../audio.js?v=1794172711').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
   const rng = (key, min, max, step) => h('input', { type: 'range', min, max, step, value: st[key], oninput: e => { st[key] = +e.target.value; saveSettings(st); after(); } });
   const chk = key => (boxes[key] = h('input', { type: 'checkbox', checked: !!st[key], onchange: e => { st[key] = e.target.checked; saveSettings(st); after(); } }));
   const status = h('span', { class: 'note' });
@@ -273,7 +267,7 @@ export function openSettings() {
     h('p', { class: 'note' }, '浏览器里「清除网站数据」也会把存档、Key 和图鉴一起清掉。'),
     st.debug ? h('div', { class: 'row' }, h('button', { class: 'btn', onclick: async () => {
       if (!(await confirmBox('全通存档', '图鉴全部解锁，三个手动存档位会被覆盖成测试节点（自动存档不动）。', '写入'))) return;
-      const d = await import('../debug.js?v=1794171497'); d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
+      const d = await import('../debug.js?v=1794172711'); d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
     } }, '调试：全通存档')) : null);
   openOv('settings', h('div', {}, panel));
 }
@@ -296,7 +290,7 @@ export function openOutfit(isStart) {
       closeOv('outfit');
       if (!isStart && s && id !== s.outfit) {
         s.outfit = id; s.meta.outfitChanged = true; saveRun(s); refreshHud(); toast('换好了。');
-        if (G.R?.chars?.he) import('../game.js?v=1794171497').then(g => g.metaLine('outfit'));
+        if (G.R?.chars?.he) import('../game.js?v=1794172711').then(g => g.metaLine('outfit'));
       }
       res(id);
     }

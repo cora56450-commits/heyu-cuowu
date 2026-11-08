@@ -531,3 +531,5 @@ body.compact .garble-hint { font-size: 22px; }
 .mail-box .btn { min-width: 120px; height: 50px; text-align: center; display: flex; align-items: center; justify-content: center; letter-spacing: 6px; }
 body.compact .mail-text { font-size: 22px; height: 240px; }
 body.compact .mail-who { font-size: 20px; height: 54px; }
+.msg-note { align-self: flex-end; font-size: 11px; color: #8a93a0; margin-top: -4px; }
+body.compact .msg-note { font-size: 15px; }
