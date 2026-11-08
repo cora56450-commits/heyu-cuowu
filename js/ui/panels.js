@@ -1,17 +1,17 @@
 // 各个浮层：地图、手机、数值页、菜单、记录、存读档、设置、选装扮、图鉴
-import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794173159';
-import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen } from '../store.js?v=1794173159';
-import { chat, testConnection, ApiError } from '../api.js?v=1794173159';
-import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794173159';
-import { looseJson } from '../parse.js?v=1794173159';
-import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS } from '../config/world.js?v=1794173159';
-import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794173159';
-import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794173159';
-import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags } from '../state.js?v=1794173159';
-import { rollMeta } from '../meta.js?v=1794173159';
-import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm } from '../game.js?v=1794173159';
-import { openOrgan } from './organ.js?v=1794173159';
-import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794173159';
+import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794174270';
+import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen } from '../store.js?v=1794174270';
+import { chat, testConnection, ApiError } from '../api.js?v=1794174270';
+import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794174270';
+import { looseJson } from '../parse.js?v=1794174270';
+import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT } from '../config/world.js?v=1794174270';
+import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794174270';
+import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794174270';
+import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags } from '../state.js?v=1794174270';
+import { rollMeta } from '../meta.js?v=1794174270';
+import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm } from '../game.js?v=1794174270';
+import { openOrgan } from './organ.js?v=1794174270';
+import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794174270';
 
 // 系统样式的提示框（冷冰冰的电子界面，不是河说的）
 export function systemNotice(text, buttons) {
@@ -52,7 +52,7 @@ export function openMap(fromButton) {
   };
   const side = h('div', { class: 'side' },
     h('div', { class: 'when' }, h('b', {}, `第 ${s.day} 天`), h('span', {}, SLOTS[s.slot])),
-    h('div', { class: 'tip' }, mustChoose ? '选一个地方去。到了那里有 3 点行动，用完或者离开，就进入下一个时段。' : '换个地方要花 1 点行动。'),
+    h('div', { class: 'tip' }, mustChoose ? `选一个地方去。到了那里有 ${AP_PER_SLOT} 点行动，用完或者离开，就进入下一个时段。` : '换个地方要花 1 点行动。'),
     info,
     mustChoose ? null : h('button', { type: 'button', class: 'btn back', onclick: () => closeOv('map') }, '返回'));
   const ov = h('div', {}, h('div', { class: 'mapwrap' }, h('img', { src: A('ui/map.webp'), alt: '手绘的村子地图' }), ...pins), side);
@@ -91,7 +91,7 @@ export function openPhone() {
     const t = input.value.trim(); if (!t) return;
     input.value = '';
     const last = s.phone[s.phone.length - 1]; if (last?.from === 'me') delete last.note;
-    s.phone.push({ from: 'me', text: t, ts: Date.now(), note: '已送达' }); s.f.pingAnswered = true;
+    s.phone.push({ from: 'me', text: t, ts: Date.now(), note: '已送达', day: s.day }); s.f.pingAnswered = true;
     if (s.day === 39 && s.f.d39_phone && !s.f.d39_replied) { s.f.d39_replied = true; render(); saveRun(s); await sleep(1800); s.phone[s.phone.length - 1].note = '已读'; s.phone.push({ from: 'he', text: '嗯。睡吧。', ts: Date.now() }); render(); saveRun(s); return; }
     if (!s.phonePending) {
       if ((s.phoneToday || 0) >= 3) s.phone[s.phone.length - 1].note = '已送达 · 他今天不会再回了';   // 每天最多回 3 次
@@ -226,7 +226,7 @@ export function openSettings() {
     if (key === 'apiKey' && st.apiKey && st.mock) { st.mock = false; if (boxes.mock) boxes.mock.checked = false; }
     saveSettings(st);
   } });
-  const after = () => { import('../audio.js?v=1794173159').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
+  const after = () => { import('../audio.js?v=1794174270').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
   const rng = (key, min, max, step) => h('input', { type: 'range', min, max, step, value: st[key], oninput: e => { st[key] = +e.target.value; saveSettings(st); after(); } });
   const chk = key => (boxes[key] = h('input', { type: 'checkbox', checked: !!st[key], onchange: e => { st[key] = e.target.checked; saveSettings(st); after(); } }));
   const status = h('span', { class: 'note' });
@@ -267,7 +267,7 @@ export function openSettings() {
     h('p', { class: 'note' }, '浏览器里「清除网站数据」也会把存档、Key 和图鉴一起清掉。'),
     st.debug ? h('div', { class: 'row' }, h('button', { class: 'btn', onclick: async () => {
       if (!(await confirmBox('全通存档', '图鉴全部解锁，三个手动存档位会被覆盖成测试节点（自动存档不动）。', '写入'))) return;
-      const d = await import('../debug.js?v=1794173159'); d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
+      const d = await import('../debug.js?v=1794174270'); d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
     } }, '调试：全通存档')) : null);
   openOv('settings', h('div', {}, panel));
 }
@@ -290,7 +290,7 @@ export function openOutfit(isStart) {
       closeOv('outfit');
       if (!isStart && s && id !== s.outfit) {
         s.outfit = id; s.meta.outfitChanged = true; saveRun(s); refreshHud(); toast('换好了。');
-        if (G.R?.chars?.he) import('../game.js?v=1794173159').then(g => g.metaLine('outfit'));
+        if (G.R?.chars?.he) import('../game.js?v=1794174270').then(g => g.metaLine('outfit'));
       }
       res(id);
     }
