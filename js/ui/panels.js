@@ -1,17 +1,18 @@
 // 各个浮层：地图、手机、数值页、菜单、记录、存读档、设置、选装扮、图鉴
-import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794223003';
-import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen } from '../store.js?v=1794223003';
-import { chat, testConnection, ApiError } from '../api.js?v=1794223003';
-import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794223003';
-import { looseJson } from '../parse.js?v=1794223003';
-import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT, motherAway } from '../config/world.js?v=1794223003';
-import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794223003';
-import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794223003';
-import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags, taText } from '../state.js?v=1794223003';
-import { rollMeta } from '../meta.js?v=1794223003';
-import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm, mapMarks, PHONE_CG } from '../game.js?v=1794223003';
-import { openOrgan } from './organ.js?v=1794223003';
-import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794223003';
+import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794225433';
+import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen } from '../store.js?v=1794225433';
+import { chat, testConnection, ApiError } from '../api.js?v=1794225433';
+import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794225433';
+import { looseJson } from '../parse.js?v=1794225433';
+import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT, motherAway } from '../config/world.js?v=1794225433';
+import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794225433';
+import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794225433';
+import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags, taText } from '../state.js?v=1794225433';
+import { rollMeta } from '../meta.js?v=1794225433';
+import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm, mapMarks, PHONE_CG, hasAsset } from '../game.js?v=1794225433';
+import { DEMO } from '../config/demo.js?v=1794225433';
+import { openOrgan } from './organ.js?v=1794225433';
+import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794225433';
 
 // 系统样式的提示框（冷冰冰的电子界面，不是河说的）
 export function systemNotice(text, buttons) {
@@ -56,6 +57,7 @@ export function openMap(fromButton) {
   };
   const side = h('div', { class: 'side' },
     h('div', { class: 'when' }, h('b', {}, `第 ${s.day} 天`), h('span', {}, SLOTS[s.slot])),
+    mustChoose && s.slot === 0 && s.c.hintText && s.c.hintDay === s.day ? h('div', { class: 'tip morning' }, s.c.hintText) : null,
     h('div', { class: 'tip' }, mustChoose ? `选一个地方去。到了那里有 ${AP_PER_SLOT} 点行动，用完或者离开，就进入下一个时段。` : '换个地方要花 1 点行动。'),
     info,
     mustChoose ? null : h('button', { type: 'button', class: 'btn back', onclick: () => closeOv('map') }, '返回'));
@@ -73,13 +75,13 @@ export function openPhone(noFlash) {
   const s = G.s; if (!s) return;
   // 轮到新的「他那边」CG：先闪 1.5 秒，下方淡入一行小字；每张一局只闪一次，没有就直接打开手机
   const cgId = s.c.phoneCgPending;
-  if (noFlash !== true && cgId && !G.phoneFlashed && document.querySelector('#scr-main')) {
+  if (noFlash !== true && cgId && !G.phoneFlashed && document.querySelector('#scr-main') && (PHONE_CG[cgId]?.slot ?? s.slot) === s.slot) {   // 时段不对先不闪，留到对应时段打开手机时
     G.phoneFlashed = true; s.c.phoneCgPending = null; saveRun(s);
     const img = h('img', { src: A(`cg/${cgId}.webp`), alt: '', style: { width: '100%', height: '100%', objectFit: 'cover', opacity: 0, transition: 'opacity .6s' } });
     const cap = h('div', { class: 'phone-cap' }, PHONE_CG[cgId]?.cap || '');
     const f = h('div', { style: { background: '#000' } }, img, cap);
     openOv('phoneflash', f); setTimeout(() => { img.style.opacity = 1; cap.classList.add('on'); }, 30); setTimeout(() => { closeOv('phoneflash'); G.phoneFlashed = false; openPhone(true); }, 1800);
-    import('../store.js?v=1794223003').then(m => m.unlock('cgs', cgId)); return;
+    import('../store.js?v=1794225433').then(m => m.unlock('cgs', cgId)); return;
   }
   s.unread = 0; refreshHud(); saveRun(s);
   // 「睡了吗。」→ 打开手机 3 秒后变成「对方撤回了一条消息」
@@ -103,7 +105,8 @@ export function openPhone(noFlash) {
     msgs.scrollTop = 1e6;
   };
   // 只有不在一起的时候才能聊：他就在你身边时，手机发不出去
-  const together = s.phase === 'free' && heLocation(s.day, s.slot) === s.loc;
+  const evNow = s.phase === 'event' && G.events?.find(e => e.id === s.curEvent);
+  const together = (s.phase === 'free' && heLocation(s.day, s.slot) === s.loc) || (evNow && evNow.heHere !== false);   // 固定事件里河在场也算
   const input = h('input', { type: 'text', placeholder: together ? '他就在你旁边。' : '给河发消息', 'aria-label': '给河发消息', maxlength: 70, disabled: together, onkeydown: e => { if (e.key === 'Enter') send(); } });
   const sendBtn = h('button', { onclick: () => send(), disabled: together }, '发送');
   // 他不秒回：发出去显示「已送达」，下一个时段他才回（game.js 的 phoneReplies）；第 39 天约见那一句除外
@@ -113,12 +116,12 @@ export function openPhone(noFlash) {
     const last = s.phone[s.phone.length - 1]; if (last?.from === 'me') delete last.note;
     s.phone.push({ from: 'me', text: t, ts: Date.now(), note: '已送达', day: s.day }); s.f.pingAnswered = true;
     if (s.day === 39 && s.f.d39_phone && !s.f.d39_replied) { s.f.d39_replied = true; render(); saveRun(s); await sleep(1800); s.phone[s.phone.length - 1].note = '已读'; s.phone.push({ from: 'he', text: '嗯。睡吧。', ts: Date.now() }); render(); saveRun(s); return; }
-    const g = await import('../game.js?v=1794223003');
+    const g = await import('../game.js?v=1794225433');
     if (!s.phonePending) {
       if ((s.phoneToday || 0) >= 3) s.phone[s.phone.length - 1].note = '已送达 · 他今天不会再回了';   // 每天最多回 3 次
       else {
         s.phoneToday = (s.phoneToday || 0) + 1; s.phonePending = { day: s.day, slot: s.slot };
-        const { phoneStage } = await import('../state.js?v=1794223003');
+        const { phoneStage } = await import('../state.js?v=1794225433');
         if (phoneStage(s) === 'near' && s.slot !== 3) setTimeout(() => g.phoneReplyNow(), 12000 + Math.random() * 15000);   // 近了：这一时段内就回
       }
     }
@@ -255,7 +258,7 @@ export function openSettings() {
     if (key === 'apiKey' && st.apiKey && st.mock) { st.mock = false; if (boxes.mock) boxes.mock.checked = false; }
     saveSettings(st);
   } });
-  const after = () => { import('../audio.js?v=1794223003').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
+  const after = () => { import('../audio.js?v=1794225433').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
   const rng = (key, min, max, step) => h('input', { type: 'range', min, max, step, value: st[key], oninput: e => { st[key] = +e.target.value; saveSettings(st); after(); } });
   const chk = key => (boxes[key] = h('input', { type: 'checkbox', checked: !!st[key], onchange: e => { st[key] = e.target.checked; saveSettings(st); after(); } }));
   const status = h('span', { class: 'note' });
@@ -306,7 +309,7 @@ export function openSettings() {
     h('p', { class: 'note' }, '浏览器里「清除网站数据」也会把存档、Key 和图鉴一起清掉。'),
     st.debug ? h('div', { class: 'row' }, h('button', { class: 'btn', onclick: async () => {
       if (!(await confirmBox('全通存档', '图鉴全部解锁，三个手动存档位会被覆盖成测试节点（自动存档不动）。', '写入'))) return;
-      const d = await import('../debug.js?v=1794223003'); await d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
+      const d = await import('../debug.js?v=1794225433'); await d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
     } }, '调试：全通存档')) : null);
   openOv('settings', h('div', {}, panel));
 }
@@ -330,7 +333,7 @@ export function openOutfit(isStart) {
       closeOv('outfit');
       if (!isStart && s && id !== s.outfit) {
         s.outfit = id; s.meta.outfitChanged = true; saveRun(s); refreshHud(); toast('换好了。');
-        if (G.R?.chars?.he) import('../game.js?v=1794223003').then(g => g.metaLine('outfit'));
+        if (G.R?.chars?.he) import('../game.js?v=1794225433').then(g => g.metaLine('outfit'));
       }
       res(id);
     }
@@ -379,8 +382,9 @@ export function openGallery() {
 // 回想：剧情 / 日常 CG；没解锁的是纸卡，写 ???
 export function openMemories() {
   const g = getGallery();
-  const seen = STORY_CGS.filter(id => g.cgs[id]).length;
-  const body = h('div', { class: 'body' }, h('div', { class: 'grid' }, STORY_CGS.map(id => g.cgs[id]
+  const CGS = STORY_CGS.filter(id => hasAsset(`cg/${id}.webp`));   // 试玩版只列包里有的
+  const seen = CGS.filter(id => g.cgs[id]).length;
+  const body = h('div', { class: 'body' }, h('div', { class: 'grid' }, CGS.map(id => g.cgs[id]
     ? h('div', { class: 'gcard card on img', onclick: () => viewCG(id) }, h('img', { src: A(`cg/${id}.webp`), alt: '' }))
     : h('div', { class: 'gcard card' }, h('span', { class: 'q' }, '???')))));
   // 道具：河的画（器官归位拼完之前全是 ???）
@@ -390,9 +394,10 @@ export function openMemories() {
     : h('div', { class: 'gcard card' }, h('span', { class: 'q' }, '???')))));
   // 第 24 天门缝底下推出来的那张画（没有图，只有字）
   const textCard = (title, lines) => h('div', { class: 'gcard card on door-drawing', onclick: () => openOv('cgview', h('div', { style: { background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }, onclick: () => closeOv('cgview') }, h('div', { class: 'paper', style: { width: '560px', padding: '48px 56px', fontSize: '22px', lineHeight: '2.1', color: '#3b342c' } }, ...lines.flatMap((l, k) => k ? [h('br'), l] : [l])))) }, h('span', {}, title));
-  if (g.misc.door_drawing) body.lastChild.append(textCard('门缝下的画', ['门缝底下推出来的一张画。', '你在桃花林里数花瓣的背影，头发、毛衣，每一根线都很细。', '没有画脸。', h('span', { style: { fontSize: '16px', opacity: '.7' } }, '角落里写着很小的两个字：「睡吧。」')]));
+  // 门缝下的画：用小时候的河那张（11/09 Cora 定，和相册里的照片同一幅）
+  if (g.misc.door_drawing) body.lastChild.append(h('div', { class: 'gcard card on img organ', onclick: () => openOv('cgview', h('div', { style: { background: '#000' }, onclick: () => closeOv('cgview') }, h('img', { src: A('puzzle/he_child.webp'), style: { width: '100%', height: '100%', objectFit: 'contain' }, alt: '小时候的河' }))) }, h('img', { src: A('puzzle/he_child.webp'), alt: '小时候的河', style: { objectFit: 'cover' } })));
   if (g.misc.five_petal) body.lastChild.append(textCard('五瓣的花', ['桃花林里那朵五瓣的。', '在这里，它看起来反而像一个错误。']));
-  galleryShell('回想', `${seen} / ${STORY_CGS.length}`, body);
+  galleryShell('回想', `${seen} / ${CGS.length}`, body);
 }
 
 // ———————————————— 调试（?debug=1）————————————————
@@ -425,7 +430,7 @@ export function openMailbox() {
       const s = loadRun('auto');
       const r = await fetch('https://api.web3forms.com/submit', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ access_key: WEB3FORMS_KEY, subject: MAIL_SUBJECT, from_name: who.value.trim() || '匿名玩家', message: text,
-          进度: s ? `第 ${s.day} 天` : '还没开始', 设备: navigator.userAgent }) }).then(x => x.json());
+          进度: s ? `第 ${s.day} 天` : '还没开始', 版本: DEMO ? '试玩版' : '完整版', 设备: navigator.userAgent }) }).then(x => x.json());
       if (!r.success) throw new Error(r.message || '寄不出去');
       store.set('mail_last', Date.now()); msg.value = ''; status.textContent = '寄出去了。谢谢你。';
     } catch (e) { status.textContent = '没寄出去，过一会儿再试试。'; }

@@ -1,7 +1,7 @@
 // 一局游戏的状态、数值结算、存档 / 读档
-import { store } from './store.js?v=1794223003';
-import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, CAP_UP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794223003';
-import { AP_PER_SLOT } from './config/world.js?v=1794223003';
+import { store } from './store.js?v=1794225433';
+import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, CAP_UP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794225433';
+import { AP_PER_SLOT } from './config/world.js?v=1794225433';
 
 export function newRun(outfit = 'initial', loop = 0) {
   return {
@@ -82,7 +82,7 @@ export function loadRun(id = 'auto') {
 }
 export function delRun(id) { store.del('save_' + id); }
 export function hasActiveRun() { const s = loadRun('auto'); return !!(s && !s.ended); }
-export function slotInfo(id) { const s = loadRun(id); return s ? { day: s.day, slot: s.slot, loc: s.loc, savedAt: s.savedAt, ended: s.ended, saveName: s.saveName } : null; }
+export function slotInfo(id) { const s = loadRun(id); return s ? { day: s.day, slot: s.slot, loc: s.loc, savedAt: s.savedAt, ended: s.ended, saveName: s.saveName, f: s.f || {}, done: s.done || [] } : null; }
 export function clone(s) { return JSON.parse(JSON.stringify(s)); }
 
 // 名字：河第 1 天自我介绍、牠第 5 天递字条之前，名牌显示 ？？？（旧存档按天数算已经知道）
@@ -100,12 +100,12 @@ export function taText(s, t) {
 }
 export function knows(s, who) {
   if (!s) return true;
-  if (who === '河') return !!s.f.know_he || s.day > 1 || s.done.includes('d1_meet');
-  if (who === '牠') return !!s.f.know_ta || s.done.includes('d5_ta_suture');
-  if (who === '养母') return !!s.f.know_mother || s.day > 1 || s.done.includes('d1_night');
-  if (who === '衡') return !!s.f.know_heng || s.day > 4 || s.done.includes('d4_heng');
-  if (who === '满') return !!s.f.know_man || s.done.includes('d8_man');
-  if (who === '村民·男') return !!s.f.know_shi;
-  if (who === '村民·女') return !!s.f.know_fang;
+  if (who === '河') return !!s.f?.know_he || s.day > 1 || s.done?.includes('d1_meet');
+  if (who === '牠') return !!s.f?.know_ta || s.done?.includes('d5_ta_suture');
+  if (who === '养母') return !!s.f?.know_mother || s.day > 1 || s.done?.includes('d1_night');
+  if (who === '衡') return !!s.f?.know_heng || s.day > 4 || s.done?.includes('d4_heng');
+  if (who === '满') return !!s.f?.know_man || s.done?.includes('d8_man');
+  if (who === '村民·男') return !!s.f?.know_shi;
+  if (who === '村民·女') return !!s.f?.know_fang;
   return true;
 }

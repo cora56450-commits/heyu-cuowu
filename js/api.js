@@ -1,6 +1,6 @@
 // OpenAI 兼容 /chat/completions 调用：流式 + 错误分类 + JSON 模式自动降级
-import { getSettings, saveSettings } from './store.js?v=1794223003';
-import { mockChat } from './mock.js?v=1794223003';
+import { getSettings, saveSettings } from './store.js?v=1794225433';
+import { mockChat } from './mock.js?v=1794225433';
 
 export class ApiError extends Error {
   constructor(kind, msg, detail) { super(msg); this.kind = kind; this.detail = detail; }
@@ -64,7 +64,7 @@ export async function chat(o) {
     }
     const kind = res.status === 401 || res.status === 403 ? 'auth' : res.status === 402 ? 'balance' : res.status === 429 ? 'rate'
       : res.status >= 500 ? 'server' : res.status === 400 ? 'bad' : 'server';
-    if (/insufficient|balance|余额/i.test(detail)) throw new ApiError('balance', MSG.balance, detail);
+    if (/insufficient|balance|余额/i.test(detail) || res.status === 402) throw new ApiError('balance', st.demoKey ? '作者提供的额度用完了。可以在设置里换成你自己的 Key 继续玩。' : MSG.balance, detail);
     throw new ApiError(kind, MSG[kind] + `（${res.status}）`, detail.slice(0, 300));
   }
   try {

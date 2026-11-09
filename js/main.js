@@ -1,13 +1,14 @@
 // 启动：缩放、读设置、离线判定、标题画面
-import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794223003';
-import { store, getSettings, saveSettings, getGallery } from './store.js?v=1794223003';
-import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, hasAsset } from './game.js?v=1794223003';
-import { newRun, loadRun, hasActiveRun, saveRun } from './state.js?v=1794223003';
-import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794223003';
-import { MID } from './config/endings.js?v=1794223003';
-import { madTier } from './config/values.js?v=1794223003';
-import * as P from './ui/panels.js?v=1794223003';
-import { showLock, showAftermath } from './ui/ending.js?v=1794223003';
+import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794225433';
+import { store, getSettings, saveSettings, getGallery } from './store.js?v=1794225433';
+import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, hasAsset } from './game.js?v=1794225433';
+import { newRun, loadRun, hasActiveRun, saveRun } from './state.js?v=1794225433';
+import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794225433';
+import { MID } from './config/endings.js?v=1794225433';
+import { madTier } from './config/values.js?v=1794225433';
+import * as P from './ui/panels.js?v=1794225433';
+import { DEMO, DEMO_KEY, DEMO_BASE, DEMO_LAST_DAY, DEMO_TAG } from './config/demo.js?v=1794225433';
+import { showLock, showAftermath } from './ui/ending.js?v=1794225433';
 
 // 1280×720 等比缩放，四周黑边
 function fit() {
@@ -46,20 +47,20 @@ document.getElementById('rotate-go')?.addEventListener('click', async () => {
 // 键盘推进对话
 addEventListener('keydown', e => {
   if (e.target.matches('input,textarea')) return;
-  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794223003').then(m => m.advance()); }
+  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794225433').then(m => m.advance()); }
 });
 
 let bootOffline = 0;
 
 function showTitle() {
   G.R = null; G.s = null;
-  import('./audio.js?v=1794223003').then(a => a.playBgm('title'));
+  import('./audio.js?v=1794225433').then(a => a.playBgm('title'));
   for (const o of [...$('#overlays').children]) o.remove();
   const active = hasActiveRun();
   const items = [
     // 继续：只有自动存档就直接进；有手动存档就打开存档列表。结局：一个都没打出来时点不开。信箱：给作者写建议
     ['开始', start], ['继续', cont, !active && !hasManualSave()], ['结局', () => P.openGallery(), !Object.keys(getGallery().endings || {}).length], ['回想', () => P.openMemories()], ['设置', () => P.openSettings()], ['信箱', () => P.openMailbox()],
-  ];
+  ].filter(([label]) => !(DEMO && label === '结局'));   // 试玩版没有结局
   const st = getSettings();
   // 菜单：选中项两侧的针 + 红线从两边滑进来；点击时红线抖一下、按钮下沉，再进入下一个界面
   const orn = hasAsset('ui/menu_ornament.webp');
@@ -72,9 +73,9 @@ function showTitle() {
     ...titleCover(),
     h('div', { class: 'gname' + (hasAsset('ui/logo.webp') ? ' has-logo' : '') }, hasAsset('ui/logo.webp') ? h('img', { class: 'logo', src: A('ui/logo.webp'), alt: '河边的错误' }) : h('b', {}, '河边的错误'), h('small', {}, '他在等你回来')),
     menu,
-    h('div', { class: 'hint' }, st.apiKey || st.mock ? null : h('div', {}, '首次进入请先在「设置」里填写 API Key'), h('div', {}, '建议分几天玩，体验更好。')),
+    h('div', { class: 'hint' }, st.apiKey || st.mock ? null : h('div', {}, DEMO && DEMO_KEY ? '可以接受 DeepSeek：直接开始，用作者提供的 Key。不想用：先在「设置」里填你自己的。' : '首次进入请先在「设置」里填写 API Key'), h('div', {}, '建议分几天玩，体验更好。')),
     h('div', { class: 'ver' }, 'v0.3'),
-    h('div', { class: 'credit' }, '虚拟剧情演绎　·　制作不易，请勿倒卖')));
+    h('div', { class: 'credit' }, DEMO ? `试玩版 · 前 ${DEMO_LAST_DAY} 天　·　虚拟剧情演绎　·　仅供测试，请勿外传` : '虚拟剧情演绎　·　制作不易，请勿倒卖')));
 }
 // 封面：跟着「最近一次」打出的结局变（store 'cover'）；素材没到之前用河「冷视」立绘
 export const COVERS = { fall: '河头朝下坠进水里', fall_blood: '下坠 · 带血', palm: '手掌贴着屏幕', backtoback: '河和牠背靠背', ta_hand: '牠的手穿过玻璃', empty: '空的河水' };
@@ -104,6 +105,14 @@ G.backTitle = showTitle;
 async function needKey() {
   const st = getSettings();
   if (st.apiKey || st.mock) return true;
+  if (DEMO && DEMO_KEY) {   // 试玩版：可以直接用作者提供的限额 Key，也可以填自己的
+    const v = await modal('nokey', '用哪个 AI？', h('div', { class: 'how-text' },
+      '这个游戏的剧情和台词由 AI 现场写。\n· 可以接受 DeepSeek：直接用作者提供的 Key。额度有限，大家共用，用完就没有了。\n· 不想用 DeepSeek，或者想自己掌握：在设置里填你自己的 Key（DeepSeek、或其他兼容 OpenAI 格式的服务都可以）。'),
+      { buttons: [{ label: '用作者提供的', value: 'demo' }, { label: '填我自己的', value: 'set' }, { label: '算了', value: null }] });
+    if (v === 'demo') { saveSettings({ ...st, baseUrl: DEMO_BASE, apiKey: DEMO_KEY, model: 'deepseek-flash', demoKey: true }); return true; }
+    if (v === 'set') P.openSettings();
+    return false;
+  }
   const v = await modal('nokey', '还没有接上 AI', h('p', {}, '这个游戏的剧情和台词由 AI 现场写。需要先在设置里填你自己的 API（默认 DeepSeek）。也可以先用测试模式看看流程。'),
     { buttons: [{ label: '去设置', value: 'set' }, { label: '用测试模式', value: 'mock' }, { label: '算了', value: null }] });
   if (v === 'set') P.openSettings();
@@ -123,6 +132,7 @@ async function start(resume = null) {
     if (!resume) {
       if (!(await needKey())) return;
       if (hasActiveRun() && !(await confirmBox('开始', '会从第一天重新开始，当前的自动存档会被覆盖。（手动存档和图鉴保留）', '重新开始'))) return;
+      if (!(await contentWarning())) return;
       await P.blackLines(P.PROLOGUE);            // 序：屏幕外的你、选一张脸、四十二天
     }
     let pick = resume?.pick;
@@ -141,6 +151,15 @@ async function start(resume = null) {
     systemNoticeSafe('进村子的时候出了点问题。再点一次「开始」试试。');
   } finally { starting = false; }
 }
+// 开始之前的提示：血腥内容、AI 现场生成（每个浏览器第一次开始时出现，之后不再问）
+async function contentWarning() {
+  if (store.get('cw_ok')) return true;
+  const ok = await modal('cw', '开始之前', h('div', { class: 'how-text' },
+    '· 这个游戏有血腥内容：人体缝合、内脏、伤口的描写，还有压抑、让人不安的情节。\n· 大部分剧情和台词由 AI 现场生成，偶尔会前后对不上、逻辑不太通顺。在设置里换成 pro 模型会好很多。\n· 虚拟剧情演绎，和现实中的人、地方、习俗都无关。'),
+    { buttons: [{ label: '我知道了，开始', value: true }, { label: '返回', value: false }], noClose: true });
+  if (ok) store.set('cw_ok', 1);
+  return !!ok;
+}
 function systemNoticeSafe(t) { try { P.systemNotice(t, [{ label: '好', value: 1 }]); } catch {} }
 function hasManualSave() { return ['slot1', 'slot2', 'slot3'].some(id => { const s = loadRun(id); return s && !s.ended; }); }
 async function loadMenu() { if (await needKey()) P.openSaves('load'); }
@@ -155,7 +174,7 @@ async function cont() {
 // 同一个游戏开了两个标签页：后开的那个不能操作，避免两边存档互相覆盖
 function otherTabOpen() {
   if (!('BroadcastChannel' in window)) return Promise.resolve(false);
-  const bc = new BroadcastChannel('gucun'); tabChannel = bc;
+  const bc = new BroadcastChannel(DEMO ? 'gucun_demo' : 'gucun'); tabChannel = bc;   // 试玩版和完整版不互相锁
   let other = false, asking = true;
   bc.onmessage = e => {
     if (e.data === 'hello' && !G.blocked) bc.postMessage('here');
@@ -176,7 +195,16 @@ function showElsewhere() {
     h('button', { class: 'btn', style: { width: 'auto', padding: '10px 34px', fontSize: '18px', letterSpacing: '4px' }, onclick: take }, '在这里继续')));
 }
 
+// 试玩版水印：整屏斜着铺一层很淡的编号，角落再放一个小编号；截图、录屏里都带着，流出去能看出是谁的那份
+function watermark() {
+  if (!DEMO || !DEMO_TAG) return;
+  const t = `试玩 · ${DEMO_TAG}`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="220"><text x="20" y="130" transform="rotate(-24 180 110)" font-size="22" font-family="serif" fill="#888" fill-opacity="0.09" letter-spacing="6">${t}</text></svg>`;
+  const wm = h('div', { id: 'wm', style: { backgroundImage: `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")` } }, h('span', {}, t));
+  $('#stage').append(wm);
+}
 async function boot() {
+  watermark();
   installCopyHook();
   document.body.classList.toggle('calm', !!getSettings().reduceMotion);
   const qs = new URLSearchParams(location.search);

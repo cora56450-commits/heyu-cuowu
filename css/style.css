@@ -576,3 +576,6 @@ body.compact #ov-stats .stats-help { font-size: 15px; line-height: 1.55; top: 42
 /* 手机「他那边」CG 下方的一行小字 */
 #ov-phoneflash .phone-cap { position: absolute; left: 0; right: 0; top: 80%; text-align: center; color: #f3ece2; font-size: 22px; letter-spacing: 6px; text-shadow: 0 2px 12px #000; opacity: 0; transition: opacity .9s .3s; }
 #ov-phoneflash .phone-cap.on { opacity: 1; }
+/* 试玩版水印（不挡点击） */
+#wm { position: absolute; inset: 0; z-index: 9999; pointer-events: none; background-repeat: repeat; }
+#wm span { position: absolute; right: 14px; bottom: 8px; font-size: 12px; letter-spacing: 3px; color: rgba(160,150,140,.45); }
