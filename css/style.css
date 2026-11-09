@@ -566,3 +566,7 @@ body.compact .prologue-lines p { font-size: 32px; }
 .hud .slots-row { display: flex; align-items: center; gap: 10px; }
 .hud .appt-badge { font-size: 13px; padding: 1px 7px; border: 1px solid var(--red); color: var(--red); background: transparent; border-radius: 3px; cursor: pointer; font-family: inherit; }
 body.compact .hud .appt-badge { font-size: 16px; }
+/* 数值页：说明常驻在下面 */
+#ov-stats .stats-help { position: absolute; left: 110px; top: 430px; width: 590px; font-size: 14px; line-height: 1.75; color: #A9A39A; white-space: pre-line; }
+body.compact #ov-stats .stats-help { font-size: 15px; line-height: 1.55; top: 425px; }
+#ov-stats .shut { bottom: 36px; }
