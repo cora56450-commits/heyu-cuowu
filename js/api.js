@@ -1,6 +1,6 @@
 // OpenAI 兼容 /chat/completions 调用：流式 + 错误分类 + JSON 模式自动降级
-import { getSettings, saveSettings } from './store.js?v=1794222138';
-import { mockChat } from './mock.js?v=1794222138';
+import { getSettings, saveSettings } from './store.js?v=1794223003';
+import { mockChat } from './mock.js?v=1794223003';
 
 export class ApiError extends Error {
   constructor(kind, msg, detail) { super(msg); this.kind = kind; this.detail = detail; }

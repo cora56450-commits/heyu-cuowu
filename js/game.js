@@ -1,20 +1,20 @@
 // 主循环：主界面、对话播放、行动点、时段推进、事件、结局判定
-import { h, $, A, sleep, showScreen, openOv, closeOv, toast, preload, modal } from './ui/dom.js?v=1794222138';
-import { getSettings, store, unlock, getGallery, organsOpen } from './store.js?v=1794222138';
-import { chat, ApiError } from './api.js?v=1794222138';
-import { buildSystem, summaryPrompt, phonePingPrompt, phoneChatPrompt } from './prompt.js?v=1794222138';
-import { normTurn, LineStreamer, looseJson } from './parse.js?v=1794222138';
-import { AI_TAGS } from './config/values.js?v=1794222138';
-import { SLOTS, LOCATIONS, TOTAL_DAYS, AP_PER_SLOT, DUSK, NIGHT, heLocation, OUTFITS, SPRITE_DIR, DEFAULT_EXPR, FIRST_LINE, EXPR, SPRITE_FIT, spriteBox, NPC_SPRITES, NPC_FIT, DUO, EXPR_FALLBACK, FEIGN_PATCH, PINCH, PINCH_BOX, VILLAGERS, NPC_PRESENCE, motherAway } from './config/world.js?v=1794222138';
-import { DAILY, VILLAGE_OUTFIT_ASSIM, WARM_STREAK, madTier } from './config/values.js?v=1794222138';
-import { ENDINGS, judgeFinal, MID, AFTERMATH, LOOP_LINE } from './config/endings.js?v=1794222138';
-import { newRun, applyTags, saveRun, loadRun, clone, tierOf, knows, taText, phoneStage } from './state.js?v=1794222138';
-import { rollMeta, collectInjections, splitGarble, EXTRA_META, canExtraMeta, markExtraMeta, idleFor } from './meta.js?v=1794222138';
-import { findCliches, CLICHES } from './config/style.js?v=1794222138';
-import * as P from './ui/panels.js?v=1794222138';
-import { runMinigame } from './ui/minigames.js?v=1794222138';
-import { openOrgan, organPuzzle } from './ui/organ.js?v=1794222138';
-import { showEnding, showLock } from './ui/ending.js?v=1794222138';
+import { h, $, A, sleep, showScreen, openOv, closeOv, toast, preload, modal } from './ui/dom.js?v=1794223003';
+import { getSettings, store, unlock, getGallery, organsOpen } from './store.js?v=1794223003';
+import { chat, ApiError } from './api.js?v=1794223003';
+import { buildSystem, summaryPrompt, phonePingPrompt, phoneChatPrompt } from './prompt.js?v=1794223003';
+import { normTurn, LineStreamer, looseJson } from './parse.js?v=1794223003';
+import { AI_TAGS } from './config/values.js?v=1794223003';
+import { SLOTS, LOCATIONS, TOTAL_DAYS, AP_PER_SLOT, DUSK, NIGHT, heLocation, OUTFITS, SPRITE_DIR, DEFAULT_EXPR, FIRST_LINE, EXPR, SPRITE_FIT, spriteBox, NPC_SPRITES, NPC_FIT, DUO, EXPR_FALLBACK, FEIGN_PATCH, PINCH, PINCH_BOX, VILLAGERS, NPC_PRESENCE, motherAway } from './config/world.js?v=1794223003';
+import { DAILY, VILLAGE_OUTFIT_ASSIM, OUTSIDE_OUTFIT_ASSIM, WARM_STREAK, madTier } from './config/values.js?v=1794223003';
+import { ENDINGS, judgeFinal, MID, AFTERMATH, LOOP_LINE } from './config/endings.js?v=1794223003';
+import { newRun, applyTags, saveRun, loadRun, clone, tierOf, knows, taText, phoneStage } from './state.js?v=1794223003';
+import { rollMeta, collectInjections, splitGarble, EXTRA_META, canExtraMeta, markExtraMeta, idleFor } from './meta.js?v=1794223003';
+import { findCliches, CLICHES } from './config/style.js?v=1794223003';
+import * as P from './ui/panels.js?v=1794223003';
+import { runMinigame } from './ui/minigames.js?v=1794223003';
+import { openOrgan, organPuzzle } from './ui/organ.js?v=1794223003';
+import { showEnding, showLock } from './ui/ending.js?v=1794223003';
 
 export const G = { s: null, R: null, events: [], busy: false, last: null, backTitle: null };
 const SIZE_COST = { small: 1, medium: 2, large: 3 };
@@ -46,8 +46,8 @@ const HE_FIRST_AFTER = '昨晚你们越过了那条线。今天河有点别扭�
 
 export async function loadEvents() {
   // 发布版的 events.json 是编码过的（tools/build_dist.py），以 E1: 开头
-  const t = await fetch('data/events.json?v=1794222138').then(r => r.text());
-  const j = JSON.parse(t.startsWith('E1:') ? (await import('./_k.js?v=1794222138')).decode(t.slice(3)) : t);
+  const t = await fetch('data/events.json?v=1794223003').then(r => r.text());
+  const j = JSON.parse(t.startsWith('E1:') ? (await import('./_k.js?v=1794223003')).decode(t.slice(3)) : t);
   G.events = j.events;
   try { G.assets = new Set(Object.keys(await fetch('assets/manifest.json').then(r => r.json()))); } catch { G.assets = null; }
 }
@@ -132,7 +132,7 @@ export function pickBgm() {
   if (['ta_house', 'tomb'].includes(s.loc) || UNEASY_EVENTS.includes(s.curEvent)) slot = 'uneasy';
   else if (s.slot === NIGHT && ['he_room', 'room'].includes(s.loc) && (heLocation(s.day, s.slot) === s.loc || s.curEvent)) slot = 'night';
   if (s.curEvent === 'd40_question') slot = 'meta';
-  import('./audio.js?v=1794222138').then(a => a.playBgm(slot));
+  import('./audio.js?v=1794223003').then(a => a.playBgm(slot));
 }
 // 立绘：河在 sprite，其他人在 sprite2；两个人同时在画面上时河往左让
 function charSrc(who, expr) {
@@ -239,7 +239,7 @@ export async function metaLine(id, force = false) {
   if (G.busy || G.inTurn || G.waitClick) { if (!G.metaQueue.includes(id)) G.metaQueue.push(id); return true; }
   markExtraMeta(s, id);
   const m = EXTRA_META[id];
-  import('./audio.js?v=1794222138').then(a => a.stutter()).catch(() => {});
+  import('./audio.js?v=1794223003').then(a => a.stutter()).catch(() => {});
   if (m.faint) {   // 一行很淡的字，2 秒后消失
     const f = h('div', { class: 'faint-line' }, m.faint); R.dialog.append(f); setTimeout(() => f.remove(), 2200); return true;
   }
@@ -421,7 +421,7 @@ function ctxFor(s, kind, ev, req = {}) {
   const extra = (s.c.warmStreak || 0) >= 2 ? [WARM_STREAK.scaredNote] : [];
   if (s.f.he_first_day === s.day) extra.push(HE_FIRST_AFTER);
   if (heHere && (s.c.clingy || 0) >= 6) extra.push('「你」这一阵子一直跟着他，他走到哪你就在哪。他有点不自在：会找个理由走开一会儿，或者话更少，但不说破。'); 
-  if (heHere && s.day === 32 && s.done.includes('d32_thread') && !ev) extra.push('「你」手腕内侧有一截红线头（「你」可能用袖子藏着）。河看见会愣一下，不解释，只问一句「疼吗」。');
+  if (heHere && s.day === 32 && s.done.includes('d32_thread') && !ev) extra.push(s.f.thread_picked ? '「你」早上用针把手腕内侧的一截红线头挑掉了，留下一个新的针眼。河看见会愣一下，问一句「谁让你挑的」，然后不说话，拿药给你按上。' : '「你」手腕内侧有一截红线头（「你」可能用袖子藏着）。河看见会愣一下，不解释，只问一句「疼吗」。');
   if (appt?.flaked && !ev) extra.push(`约好的${appt.who}没来：她被家里叫回去了。可以由旁白或路过的人交代一句。`);
   else if (appt && !ev) extra.push(`之前约好的：${appt.who}和「你」约在第 ${appt.day} 天${SLOTS[appt.slot]}的${appt.place}。${appt.who}已经在这里等你了，接着这个约定演。`);
   const missed = s.apptMissed;
@@ -686,14 +686,14 @@ async function miniAction(name) {
 // 器官图 = 河画的解剖图
 const ownedDrawings = () => { const g = getGallery(); return Object.keys(g.organs).filter(id => g.organs[id]); };
 async function giveDrawing(id, how) {
-  const { ORGANS } = await import('./config/world.js?v=1794222138');
+  const { ORGANS } = await import('./config/world.js?v=1794223003');
   const o = ORGANS.find(x => x.id === id); if (!o) return;
   unlock('organs', id);
   if (how === 'he') await playLines([{ speaker: '河', expr: 'shy', text: '……这个给你。画得不好。' }]);
   await openOrgan(id, ownedDrawings());
 }
 async function sketchbook() {
-  const { ORGANS } = await import('./config/world.js?v=1794222138');
+  const { ORGANS } = await import('./config/world.js?v=1794223003');
   const left = ORGANS.filter(o => !ownedDrawings().includes(o.id));
   if (!left.length) return spendLocal(1, [{ speaker: 'narration', text: '画本你都翻过了。每一页的线条都很细，标注写得很工整。' }]);
   const o = left[Math.floor(Math.random() * left.length)];
@@ -703,7 +703,7 @@ async function sketchbook() {
 }
 // 器官归位：十张画全给，拼完一次就全部解锁（回想、「河的画」）
 async function organsGame() {
-  const { ORGANS } = await import('./config/world.js?v=1794222138');
+  const { ORGANS } = await import('./config/world.js?v=1794223003');
   const first = !organsOpen();
   const res = await organPuzzle(ORGANS.map(o => o.id), hasAsset('ui/torso.webp'));
   if (res.success) {
@@ -1051,6 +1051,7 @@ export async function endSlot() {
   if (s.c.clingy >= 6) s.c.clingyDay = s.day;
   s.apptNow = null;
   if (s.outfit === 'village') applyTags(s, [], [], { assim: VILLAGE_OUTFIT_ASSIM }, { capExtra: true });   // 衣服加的同化也算进每天上限
+  if (s.outfit === 'outside') applyTags(s, [], [], { assim: OUTSIDE_OUTFIT_ASSIM }, { capExtra: true });   // 外面的衣服：往回拉
   s.slot++;
   if (s.slot >= SLOTS.length) {
     s.slot = 0; s.day++; s.phoneToday = 0;
@@ -1086,9 +1087,11 @@ export async function runEvent(ev, opts = {}) {
     const res = name === 'organs' ? await organsGame() : await runMinigame(name, s);
     if (res.lines?.length) await playLines(res.lines);
   }
-  if (ev.choices) {
-    const i = ev.special === 'd40' ? await d40Choose(ev) : await choose(ev.choices);
-    const c = ev.choices[i];
+  const choices = ev.choices?.filter(c => !c.if || condOk(s, c.if));   // 选项可以按条件出现
+  let fixedEnd = false;
+  if (choices?.length) {
+    const i = ev.special === 'd40' ? await d40Choose(ev) : await choose(choices);
+    const c = choices[i];
     renderActions('none');
     applyTags(s, c.tags || [], [], c.delta, { noCap: true });   // 固定事件的选项不受每天上限
     if (c.counter) s.c[c.counter] = (s.c[c.counter] || 0) + 1;
@@ -1108,7 +1111,8 @@ export async function runEvent(ev, opts = {}) {
       await playLines(D40_AFTER[c.set?.d40] || []);
       await playLines([{ speaker: 'narration', text: '天黑下来。他把鞋穿上，先走了。' }]);
       s.summary = (s.summary || '') + `第四十天黄昏，你对他说了「${c.text.replace(/[「」。]/g, '')}」。`;   // 第 41 天 AI 会知道
-    } else await doTurn({ kind: 'choice', event: ev, text: c.text, note: c.note });
+    } else if (c.lines) { await playLines(c.lines); fixedEnd = true; }   // 只有固定台词的选项：不调用 AI
+    else await doTurn({ kind: 'choice', event: ev, text: c.text, note: c.note });
   }
   if (ev.endLines) await playLines(expandLines(ev.endLines));   // AI 那段、选项之后再接的固定台词（认路结尾给手机）
   Object.assign(s.f, ev.set || {});
@@ -1118,7 +1122,7 @@ export async function runEvent(ev, opts = {}) {
   markDone(s, ev);
   // 事件最后是 AI 写的段落（流式播放，最后一句不等点击）或选项结果时，才在这里等一下点击；
   // 只有固定台词的事件（比如衡的初见），最后一句在 playLines 里已经点过了，再等一次会像「点了没反应」
-  if (ev.scene || ev.choices || ev.special) await waitAdvance();
+  if ((ev.scene || choices?.length || ev.special) && !fixedEnd) await waitAdvance();
   G.R.next.classList.add('hidden');
   showCG(null);
   if (ev.trigger === 'offline') return; // 离线事件不占时段
@@ -1399,7 +1403,7 @@ export async function continueRun(s, offlineMs, alertLine = null) {
   G.s = s; G.last = null;
   buildMain(); setScene(); refreshHud();
   if (alertLine) {   // 当着他的面读档：第一句强制换成「警觉」
-    import('./audio.js?v=1794222138').then(a => a.stutter()).catch(() => {});
+    import('./audio.js?v=1794223003').then(a => a.stutter()).catch(() => {});
     await playLines([{ speaker: '河', expr: 'alert', text: alertLine }]);
     s.meta.saidMeta = alertLine;
   }

@@ -1,17 +1,17 @@
 // 各个浮层：地图、手机、数值页、菜单、记录、存读档、设置、选装扮、图鉴
-import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794222138';
-import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen } from '../store.js?v=1794222138';
-import { chat, testConnection, ApiError } from '../api.js?v=1794222138';
-import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794222138';
-import { looseJson } from '../parse.js?v=1794222138';
-import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT, motherAway } from '../config/world.js?v=1794222138';
-import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794222138';
-import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794222138';
-import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags, taText } from '../state.js?v=1794222138';
-import { rollMeta } from '../meta.js?v=1794222138';
-import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm, mapMarks, PHONE_CG } from '../game.js?v=1794222138';
-import { openOrgan } from './organ.js?v=1794222138';
-import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794222138';
+import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794223003';
+import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen } from '../store.js?v=1794223003';
+import { chat, testConnection, ApiError } from '../api.js?v=1794223003';
+import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794223003';
+import { looseJson } from '../parse.js?v=1794223003';
+import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT, motherAway } from '../config/world.js?v=1794223003';
+import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794223003';
+import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794223003';
+import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags, taText } from '../state.js?v=1794223003';
+import { rollMeta } from '../meta.js?v=1794223003';
+import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm, mapMarks, PHONE_CG } from '../game.js?v=1794223003';
+import { openOrgan } from './organ.js?v=1794223003';
+import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794223003';
 
 // 系统样式的提示框（冷冰冰的电子界面，不是河说的）
 export function systemNotice(text, buttons) {
@@ -79,7 +79,7 @@ export function openPhone(noFlash) {
     const cap = h('div', { class: 'phone-cap' }, PHONE_CG[cgId]?.cap || '');
     const f = h('div', { style: { background: '#000' } }, img, cap);
     openOv('phoneflash', f); setTimeout(() => { img.style.opacity = 1; cap.classList.add('on'); }, 30); setTimeout(() => { closeOv('phoneflash'); G.phoneFlashed = false; openPhone(true); }, 1800);
-    import('../store.js?v=1794222138').then(m => m.unlock('cgs', cgId)); return;
+    import('../store.js?v=1794223003').then(m => m.unlock('cgs', cgId)); return;
   }
   s.unread = 0; refreshHud(); saveRun(s);
   // 「睡了吗。」→ 打开手机 3 秒后变成「对方撤回了一条消息」
@@ -113,12 +113,12 @@ export function openPhone(noFlash) {
     const last = s.phone[s.phone.length - 1]; if (last?.from === 'me') delete last.note;
     s.phone.push({ from: 'me', text: t, ts: Date.now(), note: '已送达', day: s.day }); s.f.pingAnswered = true;
     if (s.day === 39 && s.f.d39_phone && !s.f.d39_replied) { s.f.d39_replied = true; render(); saveRun(s); await sleep(1800); s.phone[s.phone.length - 1].note = '已读'; s.phone.push({ from: 'he', text: '嗯。睡吧。', ts: Date.now() }); render(); saveRun(s); return; }
-    const g = await import('../game.js?v=1794222138');
+    const g = await import('../game.js?v=1794223003');
     if (!s.phonePending) {
       if ((s.phoneToday || 0) >= 3) s.phone[s.phone.length - 1].note = '已送达 · 他今天不会再回了';   // 每天最多回 3 次
       else {
         s.phoneToday = (s.phoneToday || 0) + 1; s.phonePending = { day: s.day, slot: s.slot };
-        const { phoneStage } = await import('../state.js?v=1794222138');
+        const { phoneStage } = await import('../state.js?v=1794223003');
         if (phoneStage(s) === 'near' && s.slot !== 3) setTimeout(() => g.phoneReplyNow(), 12000 + Math.random() * 15000);   // 近了：这一时段内就回
       }
     }
@@ -255,7 +255,7 @@ export function openSettings() {
     if (key === 'apiKey' && st.apiKey && st.mock) { st.mock = false; if (boxes.mock) boxes.mock.checked = false; }
     saveSettings(st);
   } });
-  const after = () => { import('../audio.js?v=1794222138').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
+  const after = () => { import('../audio.js?v=1794223003').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
   const rng = (key, min, max, step) => h('input', { type: 'range', min, max, step, value: st[key], oninput: e => { st[key] = +e.target.value; saveSettings(st); after(); } });
   const chk = key => (boxes[key] = h('input', { type: 'checkbox', checked: !!st[key], onchange: e => { st[key] = e.target.checked; saveSettings(st); after(); } }));
   const status = h('span', { class: 'note' });
@@ -306,7 +306,7 @@ export function openSettings() {
     h('p', { class: 'note' }, '浏览器里「清除网站数据」也会把存档、Key 和图鉴一起清掉。'),
     st.debug ? h('div', { class: 'row' }, h('button', { class: 'btn', onclick: async () => {
       if (!(await confirmBox('全通存档', '图鉴全部解锁，三个手动存档位会被覆盖成测试节点（自动存档不动）。', '写入'))) return;
-      const d = await import('../debug.js?v=1794222138'); d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
+      const d = await import('../debug.js?v=1794223003'); await d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
     } }, '调试：全通存档')) : null);
   openOv('settings', h('div', {}, panel));
 }
@@ -330,7 +330,7 @@ export function openOutfit(isStart) {
       closeOv('outfit');
       if (!isStart && s && id !== s.outfit) {
         s.outfit = id; s.meta.outfitChanged = true; saveRun(s); refreshHud(); toast('换好了。');
-        if (G.R?.chars?.he) import('../game.js?v=1794222138').then(g => g.metaLine('outfit'));
+        if (G.R?.chars?.he) import('../game.js?v=1794223003').then(g => g.metaLine('outfit'));
       }
       res(id);
     }
