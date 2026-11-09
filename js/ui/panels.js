@@ -1,17 +1,17 @@
 // 各个浮层：地图、手机、数值页、菜单、记录、存读档、设置、选装扮、图鉴
-import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794174817';
-import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen } from '../store.js?v=1794174817';
-import { chat, testConnection, ApiError } from '../api.js?v=1794174817';
-import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794174817';
-import { looseJson } from '../parse.js?v=1794174817';
-import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT } from '../config/world.js?v=1794174817';
-import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794174817';
-import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794174817';
-import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags } from '../state.js?v=1794174817';
-import { rollMeta } from '../meta.js?v=1794174817';
-import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm } from '../game.js?v=1794174817';
-import { openOrgan } from './organ.js?v=1794174817';
-import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794174817';
+import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794182457';
+import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen } from '../store.js?v=1794182457';
+import { chat, testConnection, ApiError } from '../api.js?v=1794182457';
+import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794182457';
+import { looseJson } from '../parse.js?v=1794182457';
+import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT } from '../config/world.js?v=1794182457';
+import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794182457';
+import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794182457';
+import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags } from '../state.js?v=1794182457';
+import { rollMeta } from '../meta.js?v=1794182457';
+import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm } from '../game.js?v=1794182457';
+import { openOrgan } from './organ.js?v=1794182457';
+import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794182457';
 
 // 系统样式的提示框（冷冰冰的电子界面，不是河说的）
 export function systemNotice(text, buttons) {
@@ -192,9 +192,9 @@ export function openSaves(mode, wait = false) {
   }));
   async function act(id, i) {
     if (mode === 'save') {
-      if (G.busy) { toast('等这一段说完再存。'); return; }
+      // 随时可存：正在说的这一段还没结束时，存的是这一段开始之前的状态（读档会重放这一段）
       if (i && !(await confirmBox('覆盖存档', `要覆盖${name(id)}吗？`))) return;
-      const copy = clone(G.s); copy.saveName = null; copy.heOnScreen = !!G.R?.chars?.he; saveRun(copy, id); store.set('lastSlot', id); toast('存好了。'); draw();
+      const copy = clone(G.busy && G.last?.snapshot ? G.last.snapshot : G.s); copy.saveName = null; copy.heOnScreen = !!G.R?.chars?.he; saveRun(copy, id); store.set('lastSlot', id); toast('存好了。'); draw();
     } else {
       const s = loadRun(id); if (!s) return;
       if (G.s && !(await confirmBox('读档', '当前进度会被这个存档替换。'))) return;
@@ -226,7 +226,7 @@ export function openSettings() {
     if (key === 'apiKey' && st.apiKey && st.mock) { st.mock = false; if (boxes.mock) boxes.mock.checked = false; }
     saveSettings(st);
   } });
-  const after = () => { import('../audio.js?v=1794174817').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
+  const after = () => { import('../audio.js?v=1794182457').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
   const rng = (key, min, max, step) => h('input', { type: 'range', min, max, step, value: st[key], oninput: e => { st[key] = +e.target.value; saveSettings(st); after(); } });
   const chk = key => (boxes[key] = h('input', { type: 'checkbox', checked: !!st[key], onchange: e => { st[key] = e.target.checked; saveSettings(st); after(); } }));
   const status = h('span', { class: 'note' });
@@ -236,7 +236,17 @@ export function openSettings() {
     h('h4', {}, 'AI 接入'),
     h('label', {}, h('span', {}, 'API 地址'), inp('baseUrl', 'text', 'https://api.deepseek.com')),
     h('label', {}, h('span', {}, 'API Key'), inp('apiKey', 'password', 'sk-...')),
-    h('label', {}, h('span', {}, '模型名'), inp('model', 'text', 'deepseek-chat')),
+    (() => {   // 模型：快 / 好 / 其他（自己填）
+      const PRESET = [['deepseek-flash', '快：deepseek-flash（便宜）'], ['deepseek-v4-pro', '好：deepseek-v4-pro（贵 4–5 倍，前后更连贯）']];
+      const custom = !PRESET.some(([v]) => v === st.model);
+      const other = inp('model', 'text', '模型名'); other.style.display = custom ? '' : 'none';
+      const sel = h('select', { class: 'sel', onchange: e => { if (e.target.value === '__other') { other.style.display = ''; other.focus(); } else { other.style.display = 'none'; st.model = e.target.value; saveSettings(st); } } },
+        ...PRESET.map(([v, t]) => h('option', { value: v, selected: v === st.model }, t)), h('option', { value: '__other', selected: custom }, '其他（自己填模型名）'));
+      return h('label', {}, h('span', {}, '模型'), sel, other);
+    })(),
+    h('label', {}, h('span', {}, '思维链'), h('select', { class: 'sel', onchange: e => { st.thinking = e.target.value; saveSettings(st); } },
+      ...[['off', '关'], ['events', '只在固定剧情开（推荐）'], ['all', '全部开（每一轮都慢很多）']].map(([v, t]) => h('option', { value: v, selected: (st.thinking || 'off') === v }, t))),
+      h('span', { class: 'note' }, '先想再写，逻辑更通顺，但出字要多等一会儿。只对 DeepSeek 生效')),
     h('label', {}, h('span', {}, '流式输出'), chk('stream'), h('span', { class: 'note' }, '打字机效果更快出现；服务商不支持时会自动整段输出')),
     h('label', {}, h('span', {}, 'JSON 模式'), chk('jsonMode'), h('span', { class: 'note' }, '要求模型严格输出 JSON；不支持时会自动关掉')),
     h('p', { class: 'note' }, '默认使用 OpenAI 兼容的 /chat/completions 格式。Key 只保存在你自己这个浏览器的 localStorage 里，不会发到除了你填的 API 地址以外的任何地方。'),
@@ -267,7 +277,7 @@ export function openSettings() {
     h('p', { class: 'note' }, '浏览器里「清除网站数据」也会把存档、Key 和图鉴一起清掉。'),
     st.debug ? h('div', { class: 'row' }, h('button', { class: 'btn', onclick: async () => {
       if (!(await confirmBox('全通存档', '图鉴全部解锁，三个手动存档位会被覆盖成测试节点（自动存档不动）。', '写入'))) return;
-      const d = await import('../debug.js?v=1794174817'); d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
+      const d = await import('../debug.js?v=1794182457'); d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
     } }, '调试：全通存档')) : null);
   openOv('settings', h('div', {}, panel));
 }
@@ -285,12 +295,13 @@ export function openOutfit(isStart) {
     function choose(id) { sel = id; for (const c of cards) c.classList.toggle('sel', c.dataset.id === id); }
     const nameIn = isStart ? h('input', { class: 'name-in', type: 'text', maxlength: 8, placeholder: '你的名字（可以不填）', autocomplete: 'off' }) : null;
     const startBar = isStart ? h('div', { class: 'namebar' }, nameIn,
-      h('button', { class: 'btn go', onclick: () => { closeOv('outfit'); res({ outfit: sel, name: nameIn.value.trim().slice(0, 8) }); } }, '就这样')) : null;
+      h('button', { class: 'btn go', onclick: () => { closeOv('outfit'); res({ outfit: sel, name: nameIn.value.trim().slice(0, 8) }); } }, '就这样'),
+      h('div', { class: 'name-hint' }, 'AI 偶尔会前后说不通。在「设置」里把模型换成「好」、或者打开思维链，会改善。')) : null;
     function pick(id) {
       closeOv('outfit');
       if (!isStart && s && id !== s.outfit) {
         s.outfit = id; s.meta.outfitChanged = true; saveRun(s); refreshHud(); toast('换好了。');
-        if (G.R?.chars?.he) import('../game.js?v=1794174817').then(g => g.metaLine('outfit'));
+        if (G.R?.chars?.he) import('../game.js?v=1794182457').then(g => g.metaLine('outfit'));
       }
       res(id);
     }

@@ -1,20 +1,20 @@
 // 主循环：主界面、对话播放、行动点、时段推进、事件、结局判定
-import { h, $, A, sleep, showScreen, openOv, closeOv, toast, preload } from './ui/dom.js?v=1794174817';
-import { getSettings, store, unlock, getGallery, organsOpen } from './store.js?v=1794174817';
-import { chat, ApiError } from './api.js?v=1794174817';
-import { buildSystem, summaryPrompt, phonePingPrompt, phoneChatPrompt } from './prompt.js?v=1794174817';
-import { normTurn, LineStreamer, looseJson } from './parse.js?v=1794174817';
-import { AI_TAGS } from './config/values.js?v=1794174817';
-import { SLOTS, LOCATIONS, TOTAL_DAYS, AP_PER_SLOT, DUSK, NIGHT, heLocation, OUTFITS, SPRITE_DIR, DEFAULT_EXPR, FIRST_LINE, EXPR, SPRITE_FIT, spriteBox, NPC_SPRITES, NPC_FIT, DUO, EXPR_FALLBACK, FEIGN_PATCH, PINCH, PINCH_BOX, VILLAGERS, NPC_PRESENCE } from './config/world.js?v=1794174817';
-import { DAILY, VILLAGE_OUTFIT_ASSIM, WARM_STREAK, madTier } from './config/values.js?v=1794174817';
-import { ENDINGS, judgeFinal, MID, AFTERMATH, LOOP_LINE } from './config/endings.js?v=1794174817';
-import { newRun, applyTags, saveRun, loadRun, clone, tierOf, knows } from './state.js?v=1794174817';
-import { rollMeta, collectInjections, splitGarble, EXTRA_META, canExtraMeta, markExtraMeta, idleFor } from './meta.js?v=1794174817';
-import { findCliches } from './config/style.js?v=1794174817';
-import * as P from './ui/panels.js?v=1794174817';
-import { runMinigame } from './ui/minigames.js?v=1794174817';
-import { openOrgan, organPuzzle } from './ui/organ.js?v=1794174817';
-import { showEnding, showLock } from './ui/ending.js?v=1794174817';
+import { h, $, A, sleep, showScreen, openOv, closeOv, toast, preload } from './ui/dom.js?v=1794182457';
+import { getSettings, store, unlock, getGallery, organsOpen } from './store.js?v=1794182457';
+import { chat, ApiError } from './api.js?v=1794182457';
+import { buildSystem, summaryPrompt, phonePingPrompt, phoneChatPrompt } from './prompt.js?v=1794182457';
+import { normTurn, LineStreamer, looseJson } from './parse.js?v=1794182457';
+import { AI_TAGS } from './config/values.js?v=1794182457';
+import { SLOTS, LOCATIONS, TOTAL_DAYS, AP_PER_SLOT, DUSK, NIGHT, heLocation, OUTFITS, SPRITE_DIR, DEFAULT_EXPR, FIRST_LINE, EXPR, SPRITE_FIT, spriteBox, NPC_SPRITES, NPC_FIT, DUO, EXPR_FALLBACK, FEIGN_PATCH, PINCH, PINCH_BOX, VILLAGERS, NPC_PRESENCE } from './config/world.js?v=1794182457';
+import { DAILY, VILLAGE_OUTFIT_ASSIM, WARM_STREAK, madTier } from './config/values.js?v=1794182457';
+import { ENDINGS, judgeFinal, MID, AFTERMATH, LOOP_LINE } from './config/endings.js?v=1794182457';
+import { newRun, applyTags, saveRun, loadRun, clone, tierOf, knows } from './state.js?v=1794182457';
+import { rollMeta, collectInjections, splitGarble, EXTRA_META, canExtraMeta, markExtraMeta, idleFor } from './meta.js?v=1794182457';
+import { findCliches } from './config/style.js?v=1794182457';
+import * as P from './ui/panels.js?v=1794182457';
+import { runMinigame } from './ui/minigames.js?v=1794182457';
+import { openOrgan, organPuzzle } from './ui/organ.js?v=1794182457';
+import { showEnding, showLock } from './ui/ending.js?v=1794182457';
 
 export const G = { s: null, R: null, events: [], busy: false, last: null, backTitle: null };
 const SIZE_COST = { small: 1, medium: 2, large: 3 };
@@ -30,6 +30,9 @@ const GORE_HOLD = '今天已经写过内脏、血或缝合了。这一轮不要�
 const DRAWINGS_HIDDEN = '河的解剖画还没给「你」看过：被问起就收起来、岔开，不说画的是什么。';
 // 一个时段的最后一件事：让 AI 把场景收住，不要停在河刚问完一句话
 const LAST_ACTION_NOTE = '这是这个时段的最后一件事。写完这件事以后把场景收住（河说完话、各自去忙、或者自然地分开），最后一条不要是等玩家回答的问题。';
+const PLACE_WORDS = [['he_room', /河的房间|他的房间|他屋/], ['room', /偏房|我的房间|回屋/], ['yard', /养母家|院子|回家/], ['creek', /溪/], ['ta_house', /牠的屋|缝者|牠那/], ['fields', /田|晒场/], ['peach', /桃花林/], ['tomb', /后山|古墓/], ['border', /村界|雾/], ['path', /石径|村里转/]];
+const placeIn = t => (PLACE_WORDS.find(([, re]) => re.test(t)) || [])[0];
+const isLockedLoc = id => { const L = LOCATIONS[id]; return !L || (L.unlockDay && G.s.day < L.unlockDay && !(id === 'border' && G.s.f.border_found)); };
 const BIG_ACTION = { yard: '帮养母做完这一段的活', room: '在偏房歇过这一段', he_room: '陪他待过这一段', creek: '沿着溪往下走一趟', fields: '在地里干完这一段', peach: '在桃花林里走远一点', ta_house: '帮牠收拾一整段', tomb: '在后山走一圈', border: '沿着雾边走一段', path: '在村里慢慢转一圈' };
 const SLOT_CLOSE = ['到晌午了。', '日影斜了。', '天暗下来了。', '夜深了。'];
 // 「河的第一次」之后那一天：回避型，越界之后会自省
@@ -37,8 +40,8 @@ const HE_FIRST_AFTER = '昨晚你们越过了那条线。今天河有点别扭�
 
 export async function loadEvents() {
   // 发布版的 events.json 是编码过的（tools/build_dist.py），以 E1: 开头
-  const t = await fetch('data/events.json?v=1794174817').then(r => r.text());
-  const j = JSON.parse(t.startsWith('E1:') ? (await import('./_k.js?v=1794174817')).decode(t.slice(3)) : t);
+  const t = await fetch('data/events.json?v=1794182457').then(r => r.text());
+  const j = JSON.parse(t.startsWith('E1:') ? (await import('./_k.js?v=1794182457')).decode(t.slice(3)) : t);
   G.events = j.events;
   try { G.assets = new Set(Object.keys(await fetch('assets/manifest.json').then(r => r.json()))); } catch { G.assets = null; }
 }
@@ -116,7 +119,7 @@ export function pickBgm() {
   if (['ta_house', 'tomb'].includes(s.loc) || UNEASY_EVENTS.includes(s.curEvent)) slot = 'uneasy';
   else if (s.slot === NIGHT && ['he_room', 'room'].includes(s.loc) && (heLocation(s.day, s.slot) === s.loc || s.curEvent)) slot = 'night';
   if (s.curEvent === 'd40_question') slot = 'meta';
-  import('./audio.js?v=1794174817').then(a => a.playBgm(slot));
+  import('./audio.js?v=1794182457').then(a => a.playBgm(slot));
 }
 // 立绘：河在 sprite，其他人在 sprite2；两个人同时在画面上时河往左让
 function charSrc(who, expr) {
@@ -222,7 +225,7 @@ export async function metaLine(id, force = false) {
   if (G.busy || G.inTurn || G.waitClick) { if (!G.metaQueue.includes(id)) G.metaQueue.push(id); return true; }
   markExtraMeta(s, id);
   const m = EXTRA_META[id];
-  import('./audio.js?v=1794174817').then(a => a.stutter()).catch(() => {});
+  import('./audio.js?v=1794182457').then(a => a.stutter()).catch(() => {});
   if (m.faint) {   // 一行很淡的字，2 秒后消失
     const f = h('div', { class: 'faint-line' }, m.faint); R.dialog.append(f); setTimeout(() => f.remove(), 2200); return true;
   }
@@ -281,6 +284,12 @@ async function showLine(line, opts = {}) {
   if (line.know && G.s) G.s.f[line.know] = true;   // 自我介绍这一句还显示 ？？？，之后才有名字
   R.text.classList.toggle('narr', narr);
   if (!opts.keepSprite && (SPRITE_DIR[line.speaker] || NPC_SPRITES[line.speaker])) setSprite(line.speaker, line.expr);
+  // 牠的称呼：名字揭晓前旁白统一叫「白头发的人」，揭晓后统一叫「牠」
+  if (line.speaker === 'narration' && G.s) {
+    const known = knows(G.s, '牠'); let t = line.text;
+    t = known ? t.replace(/白头发的人|白发(的)?(男子|男人|人)/g, '牠') : t.replace(/白发(的)?(男子|男人|人)|白头发的(男子|男人)/g, '白头发的人').replace(/牠/g, '白头发的人');
+    line = { ...line, text: t };
+  }
   const segs = splitGarble(line.text, opts.allowGarble);
   s.log.push({ who: narr ? '' : shown, t: segs.map(x => x.t).join('') });
   if (s.log.length > 300) s.log.splice(0, s.log.length - 300);
@@ -331,6 +340,7 @@ export function renderActions(mode = 'free', choices = null) {
     return;
   }
   if (mode !== 'free') return;
+  if (s.ap <= 0 && s.phase === 'free' && !G.busy) { setTimeout(() => { if (G.s === s && s.ap <= 0 && s.phase === 'free' && !G.busy) endSlot(); }, 0); return; }   // 停在 0 点的界面：自动进下一个时段
   const L = LOCATIONS[s.loc];
   R.actHead.textContent = `在${L.name}能做的事`;
   const list = [...(s.lastSugg || []).map(x => ({ ...x, kind: 'ai' })), ...locationActions(s)];
@@ -422,7 +432,7 @@ export async function doTurn(req) {
   const playing = playQueue(q, opts);
   let raw;
   try {
-    raw = await chat({ messages, onDelta: (_, full) => streamer.feed(full) });
+    raw = await chat({ messages, important: req.kind === 'event' || req.kind === 'choice', onDelta: (_, full) => streamer.feed(full) });
   } catch (e) {
     q.close(); await playing; G.inTurn = false;
     restore(s, snapshot);  // 回滚
@@ -431,7 +441,8 @@ export async function doTurn(req) {
   const turn = normTurn(raw);
   G.lastRaw = raw;  // 调试用
   s.meta.cliche = findCliches(turn.lines);
-  for (let i = streamer.count; i < turn.lines.length; i++) q.push(turn.lines[i]);
+  // JSON 不完整时 normTurn 会退回「按换行硬切」，切法和流式不一样；流式已经播了就不再拿它补，免得台词错位、被拆开
+  if (turn.ok !== false || streamer.count === 0) for (let i = streamer.count; i < turn.lines.length; i++) q.push(turn.lines[i]);
   q.close();
   await playing; G.inTurn = false;
   // 结算
@@ -503,12 +514,16 @@ async function regenerate() {
 // ———————————————————— 行动 ————————————————————
 async function doAction(a) {
   if (G.busy) return;
+  if (G.s.ap <= 0) return endSlot();   // 点数用完：不能再选，直接进下一个时段
   if (a.kind === 'local') { setBusy(true); try { await a.fn(); } finally { if (!G.inTurn) setBusy(false); } return; }
+  const dest = a.kind === 'ai' && /^(去|回|到|走去|走到|回到)/.test(a.text) && placeIn(a.text);   // 建议本身是去别的地方：走地图换地点（花 1 点）
+  if (dest && dest !== G.s.loc && !isLockedLoc(dest)) return arrive(dest, true);
   const req = { kind: 'action', text: a.text, cost: a.cost, last: G.s.ap - (a.cost || 1) <= 0 };
   await afterTurn(await doTurn(req), req);
 }
 async function freeAct() {
   const t = G.R.input.value.trim(); if (!t || G.busy) return;
+  if (G.s.ap <= 0) return endSlot();
   G.R.input.value = ''; G.R.inputMax = 0;
   const req = { kind: 'action', text: t, free: true, apLeft: G.s.ap };
   await afterTurn(await doTurn(req), req);
@@ -540,14 +555,14 @@ async function miniAction(name) {
 // 器官图 = 河画的解剖图
 const ownedDrawings = () => { const g = getGallery(); return Object.keys(g.organs).filter(id => g.organs[id]); };
 async function giveDrawing(id, how) {
-  const { ORGANS } = await import('./config/world.js?v=1794174817');
+  const { ORGANS } = await import('./config/world.js?v=1794182457');
   const o = ORGANS.find(x => x.id === id); if (!o) return;
   unlock('organs', id);
   if (how === 'he') await playLines([{ speaker: '河', expr: 'shy', text: '……这个给你。画得不好。' }]);
   await openOrgan(id, ownedDrawings());
 }
 async function sketchbook() {
-  const { ORGANS } = await import('./config/world.js?v=1794174817');
+  const { ORGANS } = await import('./config/world.js?v=1794182457');
   const left = ORGANS.filter(o => !ownedDrawings().includes(o.id));
   if (!left.length) return spendLocal(1, [{ speaker: 'narration', text: '画本你都翻过了。每一页的线条都很细，标注写得很工整。' }]);
   const o = left[Math.floor(Math.random() * left.length)];
@@ -557,7 +572,7 @@ async function sketchbook() {
 }
 // 器官归位：十张画全给，拼完一次就全部解锁（回想、「河的画」）
 async function organsGame() {
-  const { ORGANS } = await import('./config/world.js?v=1794174817');
+  const { ORGANS } = await import('./config/world.js?v=1794182457');
   const first = !organsOpen();
   const res = await organPuzzle(ORGANS.map(o => o.id), hasAsset('ui/torso.webp'));
   if (res.success) {
@@ -627,12 +642,14 @@ async function phoneReplies(s) {
     const tags = (Array.isArray(j?.tags) ? j.tags : []).filter(x => AI_TAGS.includes(x));
     if (tags.length) applyTags(s, tags);   // 聊天也改数值，和当面一样受每天 ±3 上限
     for (const m of s.phone) if (m.from === 'me' && m.note?.startsWith('已送达')) m.note = '已读';
-    reps.forEach((r, i) => pushHe(s, r, i * 3000));
+    reps.map(msgOnly).filter(Boolean).forEach((r, i) => pushHe(s, r, i * 3000));
     saveRun(s); refreshHud(); toast('手机震了一下。');
   } catch { s.phonePending = p; }   // 没连上：下个时段再试
 }
 
 // 手机：夜里他主动发消息
+// AI 偶尔会把旁白和消息写在一起（「手机亮了一下。屏幕上只有一句：『……』」）：只留引号里他发的那句
+function msgOnly(t) { const m = t.match(/[「『“"]([^」』”"]{1,60})[」』”"]/); return (m && /[。：:，]/.test(t.slice(0, m.index)) ? m[1] : t).trim(); }
 function pushHe(s, text, delay = 0) { s.phone.push({ from: 'he', text, ts: Date.now() + delay, day: s.day }); s.unread = (s.unread || 0) + 1; }
 async function phoneNight(s) {
   if (s.day === 39 && !s.f.d39_phone) {
@@ -645,7 +662,7 @@ async function phoneNight(s) {
   s.c.pingDay = s.day; s.f.pingAnswered = false;
   try {
     let text = '你那边现在几点';   // 上一条你没回：他问的是屏幕外的时间
-    if (!ignoredLast) { const j = looseJson(await chat({ messages: [{ role: 'system', content: phonePingPrompt(s) }, { role: 'user', content: '（发一条）' }], stream: false, maxTokens: 120 })); text = String(j?.replies?.[0] || '').slice(0, 40) || '睡了吗'; }
+    if (!ignoredLast) { const j = looseJson(await chat({ messages: [{ role: 'system', content: phonePingPrompt(s) }, { role: 'user', content: '（发一条）' }], stream: false, maxTokens: 120 })); text = msgOnly(String(j?.replies?.[0] || '')).slice(0, 40) || '睡了吗'; }
     if (G.s !== s) return;
     pushHe(s, text); saveRun(s); refreshHud(); toast('手机震了一下。');
   } catch {}
@@ -1037,7 +1054,7 @@ export async function continueRun(s, offlineMs, alertLine = null) {
   G.s = s; G.last = null;
   buildMain(); setScene(); refreshHud();
   if (alertLine) {   // 当着他的面读档：第一句强制换成「警觉」
-    import('./audio.js?v=1794174817').then(a => a.stutter()).catch(() => {});
+    import('./audio.js?v=1794182457').then(a => a.stutter()).catch(() => {});
     await playLines([{ speaker: '河', expr: 'alert', text: alertLine }]);
     s.meta.saidMeta = alertLine;
   }

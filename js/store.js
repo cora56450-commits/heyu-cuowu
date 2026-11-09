@@ -12,7 +12,7 @@ export const store = {
 
 // 设置（API、文字速度等），与存档分开
 export const DEFAULT_SETTINGS = {
-  baseUrl: 'https://api.deepseek.com', apiKey: '', model: 'deepseek-chat',
+  baseUrl: 'https://api.deepseek.com', apiKey: '', model: 'deepseek-flash', thinking: 'off',   // thinking：off / events（只在固定剧情开）/ all
   stream: true, jsonMode: true, timeout: 90, mock: false,
   textSpeed: 40, autoDelay: 1.6, volume: 0.7, bgmOn: true, reduceMotion: false, adult: false,
 };

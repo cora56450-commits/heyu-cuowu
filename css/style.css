@@ -533,3 +533,16 @@ body.compact .mail-text { font-size: 22px; height: 240px; }
 body.compact .mail-who { font-size: 20px; height: 54px; }
 .msg-note { align-self: flex-end; font-size: 11px; color: #8a93a0; margin-top: -4px; }
 body.compact .msg-note { font-size: 15px; }
+
+/* 名牌放大（人肉测试 v2） */
+.dialog .nametag { font-size: 22px; padding: 7px 16px; }
+body.compact .dialog .nametag { font-size: 27px; }
+
+/* 设置里的下拉框、起名提示、标题页小字（人肉测试 v2 · D） */
+#ov-settings .sel { height: 38px; padding: 0 8px; font-size: 15px; font-family: inherit; background: rgba(255,255,255,.55); border: 1px solid rgba(94,90,83,.4); color: var(--ink); }
+#ov-outfit .namebar { flex-wrap: wrap; }
+#ov-outfit .name-hint { flex-basis: 100%; text-align: center; font-size: 13px; letter-spacing: 1px; color: rgba(239,230,216,.55); margin-top: 2px; }
+#ov-outfit .row.with-name { bottom: 130px; }
+#scr-title .credit { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 13px; letter-spacing: 4px; color: rgba(214,207,198,.45); pointer-events: none; }
+body.compact #ov-outfit .name-hint { font-size: 17px; }
+body.compact #scr-title .credit { font-size: 17px; }

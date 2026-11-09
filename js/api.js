@@ -1,6 +1,6 @@
 // OpenAI 兼容 /chat/completions 调用：流式 + 错误分类 + JSON 模式自动降级
-import { getSettings, saveSettings } from './store.js?v=1794174817';
-import { mockChat } from './mock.js?v=1794174817';
+import { getSettings, saveSettings } from './store.js?v=1794182457';
+import { mockChat } from './mock.js?v=1794182457';
 
 export class ApiError extends Error {
   constructor(kind, msg, detail) { super(msg); this.kind = kind; this.detail = detail; }
@@ -35,6 +35,11 @@ export async function chat(o) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort('timeout'), (st.timeout || 90) * 1000);
   const body = { model: st.model, messages: o.messages, temperature: o.temperature ?? 1.0, max_tokens: o.maxTokens || 1200, stream };
+  if (/deepseek/i.test(st.baseUrl || '')) {
+    const think = st.thinking === 'all' || (st.thinking === 'events' && o.important);
+    body.thinking = { type: think ? 'enabled' : 'disabled' };
+    if (think) body.max_tokens = Math.max(body.max_tokens, 4000);   // 思考内容也算在长度里
+  }
   const useJson = (o.json ?? true) && st.jsonMode;
   if (useJson) body.response_format = { type: 'json_object' };
   let res;

@@ -1,13 +1,13 @@
 // 启动：缩放、读设置、离线判定、标题画面
-import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794174817';
-import { store, getSettings, saveSettings, getGallery } from './store.js?v=1794174817';
-import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, hasAsset } from './game.js?v=1794174817';
-import { newRun, loadRun, hasActiveRun } from './state.js?v=1794174817';
-import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794174817';
-import { MID } from './config/endings.js?v=1794174817';
-import { madTier } from './config/values.js?v=1794174817';
-import * as P from './ui/panels.js?v=1794174817';
-import { showLock, showAftermath } from './ui/ending.js?v=1794174817';
+import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794182457';
+import { store, getSettings, saveSettings, getGallery } from './store.js?v=1794182457';
+import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, hasAsset } from './game.js?v=1794182457';
+import { newRun, loadRun, hasActiveRun } from './state.js?v=1794182457';
+import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794182457';
+import { MID } from './config/endings.js?v=1794182457';
+import { madTier } from './config/values.js?v=1794182457';
+import * as P from './ui/panels.js?v=1794182457';
+import { showLock, showAftermath } from './ui/ending.js?v=1794182457';
 
 // 1280×720 等比缩放，四周黑边
 function fit() {
@@ -46,14 +46,14 @@ document.getElementById('rotate-go')?.addEventListener('click', async () => {
 // 键盘推进对话
 addEventListener('keydown', e => {
   if (e.target.matches('input,textarea')) return;
-  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794174817').then(m => m.advance()); }
+  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794182457').then(m => m.advance()); }
 });
 
 let bootOffline = 0;
 
 function showTitle() {
   G.R = null; G.s = null;
-  import('./audio.js?v=1794174817').then(a => a.playBgm('title'));
+  import('./audio.js?v=1794182457').then(a => a.playBgm('title'));
   for (const o of [...$('#overlays').children]) o.remove();
   const active = hasActiveRun();
   const items = [
@@ -73,7 +73,8 @@ function showTitle() {
     h('div', { class: 'gname' + (hasAsset('ui/logo.webp') ? ' has-logo' : '') }, hasAsset('ui/logo.webp') ? h('img', { class: 'logo', src: A('ui/logo.webp'), alt: '河边的错误' }) : h('b', {}, '河边的错误'), h('small', {}, '他在等你回来')),
     menu,
     h('div', { class: 'hint' }, st.apiKey || st.mock ? null : h('div', {}, '首次进入请先在「设置」里填写 API Key'), h('div', {}, '建议分几天玩，体验更好。')),
-    h('div', { class: 'ver' }, 'v0.3')));
+    h('div', { class: 'ver' }, 'v0.3'),
+    h('div', { class: 'credit' }, '虚拟剧情演绎　·　制作不易，请勿倒卖')));
 }
 // 封面：跟着「最近一次」打出的结局变（store 'cover'）；素材没到之前用河「冷视」立绘
 export const COVERS = { fall: '河头朝下坠进水里', fall_blood: '下坠 · 带血', palm: '手掌贴着屏幕', backtoback: '河和牠背靠背', ta_hand: '牠的手穿过玻璃', empty: '空的河水' };
