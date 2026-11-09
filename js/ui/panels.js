@@ -1,17 +1,17 @@
 // 各个浮层：地图、手机、数值页、菜单、记录、存读档、设置、选装扮、图鉴
-import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794183813';
-import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen } from '../store.js?v=1794183813';
-import { chat, testConnection, ApiError } from '../api.js?v=1794183813';
-import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794183813';
-import { looseJson } from '../parse.js?v=1794183813';
-import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT } from '../config/world.js?v=1794183813';
-import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794183813';
-import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794183813';
-import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags } from '../state.js?v=1794183813';
-import { rollMeta } from '../meta.js?v=1794183813';
-import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm } from '../game.js?v=1794183813';
-import { openOrgan } from './organ.js?v=1794183813';
-import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794183813';
+import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794184780';
+import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen } from '../store.js?v=1794184780';
+import { chat, testConnection, ApiError } from '../api.js?v=1794184780';
+import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794184780';
+import { looseJson } from '../parse.js?v=1794184780';
+import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT } from '../config/world.js?v=1794184780';
+import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794184780';
+import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794184780';
+import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags } from '../state.js?v=1794184780';
+import { rollMeta } from '../meta.js?v=1794184780';
+import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm } from '../game.js?v=1794184780';
+import { openOrgan } from './organ.js?v=1794184780';
+import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794184780';
 
 // 系统样式的提示框（冷冰冰的电子界面，不是河说的）
 export function systemNotice(text, buttons) {
@@ -71,7 +71,7 @@ export function openPhone() {
   if (s.unread && !G.phoneFlashed && A && document.querySelector('#scr-main')) {
     G.phoneFlashed = true; const f = h('div', { style: { background: '#000' } }, h('img', { src: A('cg/phone_night.webp'), alt: '', style: { width: '100%', height: '100%', objectFit: 'cover', opacity: 0, transition: 'opacity .6s' } }));
     openOv('phoneflash', f); setTimeout(() => { f.firstChild.style.opacity = 1; }, 30); setTimeout(() => { closeOv('phoneflash'); G.phoneFlashed = false; openPhone(); }, 1500);
-    import('../store.js?v=1794183813').then(m => m.unlock('cgs', 'phone_night')); return;
+    import('../store.js?v=1794184780').then(m => m.unlock('cgs', 'phone_night')); return;
   }
   s.unread = 0; refreshHud(); saveRun(s);
     const msgs = h('div', { class: 'msgs' });
@@ -233,7 +233,7 @@ export function openSettings() {
     if (key === 'apiKey' && st.apiKey && st.mock) { st.mock = false; if (boxes.mock) boxes.mock.checked = false; }
     saveSettings(st);
   } });
-  const after = () => { import('../audio.js?v=1794183813').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
+  const after = () => { import('../audio.js?v=1794184780').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
   const rng = (key, min, max, step) => h('input', { type: 'range', min, max, step, value: st[key], oninput: e => { st[key] = +e.target.value; saveSettings(st); after(); } });
   const chk = key => (boxes[key] = h('input', { type: 'checkbox', checked: !!st[key], onchange: e => { st[key] = e.target.checked; saveSettings(st); after(); } }));
   const status = h('span', { class: 'note' });
@@ -284,7 +284,7 @@ export function openSettings() {
     h('p', { class: 'note' }, '浏览器里「清除网站数据」也会把存档、Key 和图鉴一起清掉。'),
     st.debug ? h('div', { class: 'row' }, h('button', { class: 'btn', onclick: async () => {
       if (!(await confirmBox('全通存档', '图鉴全部解锁，三个手动存档位会被覆盖成测试节点（自动存档不动）。', '写入'))) return;
-      const d = await import('../debug.js?v=1794183813'); d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
+      const d = await import('../debug.js?v=1794184780'); d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
     } }, '调试：全通存档')) : null);
   openOv('settings', h('div', {}, panel));
 }
@@ -308,7 +308,7 @@ export function openOutfit(isStart) {
       closeOv('outfit');
       if (!isStart && s && id !== s.outfit) {
         s.outfit = id; s.meta.outfitChanged = true; saveRun(s); refreshHud(); toast('换好了。');
-        if (G.R?.chars?.he) import('../game.js?v=1794183813').then(g => g.metaLine('outfit'));
+        if (G.R?.chars?.he) import('../game.js?v=1794184780').then(g => g.metaLine('outfit'));
       }
       res(id);
     }
@@ -321,7 +321,7 @@ export function openOutfit(isStart) {
 
 // ———————————————— 图鉴 ————————————————
 // 回想里的剧情 / 日常 CG（结局 CG 不放这里）
-export const STORY_CGS = ['first_meet', 'd1_night', 'd2_walk', 'd2_phone', 'daily_breakfast', 'daily_table', 'daily_lamp', 'd4_heng', 'd6_creek', 'd8_man', 'puzzle_photo', 'phone_night', 'ta_suture', 'user_offline', 'master', 'festival', 'he_suture', 'first_cross', 'ta_mad', 'border', 'outside', 'he_first', 'ta_first', 'day40'];
+export const STORY_CGS = ['first_meet', 'd1_night', 'd2_walk', 'd2_phone', 'daily_breakfast', 'daily_table', 'daily_lamp', 'daily_chili', 'd4_heng', 'ta_suture', 'd6_creek', 'd8_man', 'puzzle_photo', 'phone_night', 'user_offline', 'master', 'festival', 'd16_teach', 'he_suture', 'd20_rain', 'first_cross', 'daily_table_mid', 'daily_lamp_mid', 'daily_laundry', 'ta_mad', 'd26_guo', 'd28_tomb', 'border', 'd32_thread', 'outside', 'd36_roof', 'daily_table_late', 'daily_lamp_late', 'he_first', 'ta_first', 'day40', 'd41_night'];
 function viewCG(id, title) {
   const v = h('div', { style: { background: '#000' }, onclick: () => closeOv('cgview') },
     h('img', { src: A(`cg/${id}.webp`), style: { width: '100%', height: '100%', objectFit: 'contain' }, alt: '' }),
@@ -366,6 +366,8 @@ export function openMemories() {
   body.append(h('div', { class: 'gsec' }, '河的画'), h('div', { class: 'grid organs' }, ORGANS.map(o => open && g.organs[o.id]
     ? h('div', { class: 'gcard card on img organ', onclick: () => openOrgan(o.id, ORGANS.filter(x => g.organs[x.id]).map(x => x.id)) }, h('img', { src: A(`organ/${o.id}.webp`), alt: o.name }))
     : h('div', { class: 'gcard card' }, h('span', { class: 'q' }, '???')))));
+  // 第 24 天门缝底下推出来的那张画（没有图，只有字）
+  if (g.misc.door_drawing) body.lastChild.append(h('div', { class: 'gcard card on door-drawing', onclick: () => openOv('cgview', h('div', { style: { background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }, onclick: () => closeOv('cgview') }, h('div', { class: 'paper', style: { width: '560px', padding: '48px 56px', fontSize: '22px', lineHeight: '2.1', color: '#3b342c' } }, '门缝底下推出来的一张画。', h('br'), '你在桃花林里数花瓣的背影，头发、毛衣，每一根线都很细。', h('br'), '没有画脸。', h('br'), h('span', { style: { fontSize: '16px', opacity: '.7' } }, '角落里写着很小的两个字：「睡吧。」')))) }, h('span', {}, '门缝下的画')));
   galleryShell('回想', `${seen} / ${STORY_CGS.length}`, body);
 }
 

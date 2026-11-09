@@ -1,13 +1,13 @@
 // 启动：缩放、读设置、离线判定、标题画面
-import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794183813';
-import { store, getSettings, saveSettings, getGallery } from './store.js?v=1794183813';
-import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, hasAsset } from './game.js?v=1794183813';
-import { newRun, loadRun, hasActiveRun } from './state.js?v=1794183813';
-import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794183813';
-import { MID } from './config/endings.js?v=1794183813';
-import { madTier } from './config/values.js?v=1794183813';
-import * as P from './ui/panels.js?v=1794183813';
-import { showLock, showAftermath } from './ui/ending.js?v=1794183813';
+import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794184780';
+import { store, getSettings, saveSettings, getGallery } from './store.js?v=1794184780';
+import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, hasAsset } from './game.js?v=1794184780';
+import { newRun, loadRun, hasActiveRun } from './state.js?v=1794184780';
+import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794184780';
+import { MID } from './config/endings.js?v=1794184780';
+import { madTier } from './config/values.js?v=1794184780';
+import * as P from './ui/panels.js?v=1794184780';
+import { showLock, showAftermath } from './ui/ending.js?v=1794184780';
 
 // 1280×720 等比缩放，四周黑边
 function fit() {
@@ -46,14 +46,14 @@ document.getElementById('rotate-go')?.addEventListener('click', async () => {
 // 键盘推进对话
 addEventListener('keydown', e => {
   if (e.target.matches('input,textarea')) return;
-  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794183813').then(m => m.advance()); }
+  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794184780').then(m => m.advance()); }
 });
 
 let bootOffline = 0;
 
 function showTitle() {
   G.R = null; G.s = null;
-  import('./audio.js?v=1794183813').then(a => a.playBgm('title'));
+  import('./audio.js?v=1794184780').then(a => a.playBgm('title'));
   for (const o of [...$('#overlays').children]) o.remove();
   const active = hasActiveRun();
   const items = [

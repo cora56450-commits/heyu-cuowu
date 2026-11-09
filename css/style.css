@@ -560,3 +560,5 @@ body.compact .msg-sys { font-size: 16px; }
 .prologue-lines p.on { opacity: 1; }
 #ov-prologue .tap { position: absolute; bottom: 30px; width: 100%; text-align: center; font-size: 14px; letter-spacing: 4px; color: rgba(230,223,212,.35); }
 body.compact .prologue-lines p { font-size: 32px; }
+/* 回想 · 河的画：门缝下的那张（只有字） */
+.gcard.card.door-drawing { justify-content: center; align-items: center; color: #3b342c; background: #efe6d6 !important; border-image: none; border: 1px solid #b9ab94; font-size: 16px; letter-spacing: 4px; }

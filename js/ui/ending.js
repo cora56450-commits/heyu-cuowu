@@ -1,16 +1,16 @@
 // 结局画面、‘楚门的世界’锁定画面、结局后效
-import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794183813';
-import { store } from '../store.js?v=1794183813';
-import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794183813';
-import { madTier } from '../config/values.js?v=1794183813';
-import { userFigure } from '../game.js?v=1794183813';
-import { FILE_NAME, afterwordText, loadAfterword } from '../config/afterword.js?v=1794183813';
+import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794184780';
+import { store } from '../store.js?v=1794184780';
+import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794184780';
+import { madTier } from '../config/values.js?v=1794184780';
+import { userFigure } from '../game.js?v=1794184780';
+import { FILE_NAME, afterwordText, loadAfterword } from '../config/afterword.js?v=1794184780';
 
 const waitClick = el => new Promise(r => el.addEventListener('click', r, { once: true }));
 
 export async function showEnding(id, s) {
   const e = ENDINGS[id]; const L = ENDING_LINES[id] || {};
-  import('../audio.js?v=1794183813').then(a => a.playBgm('meta'));
+  import('../audio.js?v=1794184780').then(a => a.playBgm('meta'));
   if (id === 'truman') loadAfterword();   // 先读好后日谈，最后那一下点击时直接下载
   const tier = madTier(s?.madness || 0);
   const cg = h('img', { class: 'cg' + (e.glitch ? ' glitch' : ''), src: A(`cg/${e.cg}.webp`), alt: '' });
