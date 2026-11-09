@@ -1,5 +1,5 @@
 // localStorage 封装：所有键统一加 gucun_ 前缀
-import { DEMO } from './config/demo.js?v=1794246986';
+import { DEMO } from './config/demo.js?v=1794249273';
 // 试玩版和完整版在同一个域名下（github.io），存档要分开，不然会互相覆盖
 const P = DEMO ? 'gucun_demo_' : 'gucun_';
 export const store = {

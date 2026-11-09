@@ -1,18 +1,18 @@
 // 各个浮层：地图、手机、数值页、菜单、记录、存读档、设置、选装扮、图鉴
-import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794246986';
-import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen, endingsOpen } from '../store.js?v=1794246986';
-import { chat, testConnection, ApiError } from '../api.js?v=1794246986';
-import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794246986';
-import { looseJson } from '../parse.js?v=1794246986';
-import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT, motherAway, locLocked, lockNote } from '../config/world.js?v=1794246986';
-import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794246986';
-import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794246986';
-import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags, taText } from '../state.js?v=1794246986';
-import { rollMeta } from '../meta.js?v=1794246986';
-import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm, mapMarks, PHONE_CG, hasAsset, hasPhone as hasPhoneNow } from '../game.js?v=1794246986';
-import { DEMO } from '../config/demo.js?v=1794246986';
-import { openOrgan } from './organ.js?v=1794246986';
-import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794246986';
+import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794249273';
+import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen, endingsOpen } from '../store.js?v=1794249273';
+import { chat, testConnection, ApiError } from '../api.js?v=1794249273';
+import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794249273';
+import { looseJson } from '../parse.js?v=1794249273';
+import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT, motherAway, locLocked, lockNote } from '../config/world.js?v=1794249273';
+import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794249273';
+import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794249273';
+import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags, taText } from '../state.js?v=1794249273';
+import { rollMeta } from '../meta.js?v=1794249273';
+import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm, mapMarks, PHONE_CG, hasAsset, hasPhone as hasPhoneNow } from '../game.js?v=1794249273';
+import { DEMO } from '../config/demo.js?v=1794249273';
+import { openOrgan } from './organ.js?v=1794249273';
+import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794249273';
 
 // 系统样式的提示框（冷冰冰的电子界面，不是河说的）
 export function systemNotice(text, buttons) {
@@ -86,7 +86,7 @@ export function openPhone(noFlash) {
     const cap = h('div', { class: 'phone-cap' }, PHONE_CG[cgId]?.cap || '');
     const f = h('div', { style: { background: '#000' } }, img, cap);
     openOv('phoneflash', f); setTimeout(() => { img.style.opacity = 1; cap.classList.add('on'); }, 30); setTimeout(() => { closeOv('phoneflash'); G.phoneFlashed = false; openPhone(true); }, 1800);
-    import('../store.js?v=1794246986').then(m => m.unlock('cgs', cgId)); return;
+    import('../store.js?v=1794249273').then(m => m.unlock('cgs', cgId)); return;
   }
   s.unread = 0; refreshHud(); saveRun(s);
   // 「睡了吗。」→ 打开手机 3 秒后变成「对方撤回了一条消息」
@@ -106,7 +106,7 @@ export function openPhone(noFlash) {
       else if (m.text) out.push(h('div', { class: 'msg ' + (m.from === 'me' ? 'me' : 'he') }, m.text));
       if (m.note) out.push(h('div', { class: 'msg-note' }, m.note));
       return out;
-    }));
+    }), typing ? h('div', { class: 'msg-sys typing' }, '对方正在输入…') : '');
     msgs.scrollTop = 1e6;
   };
   // 只有不在一起的时候才能聊：他就在你身边时，手机发不出去
@@ -117,24 +117,33 @@ export function openPhone(noFlash) {
   // 他不秒回：发出去显示「已送达」，下一个时段他才回（game.js 的 phoneReplies）；第 39 天约见那一句除外
   async function send() {
     const t = input.value.trim(); if (!t) return;
+    let quick = false;
     input.value = '';
     const last = s.phone[s.phone.length - 1]; if (last?.from === 'me') delete last.note;
     s.phone.push({ from: 'me', text: t, ts: Date.now(), note: '已送达', day: s.day }); s.f.pingAnswered = true;
     if (s.day === 39 && s.f.d39_phone && !s.f.d39_replied) { s.f.d39_replied = true; render(); saveRun(s); await sleep(1800); s.phone[s.phone.length - 1].note = '已读'; s.phone.push({ from: 'he', text: '嗯。睡吧。', ts: Date.now() }); render(); saveRun(s); return; }
-    const g = await import('../game.js?v=1794246986');
+    const g = await import('../game.js?v=1794249273');
     if (!s.phonePending) {
       if ((s.phoneToday || 0) >= 3) s.phone[s.phone.length - 1].note = '已送达 · 他今天不会再回了';   // 每天最多回 3 次
       else {
         s.phoneToday = (s.phoneToday || 0) + 1; s.phonePending = { day: s.day, slot: s.slot };
-        const { phoneStage } = await import('../state.js?v=1794246986');
-        if (phoneStage(s) === 'near' && s.slot !== 3) setTimeout(() => g.phoneReplyNow(), 12000 + Math.random() * 15000);   // 近了：这一时段内就回
+        // 秒回按关系掷骰子（主线 1109 §2）：生 30%、熟 50%、近 70%、冷从不；第 22–24 天他躲着你，不掷
+        const { phoneStage } = await import('../state.js?v=1794249273');
+        const p = { raw: 0.3, warm: 0.5, near: 0.7, cold: 0 }[phoneStage(s)] ?? 0.3;
+        if (!(s.day >= 22 && s.day <= 24) && !s.f.first_msg_reply && Math.random() < p) quick = true;
       }
     }
     // 手机上约他：每一条都看（连发时第二条也算），弹框确认，他回的时候决定答不答应
     const prop = s.phonePending && g.parseProposal(s, t, '河', null);
     if (prop && await g.confirmProposal(prop)) s.phonePending.propose = prop;
     render(); saveRun(s);
+    if (quick) {   // 秒回：「对方正在输入…」1–3 秒（AI 写得慢就一直显示到写完）
+      typing = true; render();
+      await Promise.all([sleep(1000 + Math.random() * 2000), g.phoneReplyNow()]);
+      typing = false; if ($('#ov-phone')) { s.unread = 0; refreshHud(); render(); }
+    }
   }
+  let typing = false;
   const scr = h('div', { class: 'screen-area' },
     h('div', { class: 'bar' }, h('span', {}, '‹ 信息'), '河'), msgs, h('div', { class: 'inp' }, input, sendBtn));
   const home = h('button', { class: 'home', 'aria-label': 'Home 键，关掉手机', onclick: () => closeOv('phone') });
@@ -189,6 +198,8 @@ export function openStats() {
     h('img', { class: 'user', src: A(`sprite/user/${s.outfit}.webp`), alt: '你的样子，灰色', style: outfitNorm(s.outfit) }),   // 按脸对齐：眼睛正好在红线上
     h('img', { class: 'thread', src: A('ui/thread.webp'), alt: '' }),
     ...kids,
+    // 口袋里的五瓣花（主线 1109 §4）：0 朵不显示；第 34 天看过他的盒子以后多半句
+    (s.c.flowerFound || 0) > 0 ? h('div', { class: 'pocket' }, `口袋里：错的花 ×${s.c.flowerFound}` + (s.f.he_box ? '　他的盒子：很多' : '')) : null,
     h('div', { class: 'head' }, h('b', {}, '你在他眼里'), h('span', {}, '眼球越大，数值越高；太低时会转开，不再看你')),
     h('button', { type: 'button', class: 'shut', onclick: close }, '关掉'),
     h('button', { type: 'button', class: 'stats-q', onclick: help }, '这些数是什么？'));   // 说明太密，不再铺在页面上，点了才弹
@@ -273,7 +284,7 @@ export function openSettings() {
     if (key === 'apiKey' && st.apiKey && st.mock) { st.mock = false; if (boxes.mock) boxes.mock.checked = false; }
     saveSettings(st);
   } });
-  const after = () => { import('../audio.js?v=1794246986').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
+  const after = () => { import('../audio.js?v=1794249273').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
   const rng = (key, min, max, step) => h('input', { type: 'range', min, max, step, value: st[key], oninput: e => { st[key] = +e.target.value; saveSettings(st); after(); } });
   const chk = key => (boxes[key] = h('input', { type: 'checkbox', checked: !!st[key], onchange: e => { st[key] = e.target.checked; saveSettings(st); after(); } }));
   const status = h('span', { class: 'note' });
@@ -324,7 +335,7 @@ export function openSettings() {
     h('p', { class: 'note' }, '浏览器里「清除网站数据」也会把存档、Key 和图鉴一起清掉。'),
     st.debug ? h('div', { class: 'row' }, h('button', { class: 'btn', onclick: async () => {
       if (!(await confirmBox('全通存档', '图鉴全部解锁，三个手动存档位会被覆盖成测试节点（自动存档不动）。', '写入'))) return;
-      const d = await import('../debug.js?v=1794246986'); await d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
+      const d = await import('../debug.js?v=1794249273'); await d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
     } }, '调试：全通存档')) : null);
   openOv('settings', h('div', {}, panel));
 }
@@ -348,7 +359,7 @@ export function openOutfit(isStart) {
       closeOv('outfit');
       if (!isStart && s && id !== s.outfit) {
         s.outfit = id; s.meta.outfitChanged = true; saveRun(s); refreshHud(); toast('换好了。');
-        if (G.R?.chars?.he) import('../game.js?v=1794246986').then(g => g.metaLine('outfit'));
+        if (G.R?.chars?.he) import('../game.js?v=1794249273').then(g => g.metaLine('outfit'));
       }
       res(id);
     }
@@ -361,7 +372,7 @@ export function openOutfit(isStart) {
 
 // ———————————————— 图鉴 ————————————————
 // 回想里的剧情 / 日常 CG（结局 CG 不放这里）
-export const STORY_CGS = ['first_meet', 'd1_night', 'd2_walk', 'd2_phone', 'daily_breakfast', 'daily_table', 'daily_lamp', 'daily_chili', 'd4_heng', 'ta_suture', 'd6_creek', 'd8_man', 'puzzle_photo', 'phone_night', 'phone_warm', 'phone_near', 'phone_sour', 'phone_cold', 'user_offline', 'master', 'festival', 'd16_teach', 'he_suture', 'd20_rain', 'first_cross', 'daily_table_mid', 'daily_lamp_mid', 'daily_laundry', 'ta_mad', 'd26_guo', 'd28_tomb', 'border', 'd32_thread', 'outside', 'd36_roof', 'daily_table_late', 'daily_lamp_late', 'daily_wait_late', 'he_first', 'ta_first', 'day40', 'd41_night'];
+export const STORY_CGS = ['first_meet', 'd1_night', 'd2_walk', 'd2_phone', 'daily_breakfast', 'daily_table', 'daily_lamp', 'daily_chili', 'd4_heng', 'ta_suture', 'd6_creek', 'd8_man', 'puzzle_photo', 'phone_night', 'phone_warm', 'phone_near', 'phone_sour', 'phone_cold', 'user_offline', 'master', 'd12_drawings', 'festival', 'd16_teach', 'he_suture', 'd20_rain', 'first_cross', 'd24_door', 'daily_table_mid', 'daily_lamp_mid', 'daily_laundry', 'ta_mad', 'd26_guo', 'd28_tomb', 'border', 'd32_thread', 'd34_flowers', 'outside', 'd36_roof', 'd38_unbind', 'daily_table_late', 'daily_lamp_late', 'daily_wait_late', 'he_first', 'ta_first', 'day40', 'd41_night'];
 function viewCG(id, title) {
   const v = h('div', { style: { background: '#000' }, onclick: () => closeOv('cgview') },
     h('img', { src: A(`cg/${id}.webp`), style: { width: '100%', height: '100%', objectFit: 'contain' }, alt: '' }),
@@ -409,8 +420,8 @@ export function openMemories() {
     : h('div', { class: 'gcard card' }, h('span', { class: 'q' }, '???')))));
   // 第 24 天门缝底下推出来的那张画（没有图，只有字）
   const textCard = (title, lines) => h('div', { class: 'gcard card on door-drawing', onclick: () => openOv('cgview', h('div', { style: { background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }, onclick: () => closeOv('cgview') }, h('div', { class: 'paper', style: { width: '560px', padding: '48px 56px', fontSize: '22px', lineHeight: '2.1', color: '#3b342c' } }, ...lines.flatMap((l, k) => k ? [h('br'), l] : [l])))) }, h('span', {}, title));
-  // 门缝下的画：用小时候的河那张（11/09 Cora 定，和相册里的照片同一幅）
-  if (g.misc.door_drawing) body.lastChild.append(h('div', { class: 'gcard card on img organ', onclick: () => openOv('cgview', h('div', { style: { background: '#000' }, onclick: () => closeOv('cgview') }, h('img', { src: A('puzzle/he_child.webp'), style: { width: '100%', height: '100%', objectFit: 'contain' }, alt: '小时候的河' }))) }, h('img', { src: A('puzzle/he_child.webp'), alt: '小时候的河', style: { objectFit: 'cover' } })));
+  // 门缝下的画：用第 24 天的 CG（主线 1109 §5.2：原来误用了小时候的河）；图没到就不显示这张卡
+  if (g.misc.door_drawing && hasAsset('cg/d24_door.webp')) body.lastChild.append(h('div', { class: 'gcard card on img organ', onclick: () => viewCG('d24_door') }, h('img', { src: A('cg/d24_door.webp'), alt: '门缝下的画', style: { objectFit: 'cover' } })));
   if (g.misc.five_petal) body.lastChild.append(textCard('五瓣的花', ['桃花林里那朵五瓣的。', '在这里，它看起来反而像一个错误。']));
   galleryShell('回想', `${seen} / ${CGS.length}`, body);
 }

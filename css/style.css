@@ -632,3 +632,5 @@ body.compact #ov-statshelp .how-text { font-size: 21px; line-height: 1.5; }
 .piece-gap { width: 110px; height: 110px; }
 /* 锁定画面：牠的那一句（复制出去才是真的） */
 .log-list { overflow-x: hidden; }
+#ov-stats .pocket { position: absolute; left: 0; width: 940px; top: 420px; text-align: center; font-size: 17px; letter-spacing: 4px; color: #A9A39A; }
+.phone .msgs .typing { font-style: italic; }

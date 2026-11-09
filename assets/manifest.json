@@ -149,5 +149,9 @@
  "cg/phone_sour.webp": "手机怨恨中.png",
  "cg/phone_cold.webp": "手机 怨恨高.png",
  "cg/daily_wait_late.webp": "门槛.png",
- "sprite/he/aloof.webp": "河 淡漠.png"
+ "sprite/he/aloof.webp": "河 淡漠.png",
+ "cg/d12_drawings.webp": "河的画.png",
+ "cg/d24_door.webp": "门缝里的画.png",
+ "cg/d34_flowers.webp": "二十年的花.png",
+ "cg/d38_unbind.webp": "拆画本.png"
 }
