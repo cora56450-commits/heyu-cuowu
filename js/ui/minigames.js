@@ -1,6 +1,6 @@
 // 三个小游戏（纯前端，不调用 AI，支持触屏）：数花瓣、牠的字条、拼图（弹窗拼贴）
-import { h, A, openOv, closeOv, sleep, toStage } from './dom.js?v=1794251937';
-import { garble } from '../meta.js?v=1794251937';
+import { h, A, openOv, closeOv, sleep, toStage } from './dom.js?v=1794263240';
+import { garble } from '../meta.js?v=1794263240';
 
 // 拼图用的照片（框按照片比例自动调整）
 export const PUZZLES = {
@@ -13,11 +13,15 @@ export const PUZZLES = {
 // 正文按天数分组（人肉 v3 · 9）：同一句不重复，这一组用完再从下一组取
 const NOTE_GROUPS = [
   { from: 1, lines: ['针要烫过', '线头要剪干净', '河的针脚比我的正', '你的手腕很凉', '花不要摘', '今天的线太新', '别在夜里去溪边', '饭在锅里'] },
-  { from: 15, lines: ['我不老只是慢', '他记得的比他说的多', '溪水比以前浅', '外面的花有五瓣', '他夜里不睡', '你的脚步声很轻'] },
+  { from: 15, lines: ['我不老只是慢', '他记得的比他说的多', '溪水比以前浅', '外面的花有五瓣', '他夜里不睡', '你的脚步声很轻', '门响的时候别进来', '叫河'] },
   { from: 30, lines: ['雾那边我去过', '他的手比我年轻时稳', '别让他一个人去后山', '你会走吗'] },
 ];
+// d25 铺垫（给ClaudeCode_d25铺垫_1109 §2）：第 15–24 天第一次拼这一组时，必出其中一句
+const TA_WARN = ['门响的时候别进来', '叫河'];
 function pickNote(s) {
   const seen = s.c.notesSeen;
+  // 只看这两句有没有出过：第 1 组用完后会提前取第 15 组，按「整组见没见过」判断会漏掉必出
+  if (s.day >= 15 && s.day <= 24 && !TA_WARN.some(l => seen.includes(l))) return TA_WARN[Math.floor(Math.random() * TA_WARN.length)];
   const open = NOTE_GROUPS.filter(g => s.day >= g.from);
   for (const g of [...open, ...NOTE_GROUPS.filter(g => s.day < g.from)]) {   // 当前能用的组先，用完再往后取
     const left = g.lines.filter(l => !seen.includes(l));

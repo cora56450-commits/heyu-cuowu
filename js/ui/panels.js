@@ -1,18 +1,18 @@
 // 各个浮层：地图、手机、数值页、菜单、记录、存读档、设置、选装扮、图鉴
-import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794251937';
-import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen, endingsOpen } from '../store.js?v=1794251937';
-import { chat, testConnection, ApiError } from '../api.js?v=1794251937';
-import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794251937';
-import { looseJson } from '../parse.js?v=1794251937';
-import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT, motherAway, locLocked, lockNote } from '../config/world.js?v=1794251937';
-import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794251937';
-import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794251937';
-import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags, taText } from '../state.js?v=1794251937';
-import { rollMeta } from '../meta.js?v=1794251937';
-import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm, mapMarks, PHONE_CG, hasAsset, hasPhone as hasPhoneNow } from '../game.js?v=1794251937';
-import { DEMO } from '../config/demo.js?v=1794251937';
-import { openOrgan } from './organ.js?v=1794251937';
-import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794251937';
+import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794263240';
+import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen, endingsOpen } from '../store.js?v=1794263240';
+import { chat, testConnection, ApiError } from '../api.js?v=1794263240';
+import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794263240';
+import { looseJson } from '../parse.js?v=1794263240';
+import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT, motherAway, locLocked, lockNote } from '../config/world.js?v=1794263240';
+import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794263240';
+import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794263240';
+import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags, taText } from '../state.js?v=1794263240';
+import { rollMeta } from '../meta.js?v=1794263240';
+import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm, mapMarks, PHONE_CG, hasAsset, hasPhone as hasPhoneNow } from '../game.js?v=1794263240';
+import { DEMO } from '../config/demo.js?v=1794263240';
+import { openOrgan } from './organ.js?v=1794263240';
+import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794263240';
 
 // 系统样式的提示框（冷冰冰的电子界面，不是河说的）
 export function systemNotice(text, buttons) {
@@ -86,7 +86,7 @@ export function openPhone(noFlash) {
     const cap = h('div', { class: 'phone-cap' }, PHONE_CG[cgId]?.cap || '');
     const f = h('div', { style: { background: '#000' } }, img, cap);
     openOv('phoneflash', f); setTimeout(() => { img.style.opacity = 1; cap.classList.add('on'); }, 30); setTimeout(() => { closeOv('phoneflash'); G.phoneFlashed = false; openPhone(true); }, 1800);
-    import('../store.js?v=1794251937').then(m => m.unlock('cgs', cgId)); return;
+    import('../store.js?v=1794263240').then(m => m.unlock('cgs', cgId)); return;
   }
   s.unread = 0; refreshHud(); saveRun(s);
   // 「睡了吗。」→ 打开手机 3 秒后变成「对方撤回了一条消息」
@@ -122,13 +122,13 @@ export function openPhone(noFlash) {
     const last = s.phone[s.phone.length - 1]; if (last?.from === 'me') delete last.note;
     s.phone.push({ from: 'me', text: t, ts: Date.now(), note: '已送达', day: s.day }); s.f.pingAnswered = true;
     if (s.day === 39 && s.f.d39_phone && !s.f.d39_replied) { s.f.d39_replied = true; render(); saveRun(s); await sleep(1800); s.phone[s.phone.length - 1].note = '已读'; s.phone.push({ from: 'he', text: '嗯。睡吧。', ts: Date.now() }); render(); saveRun(s); return; }
-    const g = await import('../game.js?v=1794251937');
+    const g = await import('../game.js?v=1794263240');
     if (!s.phonePending) {
       if ((s.phoneToday || 0) >= 3) s.phone[s.phone.length - 1].note = '已送达 · 他今天不会再回了';   // 每天最多回 3 次
       else {
         s.phoneToday = (s.phoneToday || 0) + 1; s.phonePending = { day: s.day, slot: s.slot };
         // 秒回按关系掷骰子（主线 1109 §2）：生 30%、熟 50%、近 70%、冷从不；第 22–24 天他躲着你，不掷
-        const { phoneStage } = await import('../state.js?v=1794251937');
+        const { phoneStage } = await import('../state.js?v=1794263240');
         const p = { raw: 0.3, warm: 0.5, near: 0.7, cold: 0 }[phoneStage(s)] ?? 0.3;
         if (!(s.day >= 22 && s.day <= 24) && !s.f.first_msg_reply && Math.random() < p) quick = true;
       }
@@ -144,8 +144,27 @@ export function openPhone(noFlash) {
     }
   }
   let typing = false;
+  // 备忘录（备忘录任务单 §1）：和聊天并列的一页，代码记的、AI 不写；按天分组，新的在上面，划掉的变灰
+  const memoEl = h('div', { class: 'memo' });
+  const renderMemo = () => {
+    const days = [...new Set((s.memo || []).map(m => m.day))].sort((a, b) => b - a);
+    memoEl.replaceChildren(...(days.length ? days.flatMap(d => [h('div', { class: 'memo-day' }, `第 ${d} 天`),
+      ...(s.memo.filter(m => m.day === d).reverse().map(m => h('div', { class: 'memo-item' + (m.done ? ' done' : '') }, m.text)))]) : [h('div', { class: 'memo-empty' }, '还没有记下什么。')]));
+  };
+  const inp = h('div', { class: 'inp' }, input, sendBtn);
+  const title = h('b', {}, '河');
+  const back = h('span', { class: 'hidden', onclick: () => show('chat') }, '‹ 信息');
+  const memoBtn = h('span', { class: 'memo-tab', onclick: () => show('memo') }, '备忘录');
+  function show(v) {
+    const memo = v === 'memo';
+    if (memo) { import('../game.js?v=1794263240').then(g => { g.memoSync(s); renderMemo(); }); renderMemo(); }
+    title.textContent = memo ? '备忘录' : '河';
+    back.classList.toggle('hidden', !memo); memoBtn.classList.toggle('hidden', memo);
+    msgs.classList.toggle('hidden', memo); inp.classList.toggle('hidden', memo); memoEl.classList.toggle('hidden', !memo);
+  }
   const scr = h('div', { class: 'screen-area' },
-    h('div', { class: 'bar' }, h('span', {}, '‹ 信息'), '河'), msgs, h('div', { class: 'inp' }, input, sendBtn));
+    h('div', { class: 'bar' }, back, title, memoBtn), msgs, memoEl, inp);
+  show('chat');
   const home = h('button', { class: 'home', 'aria-label': 'Home 键，关掉手机', onclick: () => closeOv('phone') });
   const bg = $('#scr-main .bg');
   const ov = h('div', {},
@@ -294,7 +313,7 @@ export function openSettings() {
     if (key === 'apiKey' && st.apiKey && st.mock) { st.mock = false; if (boxes.mock) boxes.mock.checked = false; }
     saveSettings(st);
   } });
-  const after = () => { import('../audio.js?v=1794251937').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
+  const after = () => { import('../audio.js?v=1794263240').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
   const rng = (key, min, max, step) => h('input', { type: 'range', min, max, step, value: st[key], oninput: e => { st[key] = +e.target.value; saveSettings(st); after(); } });
   const chk = key => (boxes[key] = h('input', { type: 'checkbox', checked: !!st[key], onchange: e => { st[key] = e.target.checked; saveSettings(st); after(); } }));
   const status = h('span', { class: 'note' });
@@ -345,7 +364,7 @@ export function openSettings() {
     h('p', { class: 'note' }, '浏览器里「清除网站数据」也会把存档、Key 和图鉴一起清掉。'),
     st.debug ? h('div', { class: 'row' }, h('button', { class: 'btn', onclick: async () => {
       if (!(await confirmBox('全通存档', '图鉴全部解锁，三个手动存档位会被覆盖成测试节点（自动存档不动）。', '写入'))) return;
-      const d = await import('../debug.js?v=1794251937'); await d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
+      const d = await import('../debug.js?v=1794263240'); await d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
     } }, '调试：全通存档')) : null);
   openOv('settings', h('div', {}, panel));
 }
@@ -369,7 +388,7 @@ export function openOutfit(isStart) {
       closeOv('outfit');
       if (!isStart && s && id !== s.outfit) {
         s.outfit = id; s.meta.outfitChanged = true; saveRun(s); refreshHud(); toast('换好了。');
-        if (G.R?.chars?.he) import('../game.js?v=1794251937').then(g => g.metaLine('outfit'));
+        if (G.R?.chars?.he) import('../game.js?v=1794263240').then(g => g.metaLine('outfit'));
       }
       res(id);
     }

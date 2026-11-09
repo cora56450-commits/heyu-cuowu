@@ -1,6 +1,6 @@
 // meta 系统：离线心跳、抽签、乱码句与复制替换、各种注入
-import { store } from './store.js?v=1794251937';
-import { offlineText } from './prompt.js?v=1794251937';
+import { store } from './store.js?v=1794263240';
+import { offlineText } from './prompt.js?v=1794263240';
 
 // —— 离线按「人不在」算：lastActive 在每次点击、按键、触摸、滚动时更新；切到后台时也记一次 ——
 // 只用时间戳相减，不依赖计时器（后台标签页、电脑睡眠时计时器会被暂停）
@@ -8,18 +8,22 @@ let lastActiveMem = store.get('lastActive') ?? store.get('lastSeen') ?? null;
 export function readLastActive() { return lastActiveMem; }
 export function touchActive(t = Date.now()) { lastActiveMem = t; store.set('lastActive', t); }
 export function idleFor() { return lastActiveMem == null ? 0 : Date.now() - lastActiveMem; }
-/** onReturn(gap, event)：玩家「回来了」（离开 ≥ 1 分钟）时调用。event 是那一下点击 / 按键，可以吞掉 */
+/** onReturn(gap, event, { hidden })：玩家「回来了」（离开 ≥ 1 分钟）时调用。event 是那一下点击 / 按键，可以吞掉；
+ *  hidden = 这段时间里页面切到过后台（真的去看别的东西了），不是只在前台闲着 */
+let wentHidden = false;
 export function installActivity(onReturn) {
   const act = e => {
     const now = Date.now(); const gap = lastActiveMem == null ? 0 : now - lastActiveMem;
+    const hidden = wentHidden; wentHidden = false;
     touchActive(now);
-    if (gap >= 60e3) onReturn(gap, e);
+    if (gap >= 60e3) onReturn(gap, e, { hidden });
   };
   for (const type of ['pointerdown', 'keydown', 'touchstart', 'wheel']) addEventListener(type, act, { capture: true, passive: false });
   document.addEventListener('visibilitychange', () => {
     // 切到后台时记一次——但如果人早就走开了（闲置超过 1 分钟），保留更早的那个时间
-    if (document.hidden) { if (idleFor() < 60e3) touchActive(); }
-    else act(null);
+    if (document.hidden) { wentHidden = true; if (idleFor() < 60e3) touchActive(); return; }
+    // 切回前台：离开 30 分钟以上马上走离线流程（不等点击）；短的先不算，等下一次点击 / 按键再算（这样才知道点的是对话框还是手机）
+    if (idleFor() >= 30 * 60e3) act(null);
   });
   addEventListener('pagehide', () => { if (idleFor() < 60e3) touchActive(); });
 }

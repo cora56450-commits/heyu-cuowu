@@ -81,18 +81,18 @@ body.calm .char.on { animation: none; }
 .icon-btn img { width: 40px; height: 40px; filter: drop-shadow(0 1px 3px rgba(0,0,0,.45)) drop-shadow(0 0 2px rgba(255,255,255,.7)); }
 .icon-btn:hover img { transform: translateY(-1px); }
 .icon-btn .badge { position: absolute; right: -16px; top: -16px; min-width: 22px; height: 22px; border-radius: 11px; background: var(--red); color: #fff; font: 12px/22px var(--sans); text-align: center; padding: 0 5px; }
-.actions { position: absolute; right: 24px; top: 124px; bottom: 212px; width: 340px; z-index: 5; display: flex; flex-direction: column; gap: 6px; }
+.actions { position: absolute; right: 24px; top: 112px; bottom: 212px; width: 290px; z-index: 5; display: flex; flex-direction: column; gap: 6px; }
 .actions > * { flex: none; }
 .actions .head { align-self: flex-start; padding: 6px 6px; color: var(--paper); font-size: 14px; }
-.actions .list { display: flex; flex-direction: column; gap: 6px; flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
-.actions .list .btn { display: flex; justify-content: space-between; align-items: center; padding: 5px 12px; font-size: 17px; text-align: left; }
-.actions .list .btn:hover:not(:disabled) { border-width: 14px; padding: 3px 10px; }
+.actions .list { display: flex; flex-direction: column; gap: 4px; flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.actions .list .btn { display: flex; justify-content: space-between; align-items: center; padding: 3px 10px; font-size: 15px; text-align: left; }
+.actions .list .btn:hover:not(:disabled) { border-width: 14px; padding: 1px 8px; }
 .actions .free { display: flex; gap: 8px; align-items: center; padding: 0 0 0 4px; }
-.actions .free input { flex: 1; min-width: 0; height: 44px; padding: 0 6px; background: transparent; border: none; font-size: 15px; color: var(--ink); outline: none; user-select: text; }
-.actions .free .do { width: 56px; height: 40px; background: var(--red); color: #fff; border: none; font-size: 15px; flex: none; }
+.actions .free input { flex: 1; min-width: 0; height: 38px; padding: 0 6px; background: transparent; border: none; font-size: 14px; color: var(--ink); outline: none; user-select: text; }
+.actions .free .do { width: 48px; height: 34px; background: var(--red); color: #fff; border: none; font-size: 14px; flex: none; }
 .actions .free .do:disabled { opacity: .5; }
 .actions .row { display: flex; gap: 6px; }
-.actions .row .btn { flex: 1; font-size: 14px; text-align: center; padding: 2px 8px; color: var(--ink2); }
+.actions .row .btn { flex: 1; font-size: 13px; text-align: center; padding: 1px 8px; color: var(--ink2); }
 .dialog { position: absolute; left: 262px; right: 24px; bottom: 16px; height: 184px; z-index: 7; }
 /* 左下角：你现在的样子（对话框让出一节） */
 .user-portrait { position: absolute; left: 0; bottom: 0; width: 262px; height: 330px; z-index: 6; overflow: hidden; pointer-events: none; transition: opacity .5s, filter 1s; }
@@ -462,25 +462,25 @@ body.calm #scr-title .cover-wrap.fall { animation: none; }
 .gcard.has-how { cursor: pointer; }
 .gcard .how-hint { position: absolute; right: 16px; top: 8px; font-size: 12px; color: var(--red); opacity: .8; letter-spacing: 1px; }
 .how-text { width: 720px; font-size: 19px; line-height: 1.9; white-space: pre-line; user-select: text; -webkit-user-select: text; }
-/* 右上角四个按钮加大 */
-.topbtns { gap: 10px; }
-.icon-btn { width: 82px; height: 88px; font-size: 15px; letter-spacing: 1px; }
-.icon-btn img { width: 56px; height: 56px; }
+/* 右上角四个按钮：比最初略大，比 11/09 加大版小（Cora 11/09：太大） */
+.topbtns { gap: 6px; }
+.icon-btn { width: 66px; height: 70px; font-size: 13px; letter-spacing: 1px; }
+.icon-btn img { width: 44px; height: 44px; }
 
 /* —— 小屏（手机横屏、平板竖屏：整体缩到 75% 以下）：文字和按钮放大，保证看得清、点得到 —— */
 body.compact .dialog .text { font-size: 27px; line-height: 1.6; top: 40px; }
 body.compact .dialog .nametag { font-size: 23px; }
 body.compact .dialog .ctl { bottom: 8px; gap: 10px; }
 body.compact .dialog .ctl button { font-size: 20px; padding: 12px 12px; }
-body.compact .actions { width: 400px; top: 146px; }
+body.compact .actions { width: 350px; top: 128px; }
 body.compact .actions .head { font-size: 19px; }
-body.compact .actions .list .btn { font-size: 23px; padding: 8px 14px; }
-body.compact .actions .btn .cost { font-size: 17px; }
-body.compact .actions .free input { font-size: 21px; height: 54px; }
-body.compact .actions .free .do { width: 72px; height: 50px; font-size: 20px; }
-body.compact .actions .row .btn { font-size: 19px; padding: 6px 8px; }
-body.compact .icon-btn { width: 98px; height: 104px; font-size: 19px; }
-body.compact .icon-btn img { width: 66px; height: 66px; }
+body.compact .actions .list .btn { font-size: 20px; padding: 5px 12px; }
+body.compact .actions .btn .cost { font-size: 15px; }
+body.compact .actions .free input { font-size: 19px; height: 46px; }
+body.compact .actions .free .do { width: 62px; height: 42px; font-size: 18px; }
+body.compact .actions .row .btn { font-size: 17px; padding: 4px 8px; }
+body.compact .icon-btn { width: 80px; height: 86px; font-size: 17px; }
+body.compact .icon-btn img { width: 54px; height: 54px; }
 body.compact .hud .day { font-size: 36px; }
 body.compact .hud .slots, body.compact .hud .ap { font-size: 18px; }
 body.compact .hud .ap img { width: 34px; height: 34px; }
@@ -595,9 +595,9 @@ body.compact #ov-statshelp .how-text { font-size: 21px; line-height: 1.5; }
 .actions.choosing.over-cg { left: 50%; right: auto; top: auto; bottom: 214px; width: 620px; transform: translateX(-50%); }
 .actions.choosing.over-cg .head { align-self: center; }
 .actions.choosing.over-cg .list { -webkit-mask-image: none; mask-image: none; padding-bottom: 0; }
-/* 右上 HUD：深色底板，浅色场景上也看得清 */
-.topbtns { background: rgba(18,14,11,.5); border-radius: 10px; padding: 4px 8px; box-shadow: 0 2px 10px rgba(0,0,0,.25); }
-.icon-btn { color: #f3ece2; text-shadow: 0 1px 3px rgba(0,0,0,.9); }
+/* 右上 HUD：不要底板（Cora 11/09），靠字和图标自己的阴影在浅色场景上看清 */
+.icon-btn { color: #f3ece2; text-shadow: 0 1px 3px rgba(0,0,0,.95), 0 0 6px rgba(0,0,0,.6); }
+.icon-btn img { filter: drop-shadow(0 1px 3px rgba(0,0,0,.6)) drop-shadow(0 0 4px rgba(0,0,0,.35)); }
 /* 约定：直接写出来（字号不变） */
 /* 「重来」和其他三个隔开一点（尺寸不变） */
 .dialog .ctl button:first-child { margin-right: 20px; }
@@ -634,6 +634,16 @@ body.compact #ov-statshelp .how-text { font-size: 21px; line-height: 1.5; }
 .log-list { overflow-x: hidden; }
 #ov-stats .pocket { position: absolute; left: 0; width: 940px; top: 420px; text-align: center; font-size: 17px; letter-spacing: 4px; color: #A9A39A; }
 .phone .msgs .typing { font-style: italic; }
+/* 手机备忘录（备忘录任务单 1109）：像随手记的，不是系统 UI */
+.phone .bar .memo-tab { position: absolute; right: 10px; left: auto; font-size: 13px; cursor: pointer; }
+.phone .bar span { cursor: pointer; }
+.phone .bar b { font-weight: 500; }
+.phone .memo { flex: 1; overflow-y: auto; padding: 10px 14px; background: #F4F0E6; color: #2B2620; font-size: 14px; line-height: 1.7; user-select: text; -webkit-user-select: text; }
+.phone .memo-day { margin-top: 8px; font-size: 12px; color: #8A7F72; border-bottom: 1px solid #DDD4C4; }
+.phone .memo-item { padding: 2px 0; }
+.phone .memo-item.done { color: #A9A196; text-decoration: line-through; }
+.phone .memo-empty { margin-top: 30px; text-align: center; color: #A9A196; }
+body.compact .phone .memo { font-size: 19px; }
 .hud .ap { position: relative; }
 .ap-flash { position: absolute; left: 100%; margin-left: 8px; top: 0; color: var(--red); font-weight: 700; animation: apflash 1.6s ease forwards; pointer-events: none; }
 @keyframes apflash { 0% { opacity: 0; transform: translateY(4px); } 15% { opacity: 1; transform: none; } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-8px); } }
