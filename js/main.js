@@ -1,13 +1,13 @@
 // 启动：缩放、读设置、离线判定、标题画面
-import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794190192';
-import { store, getSettings, saveSettings, getGallery } from './store.js?v=1794190192';
-import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, hasAsset } from './game.js?v=1794190192';
-import { newRun, loadRun, hasActiveRun } from './state.js?v=1794190192';
-import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794190192';
-import { MID } from './config/endings.js?v=1794190192';
-import { madTier } from './config/values.js?v=1794190192';
-import * as P from './ui/panels.js?v=1794190192';
-import { showLock, showAftermath } from './ui/ending.js?v=1794190192';
+import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794220747';
+import { store, getSettings, saveSettings, getGallery } from './store.js?v=1794220747';
+import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, hasAsset } from './game.js?v=1794220747';
+import { newRun, loadRun, hasActiveRun, saveRun } from './state.js?v=1794220747';
+import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794220747';
+import { MID } from './config/endings.js?v=1794220747';
+import { madTier } from './config/values.js?v=1794220747';
+import * as P from './ui/panels.js?v=1794220747';
+import { showLock, showAftermath } from './ui/ending.js?v=1794220747';
 
 // 1280×720 等比缩放，四周黑边
 function fit() {
@@ -46,14 +46,14 @@ document.getElementById('rotate-go')?.addEventListener('click', async () => {
 // 键盘推进对话
 addEventListener('keydown', e => {
   if (e.target.matches('input,textarea')) return;
-  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794190192').then(m => m.advance()); }
+  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794220747').then(m => m.advance()); }
 });
 
 let bootOffline = 0;
 
 function showTitle() {
   G.R = null; G.s = null;
-  import('./audio.js?v=1794190192').then(a => a.playBgm('title'));
+  import('./audio.js?v=1794220747').then(a => a.playBgm('title'));
   for (const o of [...$('#overlays').children]) o.remove();
   const active = hasActiveRun();
   const items = [
@@ -155,18 +155,25 @@ async function cont() {
 // 同一个游戏开了两个标签页：后开的那个不能操作，避免两边存档互相覆盖
 function otherTabOpen() {
   if (!('BroadcastChannel' in window)) return Promise.resolve(false);
-  const bc = new BroadcastChannel('gucun');
+  const bc = new BroadcastChannel('gucun'); tabChannel = bc;
   let other = false, asking = true;
   bc.onmessage = e => {
     if (e.data === 'hello' && !G.blocked) bc.postMessage('here');
     if (e.data === 'here' && asking) other = true;
+    if (e.data === 'takeover' && !G.blocked) { if (G.s) saveRun(G.s); showElsewhere(); }   // 别的页面接管了：这边停下
   };
   bc.postMessage('hello');
   return new Promise(r => setTimeout(() => { asking = false; r(other); }, 400));
 }
+let tabChannel = null;
 function showElsewhere() {
   G.blocked = true;
-  showScreen('elsewhere', h('div', { style: { background: '#0b0907', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bdb4a8', fontSize: '26px', letterSpacing: '8px' } }, '你已经在别的地方看着他了。'));
+  for (const o of [...$('#overlays').children]) o.remove();
+  // 测试记录 7 #A：忘了关的后台页面也会把人卡在这里，所以给一个「在这里继续」：通知另一边停下，这边重新进
+  const take = () => { try { tabChannel?.postMessage('takeover'); sessionStorage.setItem('gucun_takeover', '1'); } catch {} location.reload(); };
+  showScreen('elsewhere', h('div', { style: { background: '#0b0907', display: 'flex', flexDirection: 'column', gap: '36px', alignItems: 'center', justifyContent: 'center', color: '#bdb4a8', fontSize: '26px', letterSpacing: '8px' } },
+    h('div', {}, '你已经在别的地方看着他了。'),
+    h('button', { class: 'btn', style: { width: 'auto', padding: '10px 34px', fontSize: '18px', letterSpacing: '4px' }, onclick: take }, '在这里继续')));
 }
 
 async function boot() {
@@ -175,7 +182,9 @@ async function boot() {
   const qs = new URLSearchParams(location.search);
   if (qs.has('debug') && LOCAL) saveSettings({ ...getSettings(), debug: true });
   if (!LOCAL && getSettings().debug) saveSettings({ ...getSettings(), debug: false });   // 线上版不开调试
-  if (await otherTabOpen()) return showElsewhere();
+  const tookOver = (() => { try { const v = sessionStorage.getItem('gucun_takeover'); sessionStorage.removeItem('gucun_takeover'); return !!v; } catch { return false; } })();
+  if (await otherTabOpen() && !tookOver) return showElsewhere();
+  if (tookOver) tabChannel?.postMessage('takeover');
   let lastActive = readLastActive();
   // 调试：?debug=1&offline=小时数，模拟离开了这么久
   if (qs.has('debug') && qs.has('offline')) lastActive = Date.now() - parseFloat(qs.get('offline')) * 3600e3;

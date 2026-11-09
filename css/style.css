@@ -570,3 +570,6 @@ body.compact .hud .appt-badge { font-size: 16px; }
 #ov-stats .stats-help { position: absolute; left: 110px; top: 430px; width: 590px; font-size: 14px; line-height: 1.75; color: #A9A39A; white-space: pre-line; }
 body.compact #ov-stats .stats-help { font-size: 15px; line-height: 1.55; top: 425px; }
 #ov-stats .shut { bottom: 36px; }
+/* 地图：有事的地点（人肉 v3 · 12） */
+#ov-map .pin .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--red); margin-left: 6px; vertical-align: middle; box-shadow: 0 0 0 2px rgba(255,255,255,.7); }
+.dialog .text .morning-hint { font-size: .82em; color: var(--ink2); margin-top: 8px; }

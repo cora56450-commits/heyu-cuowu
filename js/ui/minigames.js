@@ -1,6 +1,6 @@
 // 三个小游戏（纯前端，不调用 AI，支持触屏）：数花瓣、牠的字条、拼图（弹窗拼贴）
-import { h, A, openOv, closeOv, sleep, toStage } from './dom.js?v=1794190192';
-import { garble } from '../meta.js?v=1794190192';
+import { h, A, openOv, closeOv, sleep, toStage } from './dom.js?v=1794220747';
+import { garble } from '../meta.js?v=1794220747';
 
 // 拼图用的照片（框按照片比例自动调整）
 export const PUZZLES = {
@@ -10,7 +10,21 @@ export const PUZZLES = {
     done: '照片上的人很年轻，头发是黑的，束在脑后。你觉得这张脸在哪里见过。', fail: '照片太旧了，拼不起来。' },
 };
 // 牠的字条：句子；hidden 是拼完以后那行「看不清」的字（复制出来才是真的）
-const NOTES = ['河的针脚比我的正', '线头要剪干净', '你的手腕很凉', '我不老只是慢', '别在夜里去溪边', '外面的花有五瓣', '他记得的比他说的多'];
+// 正文按天数分组（人肉 v3 · 9）：同一句不重复，这一组用完再从下一组取
+const NOTE_GROUPS = [
+  { from: 1, lines: ['针要烫过', '线头要剪干净', '河的针脚比我的正', '你的手腕很凉', '花不要摘', '今天的线太新', '别在夜里去溪边', '饭在锅里'] },
+  { from: 15, lines: ['我不老只是慢', '他记得的比他说的多', '溪水比以前浅', '外面的花有五瓣', '他夜里不睡', '你的脚步声很轻'] },
+  { from: 30, lines: ['雾那边我去过', '他的手比我年轻时稳', '别让他一个人去后山', '你会走吗'] },
+];
+function pickNote(s) {
+  const seen = s.c.notesSeen;
+  const open = NOTE_GROUPS.filter(g => s.day >= g.from);
+  for (const g of [...open, ...NOTE_GROUPS.filter(g => s.day < g.from)]) {   // 当前能用的组先，用完再往后取
+    const left = g.lines.filter(l => !seen.includes(l));
+    if (left.length) return left[Math.floor(Math.random() * left.length)];
+  }
+  const all = open.flatMap(g => g.lines); return all[Math.floor(Math.random() * all.length)];
+}
 // 字条里的乱码真句子：按天数和牠线分档，同一句只出一次；档位不够就不出乱码（人肉 v3 · 5）
 const HIDDEN_TIERS = [
   { ok: s => s.day <= 14, lines: ['针要烫过', '今天的线太新', '花不要摘'] },
@@ -19,6 +33,7 @@ const HIDDEN_TIERS = [
   { ok: s => s.day >= 36 && (s.c.taLine || 0) >= 10 && s.f.puzzle_ta_young, lines: ['二十年前我也选过脸', '他会变成我'] },
 ];
 function pickHidden(s) {
+  if (!(s.loop > 0 || s.f.anyEnding)) return null;   // 一周目一律不出（人肉 v3 · 9）：土拨鼠之日之后，或图鉴里打出过结局
   s.c.hiddenSeen ||= [];
   const tier = [...HIDDEN_TIERS].reverse().find(t => t.ok(s) && t.lines.some(l => !s.c.hiddenSeen.includes(l)));
   if (!tier) return null;
@@ -87,8 +102,7 @@ function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.fl
 function note(s) {
   return new Promise(res => {
     s.c.notesSeen = s.c.notesSeen || [];
-    const pool = NOTES.filter(n => !s.c.notesSeen.includes(n));
-    const sentence = (pool.length ? pool : NOTES)[Math.floor(Math.random() * (pool.length || NOTES.length))];
+    const sentence = pickNote(s);
     const chars = [...sentence];
     let tiles = shuffle(chars.map((c, i) => ({ c, i, mir: Math.random() < 0.35 ? (Math.random() < 0.7 ? 'mir' : 'flip') : '' })));
     if (tiles.every((t, k) => t.i === k)) tiles = tiles.reverse();
