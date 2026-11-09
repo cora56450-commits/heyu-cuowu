@@ -1,14 +1,14 @@
 // 启动：缩放、读设置、离线判定、标题画面
-import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794263240';
-import { store, getSettings, saveSettings, getGallery, endingsOpen } from './store.js?v=1794263240';
-import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, hasAsset } from './game.js?v=1794263240';
-import { newRun, loadRun, hasActiveRun, saveRun } from './state.js?v=1794263240';
-import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794263240';
-import { MID } from './config/endings.js?v=1794263240';
-import { madTier } from './config/values.js?v=1794263240';
-import * as P from './ui/panels.js?v=1794263240';
-import { DEMO, DEMO_KEY, DEMO_BASE, DEMO_LAST_DAY, DEMO_TAG } from './config/demo.js?v=1794263240';
-import { showLock, showAftermath } from './ui/ending.js?v=1794263240';
+import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794267961';
+import { store, getSettings, saveSettings, getGallery, endingsOpen } from './store.js?v=1794267961';
+import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, hasAsset } from './game.js?v=1794267961';
+import { newRun, loadRun, hasActiveRun, saveRun } from './state.js?v=1794267961';
+import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794267961';
+import { MID } from './config/endings.js?v=1794267961';
+import { madTier } from './config/values.js?v=1794267961';
+import * as P from './ui/panels.js?v=1794267961';
+import { DEMO, DEMO_KEY, DEMO_BASE, DEMO_LAST_DAY, DEMO_TAG, TEST_BUILD } from './config/demo.js?v=1794267961';
+import { showLock, showAftermath } from './ui/ending.js?v=1794267961';
 
 // 1280×720 等比缩放，四周黑边
 function fit() {
@@ -47,14 +47,14 @@ document.getElementById('rotate-go')?.addEventListener('click', async () => {
 // 键盘推进对话
 addEventListener('keydown', e => {
   if (e.target.matches('input,textarea')) return;
-  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794263240').then(m => m.advance()); }
+  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794267961').then(m => m.advance()); }
 });
 
 let bootOffline = 0;
 
 function showTitle() {
   G.R = null; G.s = null;
-  import('./audio.js?v=1794263240').then(a => a.playBgm('title'));
+  import('./audio.js?v=1794267961').then(a => a.playBgm('title'));
   for (const o of [...$('#overlays').children]) o.remove();
   const active = hasActiveRun();
   const items = [
@@ -192,7 +192,7 @@ async function cont() {
 // 同一个游戏开了两个标签页：后开的那个不能操作，避免两边存档互相覆盖
 function otherTabOpen() {
   if (!('BroadcastChannel' in window)) return Promise.resolve(false);
-  const bc = new BroadcastChannel(DEMO ? 'gucun_demo' : 'gucun'); tabChannel = bc;   // 试玩版和完整版不互相锁
+  const bc = new BroadcastChannel(DEMO ? 'gucun_demo' : DEMO_TAG ? `gucun_${DEMO_TAG.toLowerCase()}` : 'gucun'); tabChannel = bc;   // 试玩版和完整版不互相锁
   let other = false, asking = true;
   bc.onmessage = e => {
     if (e.data === 'hello' && !G.blocked) bc.postMessage('here');
@@ -205,7 +205,7 @@ function otherTabOpen() {
 let tabChannel = null;
 function showElsewhere() {
   G.blocked = true;
-  import('./audio.js?v=1794263240').then(a => a.stopAll()).catch(() => {});   // 被接管的页面不能还在放音乐，不然两边的 BGM 叠在一起
+  import('./audio.js?v=1794267961').then(a => a.stopAll()).catch(() => {});   // 被接管的页面不能还在放音乐，不然两边的 BGM 叠在一起
   for (const o of [...$('#overlays').children]) o.remove();
   // 测试记录 7 #A：忘了关的后台页面也会把人卡在这里，所以给一个「在这里继续」：通知另一边停下，这边重新进
   const take = () => { try { tabChannel?.postMessage('takeover'); sessionStorage.setItem('gucun_takeover', '1'); } catch {} location.reload(); };
@@ -216,8 +216,8 @@ function showElsewhere() {
 
 // 试玩版水印：整屏斜着铺一层很淡的编号，角落再放一个小编号；截图、录屏里都带着，流出去能看出是谁的那份
 function watermark() {
-  if (!DEMO || !DEMO_TAG) return;
-  const t = `试玩 · ${DEMO_TAG}`;
+  if (!DEMO_TAG) return;
+  const t = `${DEMO ? '试玩' : '测试'} · ${DEMO_TAG}`;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="220"><text x="20" y="130" transform="rotate(-24 180 110)" font-size="22" font-family="serif" fill="#888" fill-opacity="0.09" letter-spacing="6">${t}</text></svg>`;
   const wm = h('div', { id: 'wm', style: { backgroundImage: `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")` } }, h('span', {}, t));
   $('#stage').append(wm);
@@ -227,8 +227,8 @@ async function boot() {
   installCopyHook();
   document.body.classList.toggle('calm', !!getSettings().reduceMotion);
   const qs = new URLSearchParams(location.search);
-  if (qs.has('debug') && LOCAL) saveSettings({ ...getSettings(), debug: true });
-  if (!LOCAL && getSettings().debug) saveSettings({ ...getSettings(), debug: false });   // 线上版不开调试
+  if (qs.has('debug') && (LOCAL || TEST_BUILD)) saveSettings({ ...getSettings(), debug: true });
+  if (!LOCAL && !TEST_BUILD && getSettings().debug) saveSettings({ ...getSettings(), debug: false });   // 线上版不开调试（Cowork 测试版 CW 除外）
   // 同一个浏览器里还有别的页面开着（常是忘了关的旧标签页、微信里没关的旧窗口）：新打开的这个直接接管，旧的那边停下、静音
   try { sessionStorage.removeItem('gucun_takeover'); } catch {}
   if (await otherTabOpen()) tabChannel?.postMessage('takeover');

@@ -1,7 +1,8 @@
 // localStorage 封装：所有键统一加 gucun_ 前缀
-import { DEMO } from './config/demo.js?v=1794263240';
+import { DEMO, DEMO_TAG } from './config/demo.js?v=1794267961';
 // 试玩版和完整版在同一个域名下（github.io），存档要分开，不然会互相覆盖
-const P = DEMO ? 'gucun_demo_' : 'gucun_';
+// 带编号的完整版（Cowork 测试版 CW）也和正式完整版分开
+const P = DEMO ? 'gucun_demo_' : DEMO_TAG ? `gucun_${DEMO_TAG.toLowerCase()}_` : 'gucun_';
 export const store = {
   get(k, def = null) {
     try { const v = localStorage.getItem(P + k); return v == null ? def : JSON.parse(v); } catch { return def; }
