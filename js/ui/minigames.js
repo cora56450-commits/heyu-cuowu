@@ -1,6 +1,6 @@
 // 三个小游戏（纯前端，不调用 AI，支持触屏）：数花瓣、牠的字条、拼图（弹窗拼贴）
-import { h, A, openOv, closeOv, sleep, toStage } from './dom.js?v=1794251694';
-import { garble } from '../meta.js?v=1794251694';
+import { h, A, openOv, closeOv, sleep, toStage } from './dom.js?v=1794251937';
+import { garble } from '../meta.js?v=1794251937';
 
 // 拼图用的照片（框按照片比例自动调整）
 export const PUZZLES = {
