@@ -1,7 +1,7 @@
 // 一局游戏的状态、数值结算、存档 / 读档
-import { store } from './store.js?v=1794185458';
-import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, CAP_UP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794185458';
-import { AP_PER_SLOT } from './config/world.js?v=1794185458';
+import { store } from './store.js?v=1794185992';
+import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, CAP_UP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794185992';
+import { AP_PER_SLOT } from './config/world.js?v=1794185992';
 
 export function newRun(outfit = 'initial', loop = 0) {
   return {
@@ -86,6 +86,11 @@ export function slotInfo(id) { const s = loadRun(id); return s ? { day: s.day, s
 export function clone(s) { return JSON.parse(JSON.stringify(s)); }
 
 // 名字：河第 1 天自我介绍、牠第 5 天递字条之前，名牌显示 ？？？（旧存档按天数算已经知道）
+// 「牠」这个名字揭晓之前，界面上（地图、建议行动）不出现「牠」（测试记录 6）
+export function taText(s, t) {
+  if (!s || knows(s, '牠')) return t;
+  return String(t).replace(/牠的屋子/g, '最高处的破屋').replace(/牠/g, '白头发的人');
+}
 export function knows(s, who) {
   if (!s) return true;
   if (who === '河') return !!s.f.know_he || s.day > 1 || s.done.includes('d1_meet');
