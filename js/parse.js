@@ -1,7 +1,7 @@
 // 解析 AI 输出：严格 JSON → 宽松提取 → 纯文本兜底；以及流式中途提取完整的 line 对象
-import { EXPR, CODE_ONLY_EXPR, ORGANS } from './config/world.js?v=1794182457';
+import { EXPR, CODE_ONLY_EXPR, ORGANS } from './config/world.js?v=1794183813';
 const ORGAN_BY_NAME = Object.fromEntries(ORGANS.map(o => [o.name, o.id]));
-import { AI_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794182457';
+import { AI_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794183813';
 
 export function looseJson(raw) {
   if (!raw) return null;
@@ -50,6 +50,7 @@ export function normTurn(raw) {
     tags, suggestions: sugg, organ,
     action_size: ['small', 'medium', 'large'].includes(j.action_size) ? j.action_size : 'small',
     he_flags: Array.isArray(j.he_flags) ? j.he_flags.filter(x => typeof x === 'string') : [],
+    appointment: j.appointment && typeof j.appointment === 'object' && j.appointment.who ? j.appointment : null,
   };
 }
 

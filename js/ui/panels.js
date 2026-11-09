@@ -1,17 +1,17 @@
 // 各个浮层：地图、手机、数值页、菜单、记录、存读档、设置、选装扮、图鉴
-import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794182457';
-import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen } from '../store.js?v=1794182457';
-import { chat, testConnection, ApiError } from '../api.js?v=1794182457';
-import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794182457';
-import { looseJson } from '../parse.js?v=1794182457';
-import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT } from '../config/world.js?v=1794182457';
-import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794182457';
-import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794182457';
-import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags } from '../state.js?v=1794182457';
-import { rollMeta } from '../meta.js?v=1794182457';
-import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm } from '../game.js?v=1794182457';
-import { openOrgan } from './organ.js?v=1794182457';
-import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794182457';
+import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794183813';
+import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen } from '../store.js?v=1794183813';
+import { chat, testConnection, ApiError } from '../api.js?v=1794183813';
+import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794183813';
+import { looseJson } from '../parse.js?v=1794183813';
+import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT } from '../config/world.js?v=1794183813';
+import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794183813';
+import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794183813';
+import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags } from '../state.js?v=1794183813';
+import { rollMeta } from '../meta.js?v=1794183813';
+import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm } from '../game.js?v=1794183813';
+import { openOrgan } from './organ.js?v=1794183813';
+import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794183813';
 
 // 系统样式的提示框（冷冰冰的电子界面，不是河说的）
 export function systemNotice(text, buttons) {
@@ -67,6 +67,12 @@ function fmtTs(ts) {
 }
 export function openPhone() {
   const s = G.s; if (!s) return;
+  // 有他的新消息：先闪一下「他那边」
+  if (s.unread && !G.phoneFlashed && A && document.querySelector('#scr-main')) {
+    G.phoneFlashed = true; const f = h('div', { style: { background: '#000' } }, h('img', { src: A('cg/phone_night.webp'), alt: '', style: { width: '100%', height: '100%', objectFit: 'cover', opacity: 0, transition: 'opacity .6s' } }));
+    openOv('phoneflash', f); setTimeout(() => { f.firstChild.style.opacity = 1; }, 30); setTimeout(() => { closeOv('phoneflash'); G.phoneFlashed = false; openPhone(); }, 1500);
+    import('../store.js?v=1794183813').then(m => m.unlock('cgs', 'phone_night')); return;
+  }
   s.unread = 0; refreshHud(); saveRun(s);
     const msgs = h('div', { class: 'msgs' });
   const render = () => {
@@ -76,7 +82,8 @@ export function openPhone() {
       if (m.sep) out.push(h('div', { class: 'sep' }, m.sep));
       if (m.ts - lastTs > 30 * 60e3) out.push(h('div', { class: 'ts' }, fmtTs(m.ts)));
       lastTs = m.ts;
-      if (m.text) out.push(h('div', { class: 'msg ' + (m.from === 'me' ? 'me' : 'he') }, m.text));
+      if (m.text && m.from === 'sys') out.push(h('div', { class: 'msg-sys' }, m.text));   // 旁白单独一行灰字
+      else if (m.text) out.push(h('div', { class: 'msg ' + (m.from === 'me' ? 'me' : 'he') }, m.text));
       if (m.note) out.push(h('div', { class: 'msg-note' }, m.note));
       return out;
     }));
@@ -226,7 +233,7 @@ export function openSettings() {
     if (key === 'apiKey' && st.apiKey && st.mock) { st.mock = false; if (boxes.mock) boxes.mock.checked = false; }
     saveSettings(st);
   } });
-  const after = () => { import('../audio.js?v=1794182457').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
+  const after = () => { import('../audio.js?v=1794183813').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
   const rng = (key, min, max, step) => h('input', { type: 'range', min, max, step, value: st[key], oninput: e => { st[key] = +e.target.value; saveSettings(st); after(); } });
   const chk = key => (boxes[key] = h('input', { type: 'checkbox', checked: !!st[key], onchange: e => { st[key] = e.target.checked; saveSettings(st); after(); } }));
   const status = h('span', { class: 'note' });
@@ -277,7 +284,7 @@ export function openSettings() {
     h('p', { class: 'note' }, '浏览器里「清除网站数据」也会把存档、Key 和图鉴一起清掉。'),
     st.debug ? h('div', { class: 'row' }, h('button', { class: 'btn', onclick: async () => {
       if (!(await confirmBox('全通存档', '图鉴全部解锁，三个手动存档位会被覆盖成测试节点（自动存档不动）。', '写入'))) return;
-      const d = await import('../debug.js?v=1794182457'); d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
+      const d = await import('../debug.js?v=1794183813'); d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
     } }, '调试：全通存档')) : null);
   openOv('settings', h('div', {}, panel));
 }
@@ -296,12 +303,12 @@ export function openOutfit(isStart) {
     const nameIn = isStart ? h('input', { class: 'name-in', type: 'text', maxlength: 8, placeholder: '你的名字（可以不填）', autocomplete: 'off' }) : null;
     const startBar = isStart ? h('div', { class: 'namebar' }, nameIn,
       h('button', { class: 'btn go', onclick: () => { closeOv('outfit'); res({ outfit: sel, name: nameIn.value.trim().slice(0, 8) }); } }, '就这样'),
-      h('div', { class: 'name-hint' }, 'AI 偶尔会前后说不通。在「设置」里把模型换成「好」、或者打开思维链，会改善。')) : null;
+      h('div', { class: 'name-hint' }, 'AI 偶尔会说出前后对不上的话。在设置里换成 pro 模型会好很多。')) : null;
     function pick(id) {
       closeOv('outfit');
       if (!isStart && s && id !== s.outfit) {
         s.outfit = id; s.meta.outfitChanged = true; saveRun(s); refreshHud(); toast('换好了。');
-        if (G.R?.chars?.he) import('../game.js?v=1794182457').then(g => g.metaLine('outfit'));
+        if (G.R?.chars?.he) import('../game.js?v=1794183813').then(g => g.metaLine('outfit'));
       }
       res(id);
     }
@@ -314,7 +321,7 @@ export function openOutfit(isStart) {
 
 // ———————————————— 图鉴 ————————————————
 // 回想里的剧情 / 日常 CG（结局 CG 不放这里）
-export const STORY_CGS = ['first_meet', 'daily_table', 'ta_suture', 'user_offline', 'master', 'festival', 'he_suture', 'first_cross', 'ta_mad', 'border', 'outside', 'he_first', 'ta_first', 'day40'];
+export const STORY_CGS = ['first_meet', 'd1_night', 'd2_walk', 'd2_phone', 'daily_breakfast', 'daily_table', 'daily_lamp', 'd4_heng', 'd6_creek', 'd8_man', 'puzzle_photo', 'phone_night', 'ta_suture', 'user_offline', 'master', 'festival', 'he_suture', 'first_cross', 'ta_mad', 'border', 'outside', 'he_first', 'ta_first', 'day40'];
 function viewCG(id, title) {
   const v = h('div', { style: { background: '#000' }, onclick: () => closeOv('cgview') },
     h('img', { src: A(`cg/${id}.webp`), style: { width: '100%', height: '100%', objectFit: 'contain' }, alt: '' }),
@@ -399,4 +406,19 @@ export function openMailbox() {
     finally { send.disabled = false; }
   } }, '寄出');
   modal('mail', '信箱', h('div', { class: 'mail-box' }, h('p', { class: 'note' }, '写给作者的信。会连同你现在的进度（第几天）一起寄出，不会带上你的 Key 和存档内容。'), msg, who, h('div', { class: 'row' }, send, status)));
+}
+
+// ———————————————— 序：点「开始」之后、选脸之前（人肉测试 v2 · C1） ————————————————
+export const PROLOGUE = ['有一个地方，从你这边走不过去。', '但你可以选一张脸，让她替你去。', '她会在一条溪边醒来。', '之后的四十二天，她看见的，就是你看见的。', '她疼的时候，你不会疼。', '——那边有人，会知道这一点。'];
+// 黑底白字，一行一行淡入，点一下下一行；lines 放完以后淡出
+export function blackLines(lines, { hold = false } = {}) {
+  return new Promise(res => {
+    const box = h('div', { class: 'prologue-lines' }); const ov = h('div', { class: 'prologue' }, box, h('div', { class: 'tap' }, '点一下'));
+    openOv('prologue', ov); let i = 0;
+    const next = () => {
+      if (i >= lines.length) { ov.removeEventListener('click', next); ov.style.transition = 'opacity .8s'; ov.style.opacity = 0; setTimeout(() => { closeOv('prologue'); res(); }, hold ? 1600 : 800); return; }
+      const p = h('p', {}, lines[i++]); box.append(p); setTimeout(() => p.classList.add('on'), 30);
+    };
+    ov.addEventListener('click', next); next();
+  });
 }

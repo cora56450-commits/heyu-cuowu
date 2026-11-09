@@ -120,5 +120,15 @@
  "ui/logo.webp": "logo_河边的错误.webp（去倒影）",
  "sprite/npc/man.webp": "小孩.png",
  "sprite/npc/heng.webp": "村长.png",
- "bg/creek_dusk40.webp": "40日限定黄昏背景.png"
+ "bg/creek_dusk40.webp": "40日限定黄昏背景.png",
+ "cg/d1_night.webp": "第一天夜里.png",
+ "cg/d2_walk.webp": "认路.png",
+ "cg/d2_phone.webp": "他给的手机.png",
+ "cg/d4_heng.webp": "衡.png",
+ "cg/d6_creek.webp": "他喜欢的东西.png",
+ "cg/d8_man.webp": "这朵花是错的.png",
+ "cg/puzzle_photo.webp": "那年我六岁.png",
+ "cg/daily_breakfast.webp": "日常早饭.png",
+ "cg/daily_lamp.webp": "日常灯下.png",
+ "cg/phone_night.webp": "他那边.png"
 }

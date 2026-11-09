@@ -1,7 +1,7 @@
 // 一局游戏的状态、数值结算、存档 / 读档
-import { store } from './store.js?v=1794182457';
-import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794182457';
-import { AP_PER_SLOT } from './config/world.js?v=1794182457';
+import { store } from './store.js?v=1794183813';
+import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, CAP_UP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794183813';
+import { AP_PER_SLOT } from './config/world.js?v=1794183813';
 
 export function newRun(outfit = 'initial', loop = 0) {
   return {
@@ -49,6 +49,7 @@ export function applyTags(s, tags = [], heFlags = [], extra = null, opts = {}) {
   // 回避型依恋：连续热烈回应
   if (warm) { s.c.warmStreak = (s.c.warmStreak || 0) + 1; WARM_STREAK.apply(s.c.warmStreak, dc); }
   else if (tags.length) s.c.warmStreak = Math.max(0, (s.c.warmStreak || 0) - WARM_STREAK.decay);
+  if (opts.scale != null && opts.scale !== 1) for (const k in dc) dc[k] *= opts.scale;   // 1 点的小事 ×0.5（固定事件、选项不打折）
   if (extra) for (const [k, x] of Object.entries(extra)) add(opts.capExtra ? dc : de, k, x);
   // 每天上限：今天已经加了多少、减了多少
   if (opts.noCap) { for (const [k, x] of Object.entries(dc)) add(de, k, x); for (const k in dc) delete dc[k]; }   // 固定剧情的选项：不受每天上限
@@ -56,7 +57,7 @@ export function applyTags(s, tags = [], heFlags = [], extra = null, opts = {}) {
   const out = {};
   for (const k of VALUE_KEYS) {
     let x = dc[k] || 0;
-    if (x > 0) { const room = Math.max(0, DAILY_CAP - (s.c.cap.up[k] || 0)); x = Math.min(x, room); s.c.cap.up[k] = (s.c.cap.up[k] || 0) + x; }
+    if (x > 0) { const cap = (CAP_UP[k] ?? DAILY_CAP) - (k === 'love' && s.c.clingyDay === s.day ? 1 : 0); const room = Math.max(0, cap - (s.c.cap.up[k] || 0)); x = Math.min(x, room); s.c.cap.up[k] = (s.c.cap.up[k] || 0) + x; }
     else if (x < 0) { const room = Math.max(0, DAILY_CAP - (s.c.cap.down[k] || 0)); x = Math.max(x, -room); s.c.cap.down[k] = (s.c.cap.down[k] || 0) - x; }
     x += de[k] || 0;
     if (x) { s.v[k] = clamp(s.v[k] + x); out[k] = x; }
@@ -89,5 +90,10 @@ export function knows(s, who) {
   if (!s) return true;
   if (who === '河') return !!s.f.know_he || s.day > 1 || s.done.includes('d1_meet');
   if (who === '牠') return !!s.f.know_ta || s.done.includes('d5_ta_suture');
+  if (who === '养母') return !!s.f.know_mother || s.day > 1 || s.done.includes('d1_night');
+  if (who === '衡') return !!s.f.know_heng || s.day > 4 || s.done.includes('d4_heng');
+  if (who === '满') return !!s.f.know_man || s.done.includes('d8_man');
+  if (who === '村民·男') return !!s.f.know_shi;
+  if (who === '村民·女') return !!s.f.know_fang;
   return true;
 }

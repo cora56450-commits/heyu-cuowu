@@ -18,8 +18,10 @@ export async function mockChat(o) {
     if (meta) lines.push({ speaker: '河', expr: 'blank', text: '你刚才睡了好久。' });
     if (garble) lines.push({ speaker: '河', expr: 'dazed', text: '……<乱>你睡着的时候我数过你的心跳</乱>' });
     lines.push({ speaker: 'narration', text: '（测试模式：没有调用 AI）' });
+    const lastUser = [...o.messages].reverse().find(m => m.role === 'user')?.content || '';
+    var appointment = /约/.test(lastUser) ? { who: '河', day: '明天', slot: '上午', place: '溪边' } : null;
     const t = pick(TAGS);
-    out = { lines, tags: t ? [t] : [], action_size: pick(['small', 'medium', 'large']), suggestions: [0, 1, 2].map(() => ({ text: pick(SUGG), cost: 1 + Math.floor(Math.random() * 3) })), he_flags: [], cg: null };
+    out = { lines, tags: t ? [t] : [], action_size: pick(['small', 'medium', 'large']), suggestions: [0, 1, 2].map(() => ({ text: pick(SUGG), cost: 1 + Math.floor(Math.random() * 3) })), he_flags: [], appointment, cg: null };
   }
   const s = JSON.stringify(out);
   let full = '';
