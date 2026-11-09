@@ -143,5 +143,10 @@
  "cg/daily_lamp_mid.webp": "日常灯下中期.png",
  "cg/daily_laundry.webp": "日常洗衣.png",
  "cg/daily_table_late.webp": "饭桌后期.png",
- "cg/daily_lamp_late.webp": "日常灯下后期.png"
+ "cg/daily_lamp_late.webp": "日常灯下后期.png",
+ "cg/phone_warm.webp": "手机 好感中.png",
+ "cg/phone_near.webp": "手机 好感高.png",
+ "cg/phone_sour.webp": "手机怨恨中.png",
+ "cg/phone_cold.webp": "手机 怨恨高.png",
+ "cg/daily_wait_late.webp": "门槛.png"
 }

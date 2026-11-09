@@ -1,17 +1,17 @@
 // 各个浮层：地图、手机、数值页、菜单、记录、存读档、设置、选装扮、图鉴
-import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794220747';
-import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen } from '../store.js?v=1794220747';
-import { chat, testConnection, ApiError } from '../api.js?v=1794220747';
-import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794220747';
-import { looseJson } from '../parse.js?v=1794220747';
-import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT, motherAway } from '../config/world.js?v=1794220747';
-import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794220747';
-import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794220747';
-import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags, taText } from '../state.js?v=1794220747';
-import { rollMeta } from '../meta.js?v=1794220747';
-import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm, mapMarks } from '../game.js?v=1794220747';
-import { openOrgan } from './organ.js?v=1794220747';
-import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794220747';
+import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794222138';
+import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen } from '../store.js?v=1794222138';
+import { chat, testConnection, ApiError } from '../api.js?v=1794222138';
+import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794222138';
+import { looseJson } from '../parse.js?v=1794222138';
+import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT, motherAway } from '../config/world.js?v=1794222138';
+import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794222138';
+import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794222138';
+import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags, taText } from '../state.js?v=1794222138';
+import { rollMeta } from '../meta.js?v=1794222138';
+import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm, mapMarks, PHONE_CG } from '../game.js?v=1794222138';
+import { openOrgan } from './organ.js?v=1794222138';
+import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794222138';
 
 // 系统样式的提示框（冷冰冰的电子界面，不是河说的）
 export function systemNotice(text, buttons) {
@@ -71,13 +71,21 @@ function fmtTs(ts) {
 }
 export function openPhone(noFlash) {
   const s = G.s; if (!s) return;
-  // 有他的新消息：先闪一下「他那边」
-  if (noFlash !== true && s.unread && !G.phoneFlashed && A && document.querySelector('#scr-main')) {
-    G.phoneFlashed = true; const f = h('div', { style: { background: '#000' } }, h('img', { src: A('cg/phone_night.webp'), alt: '', style: { width: '100%', height: '100%', objectFit: 'cover', opacity: 0, transition: 'opacity .6s' } }));
-    openOv('phoneflash', f); setTimeout(() => { f.firstChild.style.opacity = 1; }, 30); setTimeout(() => { closeOv('phoneflash'); G.phoneFlashed = false; openPhone(true); }, 1500);   // 闪完直接打开手机，不再闪（之前会无限循环）
-    import('../store.js?v=1794220747').then(m => m.unlock('cgs', 'phone_night')); return;
+  // 轮到新的「他那边」CG：先闪 1.5 秒，下方淡入一行小字；每张一局只闪一次，没有就直接打开手机
+  const cgId = s.c.phoneCgPending;
+  if (noFlash !== true && cgId && !G.phoneFlashed && document.querySelector('#scr-main')) {
+    G.phoneFlashed = true; s.c.phoneCgPending = null; saveRun(s);
+    const img = h('img', { src: A(`cg/${cgId}.webp`), alt: '', style: { width: '100%', height: '100%', objectFit: 'cover', opacity: 0, transition: 'opacity .6s' } });
+    const cap = h('div', { class: 'phone-cap' }, PHONE_CG[cgId]?.cap || '');
+    const f = h('div', { style: { background: '#000' } }, img, cap);
+    openOv('phoneflash', f); setTimeout(() => { img.style.opacity = 1; cap.classList.add('on'); }, 30); setTimeout(() => { closeOv('phoneflash'); G.phoneFlashed = false; openPhone(true); }, 1800);
+    import('../store.js?v=1794222138').then(m => m.unlock('cgs', cgId)); return;
   }
   s.unread = 0; refreshHud(); saveRun(s);
+  // 「睡了吗。」→ 打开手机 3 秒后变成「对方撤回了一条消息」
+  const recall = s.phone.filter(m => m.recallAt && m.recallAt < 1e9);
+  for (const m of recall) m.recallAt = Date.now() + m.recallAt;
+  if (recall.length) setTimeout(() => { if ($('#ov-phone')) render(); saveRun(s); }, 3100);
     const msgs = h('div', { class: 'msgs' });
   const render = () => {
     let lastTs = 0;
@@ -86,7 +94,8 @@ export function openPhone(noFlash) {
       if (m.sep) out.push(h('div', { class: 'sep' }, m.sep));
       if (m.ts - lastTs > 30 * 60e3) out.push(h('div', { class: 'ts' }, fmtTs(m.ts)));
       lastTs = m.ts;
-      if (m.text && m.from === 'sys') out.push(h('div', { class: 'msg-sys' }, m.text));   // 旁白单独一行灰字
+      if (m.recallAt && m.recallAt <= Date.now()) out.push(h('div', { class: 'msg-sys' }, '对方撤回了一条消息'));
+      else if (m.text && m.from === 'sys') out.push(h('div', { class: 'msg-sys' }, m.text));   // 旁白单独一行灰字
       else if (m.text) out.push(h('div', { class: 'msg ' + (m.from === 'me' ? 'me' : 'he') }, m.text));
       if (m.note) out.push(h('div', { class: 'msg-note' }, m.note));
       return out;
@@ -104,12 +113,12 @@ export function openPhone(noFlash) {
     const last = s.phone[s.phone.length - 1]; if (last?.from === 'me') delete last.note;
     s.phone.push({ from: 'me', text: t, ts: Date.now(), note: '已送达', day: s.day }); s.f.pingAnswered = true;
     if (s.day === 39 && s.f.d39_phone && !s.f.d39_replied) { s.f.d39_replied = true; render(); saveRun(s); await sleep(1800); s.phone[s.phone.length - 1].note = '已读'; s.phone.push({ from: 'he', text: '嗯。睡吧。', ts: Date.now() }); render(); saveRun(s); return; }
-    const g = await import('../game.js?v=1794220747');
+    const g = await import('../game.js?v=1794222138');
     if (!s.phonePending) {
       if ((s.phoneToday || 0) >= 3) s.phone[s.phone.length - 1].note = '已送达 · 他今天不会再回了';   // 每天最多回 3 次
       else {
         s.phoneToday = (s.phoneToday || 0) + 1; s.phonePending = { day: s.day, slot: s.slot };
-        const { phoneStage } = await import('../state.js?v=1794220747');
+        const { phoneStage } = await import('../state.js?v=1794222138');
         if (phoneStage(s) === 'near' && s.slot !== 3) setTimeout(() => g.phoneReplyNow(), 12000 + Math.random() * 15000);   // 近了：这一时段内就回
       }
     }
@@ -246,7 +255,7 @@ export function openSettings() {
     if (key === 'apiKey' && st.apiKey && st.mock) { st.mock = false; if (boxes.mock) boxes.mock.checked = false; }
     saveSettings(st);
   } });
-  const after = () => { import('../audio.js?v=1794220747').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
+  const after = () => { import('../audio.js?v=1794222138').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
   const rng = (key, min, max, step) => h('input', { type: 'range', min, max, step, value: st[key], oninput: e => { st[key] = +e.target.value; saveSettings(st); after(); } });
   const chk = key => (boxes[key] = h('input', { type: 'checkbox', checked: !!st[key], onchange: e => { st[key] = e.target.checked; saveSettings(st); after(); } }));
   const status = h('span', { class: 'note' });
@@ -297,7 +306,7 @@ export function openSettings() {
     h('p', { class: 'note' }, '浏览器里「清除网站数据」也会把存档、Key 和图鉴一起清掉。'),
     st.debug ? h('div', { class: 'row' }, h('button', { class: 'btn', onclick: async () => {
       if (!(await confirmBox('全通存档', '图鉴全部解锁，三个手动存档位会被覆盖成测试节点（自动存档不动）。', '写入'))) return;
-      const d = await import('../debug.js?v=1794220747'); d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
+      const d = await import('../debug.js?v=1794222138'); d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
     } }, '调试：全通存档')) : null);
   openOv('settings', h('div', {}, panel));
 }
@@ -321,7 +330,7 @@ export function openOutfit(isStart) {
       closeOv('outfit');
       if (!isStart && s && id !== s.outfit) {
         s.outfit = id; s.meta.outfitChanged = true; saveRun(s); refreshHud(); toast('换好了。');
-        if (G.R?.chars?.he) import('../game.js?v=1794220747').then(g => g.metaLine('outfit'));
+        if (G.R?.chars?.he) import('../game.js?v=1794222138').then(g => g.metaLine('outfit'));
       }
       res(id);
     }
@@ -334,7 +343,7 @@ export function openOutfit(isStart) {
 
 // ———————————————— 图鉴 ————————————————
 // 回想里的剧情 / 日常 CG（结局 CG 不放这里）
-export const STORY_CGS = ['first_meet', 'd1_night', 'd2_walk', 'd2_phone', 'daily_breakfast', 'daily_table', 'daily_lamp', 'daily_chili', 'd4_heng', 'ta_suture', 'd6_creek', 'd8_man', 'puzzle_photo', 'phone_night', 'user_offline', 'master', 'festival', 'd16_teach', 'he_suture', 'd20_rain', 'first_cross', 'daily_table_mid', 'daily_lamp_mid', 'daily_laundry', 'ta_mad', 'd26_guo', 'd28_tomb', 'border', 'd32_thread', 'outside', 'd36_roof', 'daily_table_late', 'daily_lamp_late', 'he_first', 'ta_first', 'day40', 'd41_night'];
+export const STORY_CGS = ['first_meet', 'd1_night', 'd2_walk', 'd2_phone', 'daily_breakfast', 'daily_table', 'daily_lamp', 'daily_chili', 'd4_heng', 'ta_suture', 'd6_creek', 'd8_man', 'puzzle_photo', 'phone_night', 'phone_warm', 'phone_near', 'phone_sour', 'phone_cold', 'user_offline', 'master', 'festival', 'd16_teach', 'he_suture', 'd20_rain', 'first_cross', 'daily_table_mid', 'daily_lamp_mid', 'daily_laundry', 'ta_mad', 'd26_guo', 'd28_tomb', 'border', 'd32_thread', 'outside', 'd36_roof', 'daily_table_late', 'daily_lamp_late', 'daily_wait_late', 'he_first', 'ta_first', 'day40', 'd41_night'];
 function viewCG(id, title) {
   const v = h('div', { style: { background: '#000' }, onclick: () => closeOv('cgview') },
     h('img', { src: A(`cg/${id}.webp`), style: { width: '100%', height: '100%', objectFit: 'contain' }, alt: '' }),
@@ -426,7 +435,7 @@ export function openMailbox() {
 }
 
 // ———————————————— 序：点「开始」之后、选脸之前（人肉测试 v2 · C1） ————————————————
-export const PROLOGUE = ['有一个地方，从你这边走不过去。', '但你可以选一张脸，让她替你去。', '她会在一条溪边醒来。', '之后的四十二天，她看见的，就是你看见的。', '她疼的时候，你不会疼。', '——那边有人，会知道这一点。'];
+export const PROLOGUE = ['你过不去。', '她可以。', '给她挑一张脸。', '她在溪边醒来，住四十二天。', '这些天，你看着她。', '村里也有人，在看着你。'];   // 11/09 Cora 定稿 C 版
 // 黑底白字，一行一行淡入，点一下下一行；lines 放完以后淡出
 export function blackLines(lines, { hold = false } = {}) {
   return new Promise(res => {
