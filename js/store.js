@@ -1,5 +1,5 @@
 // localStorage 封装：所有键统一加 gucun_ 前缀
-import { DEMO } from './config/demo.js?v=1794225433';
+import { DEMO } from './config/demo.js?v=1794246568';
 // 试玩版和完整版在同一个域名下（github.io），存档要分开，不然会互相覆盖
 const P = DEMO ? 'gucun_demo_' : 'gucun_';
 export const store = {
@@ -23,6 +23,8 @@ export function saveSettings(s) { store.set('settings', s); }
 
 // 图鉴：结局、CG、道具；开新档不清
 export function getGallery() { return { endings: {}, cgs: {}, organs: {}, misc: {}, ...store.get('gallery', {}) }; }
+// 「结局」按钮能不能点：完整版要打出过至少一个结局；试玩版要把十天玩完（demo_done），之后能看完整版有哪些结局、怎么达成
+export const endingsOpen = () => DEMO ? !!store.get('demo_done') : Object.keys(getGallery().endings || {}).length > 0;
 // 器官画：第 12 天「和他一起看画」拼完之前，图鉴和「河的画」里都看不到
 export const organsOpen = () => !!getGallery().misc.organ_puzzle;
 export function unlock(kind, id) { const g = getGallery(); if (!g[kind][id]) { g[kind][id] = Date.now(); store.set('gallery', g); return true; } return false; }

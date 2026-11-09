@@ -19,10 +19,10 @@ img { -webkit-user-drag: none; user-select: none; }
 .hidden { display: none !important; }
 
 /* —— 屏幕与浮层 —— */
-.screen { position: absolute; inset: 0; display: none; overflow: hidden; overflow: clip; }
+.screen { position: absolute; top: 0; right: 0; bottom: 0; left: 0; display: none; overflow: hidden; overflow: clip; }
 .screen.active { display: block; animation: fadein .45s ease; }
 @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
-#overlays > .ov { position: absolute; inset: 0; z-index: 50; animation: fadein .3s ease; overflow: hidden; overflow: clip; }
+#overlays > .ov { position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 50; animation: fadein .3s ease; overflow: hidden; overflow: clip; }
 .dim { background: rgba(10, 8, 6, .62); }
 #toast { position: absolute; left: 50%; top: 24px; transform: translateX(-50%); z-index: 99; pointer-events: none; }
 #toast div { background: rgba(20, 16, 12, .88); color: var(--paper); padding: 10px 22px; border-radius: 2px; margin-bottom: 6px; font-size: 18px; animation: fadein .3s; }
@@ -59,7 +59,7 @@ img { -webkit-user-drag: none; user-select: none; }
 #scr-title .ver { position: absolute; left: 20px; bottom: 14px; font-size: 12px; opacity: .3; }
 
 /* —— 主界面 —— */
-#scr-main .bg, .cg-layer { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+#scr-main .bg, .cg-layer { position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
 #scr-main .bg { transition: filter .6s; }
 .cg-layer { opacity: 0; transition: opacity .8s; pointer-events: none; z-index: 2; }
 .cg-layer.on { opacity: 1; }
@@ -99,7 +99,7 @@ body.calm .char.on { animation: none; }
 .user-portrait .user-fig { top: 0; height: 500px; }
 .user-portrait.feign { filter: grayscale(.6) brightness(.85); }
 .user-portrait.under-cg { opacity: 0; }
-.dialog::before { content: ''; position: absolute; inset: 0; border-style: solid; border-width: 28px; border-image: url(../assets/ui/panel.webp) 64 fill / 28px stretch; opacity: .9; }
+.dialog::before { content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; border-style: solid; border-width: 28px; border-image: url(../assets/ui/panel.webp) 64 fill / 28px stretch; opacity: .9; }
 .dialog .nametag { position: absolute; left: 30px; top: -16px; z-index: 2; height: auto; line-height: normal; padding: 6px 14px; font-size: 18px; letter-spacing: 6px; }
 .dialog .text { position: absolute; left: 52px; right: 52px; top: 44px; bottom: 40px; font-size: 20px; line-height: 1.8; user-select: text; -webkit-user-select: text; cursor: pointer; overflow: hidden; }
 .dialog .text.narr { color: var(--ink2); }
@@ -119,7 +119,7 @@ body.loose .dialog::before { filter: contrast(.92); transform: rotate(-.25deg); 
 /* —— 地图 —— */
 #ov-map { background: #3A3833; }
 #ov-map .mapwrap { position: absolute; left: 36px; top: 38px; width: 860px; height: 645px; }
-#ov-map .mapwrap > img { position: absolute; inset: 0; width: 860px; height: 645px; }
+#ov-map .mapwrap > img { position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 860px; height: 645px; }
 .pin { position: absolute; display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 4px 10px; font-size: 16px; white-space: nowrap; }
 .pin.btn { padding: 4px 10px; }
 .pin.btnsel { padding: 4px 8px; }
@@ -142,10 +142,10 @@ body.loose .dialog::before { filter: contrast(.92); transform: rotate(-.25deg); 
 
 /* —— 手机 —— */
 #ov-phone { background: #1E1D1B; }
-#ov-phone > .bgdim { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .25; }
+#ov-phone > .bgdim { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; opacity: .25; }
 .phone { position: absolute; left: 466px; top: 20px; width: 347px; height: 680px; }
-.phone .body { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
-.phone .screen-area { position: absolute; left: 24px; top: 104px; width: 300px; height: 469px; z-index: 1; background: #E6E9EE; display: flex; flex-direction: column; font-family: var(--sans); overflow: hidden; }
+.phone .body { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }   /* 外框图放在屏幕下面：旧浏览器显示不了这张图时（画成白块），屏幕内容也不会被盖住 */
+.phone .screen-area { position: absolute; left: 24px; top: 104px; width: 300px; height: 469px; z-index: 2; background: #E6E9EE; display: flex; flex-direction: column; font-family: var(--sans); overflow: hidden; }
 .phone .bar { height: 44px; flex: none; display: flex; align-items: center; justify-content: center; position: relative; background: #8FA0B4; color: #fff; font-size: 16px; font-weight: 500; }
 .phone .bar span { position: absolute; left: 10px; font-size: 13px; }
 .phone .msgs { flex: 1; overflow-y: auto; padding: 12px 10px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.5; user-select: text; -webkit-user-select: text; }
@@ -189,7 +189,7 @@ body.loose .dialog::before { filter: contrast(.92); transform: rotate(-.25deg); 
 .gcard .q { font-size: 18px; color: #6B675F; }
 .gcard .cond { font-size: 14px; line-height: 1.7; }
 .gcard.on { color: var(--paper); cursor: pointer; justify-content: flex-end; }
-.gcard.on .thumb { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .35; }
+.gcard.on .thumb { position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: .35; }
 .gcard.on b { position: relative; font-size: 19px; font-weight: 600; }
 .gcard.on small { position: relative; font-size: 12px; color: #D8D2C6; }
 .gcard.wide { height: 84px; align-items: center; justify-content: center; font-size: 22px; letter-spacing: 12px; color: #6B675F; opacity: .75; }
@@ -237,7 +237,7 @@ body.loose .dialog::before { filter: contrast(.92); transform: rotate(-.25deg); 
 
 /* —— 结局 —— */
 #scr-ending { background: #000; }
-#scr-ending .cg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 2.5s; }
+#scr-ending .cg { position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 2.5s; }
 #scr-ending .cg.on { opacity: 1; }
 #scr-ending .cg.glitch { animation: glitch 3.5s infinite; }
 @keyframes glitch {
@@ -260,8 +260,10 @@ body.loose .dialog::before { filter: contrast(.92); transform: rotate(-.25deg); 
 
 /* —— 锁定 —— */
 #scr-lock { background: #000; }
-#scr-lock .bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(.6) brightness(.35); }
+#scr-lock .bg { position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(.6) brightness(.35); }
 #scr-lock .line { position: absolute; left: 0; right: 0; top: 46%; text-align: center; color: #d6cfc6; font-size: 26px; letter-spacing: 8px; opacity: 0; animation: fadein 4s 1.5s forwards; }
+#scr-lock .ta-garble { position: absolute; left: 0; right: 0; top: calc(46% + 58px); text-align: center; color: #d6cfc6; font-size: 18px; letter-spacing: 2px; opacity: 0; animation: fadein-ta 4s 4s forwards; user-select: text; -webkit-user-select: text; cursor: text; }
+@keyframes fadein-ta { to { opacity: .45; } }
 #scr-lock .knot { position: absolute; right: 18px; bottom: 16px; width: 26px; height: 26px; opacity: .22; }
 #scr-lock .tiny { position: absolute; left: 14px; bottom: 10px; color: #444; font-size: 11px; font-family: var(--sans); }
 
@@ -274,16 +276,16 @@ body.loose .dialog::before { filter: contrast(.92); transform: rotate(-.25deg); 
 @keyframes fxfade { 0% { opacity: 1; } 100% { opacity: 0; filter: blur(2px); } }
 .fx-dust { animation: fxdust 9s ease forwards; }
 @keyframes fxdust { 0% { filter: none; } 100% { filter: grayscale(1) brightness(1.15) contrast(.55) sepia(.25); } }
-.dust-layer { position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(rgba(220,215,205,.35) 1px, transparent 1.4px); background-size: 7px 7px; opacity: 0; animation: dustin 9s ease forwards; mix-blend-mode: screen; }
+.dust-layer { position: absolute; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none; background-image: radial-gradient(rgba(220,215,205,.35) 1px, transparent 1.4px); background-size: 7px 7px; opacity: 0; animation: dustin 9s ease forwards; mix-blend-mode: screen; }
 @keyframes dustin { to { opacity: 1; } }
 .after-line { position: absolute; left: 0; right: 0; bottom: 60px; text-align: center; color: var(--paper); font-size: 24px; letter-spacing: 6px; text-shadow: 0 2px 10px #000; opacity: 0; animation: fadein 2s 3s forwards; }
 
 /* —— 器官 —— */
 #ov-organ { background: radial-gradient(ellipse at center, #2b211d, #0b0807); color: var(--paper); }
 .organ-stage { position: absolute; left: 50%; top: 46%; width: 460px; height: 460px; transform: translate(-50%, -50%); perspective: 900px; touch-action: none; cursor: grab; }
-.organ-rot { position: absolute; inset: 0; transform-style: preserve-3d; }
-.organ-rot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; animation: breathe 7s ease-in-out infinite; }
-.organ-rot .gloss { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: soft-light; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; animation: breathe 7s ease-in-out infinite; }
+.organ-rot { position: absolute; top: 0; right: 0; bottom: 0; left: 0; transform-style: preserve-3d; }
+.organ-rot img { position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; object-fit: contain; animation: breathe 7s ease-in-out infinite; }
+.organ-rot .gloss { position: absolute; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none; mix-blend-mode: soft-light; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; animation: breathe 7s ease-in-out infinite; }
 @keyframes breathe { 50% { transform: scale(1.025); } }
 #ov-organ .nm { position: absolute; top: 34px; width: 100%; text-align: center; font-size: 30px; letter-spacing: 12px; }
 #ov-organ .nm small { display: block; font-size: 15px; letter-spacing: 4px; opacity: .6; margin-top: 4px; }
@@ -315,7 +317,7 @@ body.loose .dialog::before { filter: contrast(.92); transform: rotate(-.25deg); 
 .win98.snap .tb { background: #808080; }
 
 /* —— 第 40 天：他捏住想要的那个选项 —— */
-.pinch-layer { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
+.pinch-layer { position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 6; pointer-events: none; }
 .pinch-list { position: absolute; left: 560px; top: 150px; width: 400px; display: flex; flex-direction: column; gap: 8px; pointer-events: auto; }
 .pinch-hand-layer { position: absolute; pointer-events: none; z-index: 2; }
 .pinch-opt { position: relative; height: 52px; border: 0; background: rgba(239,234,226,.94); border-style: solid; border-width: 12px; border-image: url(../assets/ui/btn.webp) 24 fill / 12px stretch; font-size: 19px; color: var(--ink); letter-spacing: 2px; cursor: pointer; }
@@ -346,7 +348,7 @@ body.loose .dialog::before { filter: contrast(.92); transform: rotate(-.25deg); 
 /* —— 河的画 / 器官归位 —— */
 #ov-organ .nm small.over { display: block; font-size: 15px; letter-spacing: 8px; opacity: .55; margin: 0 0 6px; }
 .torso { position: absolute; }
-.torso .torso-img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.torso .torso-img { position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; }
 .torso .slot { position: absolute; transform: translate(-50%, -50%); border: 1.5px dashed rgba(196,64,58,.85); border-radius: 50%; }
 .torso .slot.empty { opacity: .35; }
 .torso .slot.filled { border-color: transparent; }
@@ -363,9 +365,9 @@ body.loose .dialog::before { filter: contrast(.92); transform: rotate(-.25deg); 
 #scr-main.asleep .bg, #scr-main.asleep .char { filter: grayscale(.7) brightness(.6) !important; transition: filter 3s; }
 
 /* —— 标题：封面 + 菜单装饰 —— */
-#scr-title .river { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; animation: drift 24s ease-in-out infinite alternate; }
+#scr-title .river { position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; object-fit: cover; animation: drift 24s ease-in-out infinite alternate; }
 #scr-title .river.blood, .river-fallback.blood { filter: sepia(1) hue-rotate(-45deg) saturate(3.2) brightness(.45); }
-.river-fallback.blood { position: absolute; inset: 0; background: #10292A; }
+.river-fallback.blood { position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: #10292A; }
 #scr-title .cover-fig { position: absolute; left: 0; top: 0; width: 680px; height: 720px; object-fit: contain; object-position: left top; }
 #scr-title .cover-fig.from-bottom { object-position: left bottom; }   /* 胸像贴着画面底部 */
 #scr-title .menu button { display: flex; align-items: center; gap: 0; }
@@ -404,9 +406,9 @@ body.calm .petal, body.calm .drift { animation: none; }
 
 /* —— 标题封面：人物融进河水 —— */
 #scr-title .cover-wrap { position: absolute; left: 0; top: 0; width: 680px; height: 720px; isolation: isolate; pointer-events: none; }
-#scr-title .cover-wrap .cover-fig { position: absolute; inset: 0; width: 100%; height: 100%; filter: saturate(.7) contrast(.9) brightness(.9); }
+#scr-title .cover-wrap .cover-fig { position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; filter: saturate(.7) contrast(.9) brightness(.9); }
 #scr-title .cover-wrap.from-bottom .cover-fig { object-position: left bottom; }
-#scr-title .cover-layer { position: absolute; inset: 0; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: left top; mask-position: left top; }
+#scr-title .cover-layer { position: absolute; top: 0; right: 0; bottom: 0; left: 0; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: left top; mask-position: left top; }
 #scr-title .cover-wrap.from-bottom .cover-layer { -webkit-mask-position: left bottom; mask-position: left bottom; }
 /* 染成河水的墨绿 */
 #scr-title .cover-layer.tint { background: #2c6658; mix-blend-mode: color; opacity: .42; }
@@ -420,7 +422,7 @@ body.calm .petal, body.calm .drift { animation: none; }
 #scr-title .cover-wrap.blood .cover-layer.depth { background: linear-gradient(180deg, rgba(190,150,150,0) 0%, rgba(80,25,25,.35) 55%, rgba(30,6,8,.85) 100%); }
 #scr-title .cover-wrap.blood .cover-layer.water { filter: sepia(1) hue-rotate(-45deg) saturate(3) brightness(.6); }
 /* 整个画面再罩一层水下的雾和暗角，把人和水连在一起 */
-#scr-title .cover-haze { position: absolute; inset: 0; pointer-events: none;
+#scr-title .cover-haze { position: absolute; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none;
   background: radial-gradient(ellipse 70% 80% at 30% 45%, transparent 40%, rgba(6,24,20,.55) 100%), linear-gradient(180deg, rgba(160,200,185,.08), transparent 30%); }
 #scr-title .cover-haze.blood { background: radial-gradient(ellipse 70% 80% at 30% 45%, transparent 40%, rgba(30,5,6,.6) 100%); }
 
@@ -496,7 +498,7 @@ body.compact .how-text { font-size: 23px; }
 body.compact .pinch-opt { font-size: 23px; }
 
 /* 手机竖着拿：提示横过来（舞台在舞台外，不受缩放影响） */
-#rotate { display: none; position: fixed; inset: 0; z-index: 1000; background: #0b0907; color: #d8cfc2; flex-direction: column; align-items: center; justify-content: center; gap: 18px; font-size: 18px; letter-spacing: 4px; text-align: center; }
+#rotate { display: none; position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 1000; background: #0b0907; color: #d8cfc2; flex-direction: column; align-items: center; justify-content: center; gap: 18px; font-size: 18px; letter-spacing: 4px; text-align: center; }
 #rotate .ph { width: 46px; height: 80px; border: 2px solid #d8cfc2; border-radius: 8px; animation: rot 2.4s ease-in-out infinite; }
 @keyframes rot { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(90deg); } }
 @media (orientation: portrait) and (max-width: 600px) { #rotate { display: flex; } }
@@ -567,8 +569,8 @@ body.compact .prologue-lines p { font-size: 32px; }
 .hud .appt-badge { font-size: 13px; padding: 1px 7px; border: 1px solid var(--red); color: var(--red); background: transparent; border-radius: 3px; cursor: pointer; font-family: inherit; }
 body.compact .hud .appt-badge { font-size: 16px; }
 /* 数值页：说明常驻在下面 */
-#ov-stats .stats-help { position: absolute; left: 110px; top: 430px; width: 590px; font-size: 14px; line-height: 1.75; color: #A9A39A; white-space: pre-line; }
-body.compact #ov-stats .stats-help { font-size: 15px; line-height: 1.55; top: 425px; }
+#ov-stats .stats-q { position: absolute; left: 270px; bottom: 36px; height: 44px; padding: 0 22px; border: 1px solid #5a534b; background: none; color: #A9A39A; font-size: 15px; letter-spacing: 3px; cursor: pointer; }
+#ov-stats .stats-q:hover { color: #E9E4DA; border-color: #A9A39A; }
 #ov-stats .shut { bottom: 36px; }
 /* 地图：有事的地点（人肉 v3 · 12） */
 #ov-map .pin .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--red); margin-left: 6px; vertical-align: middle; box-shadow: 0 0 0 2px rgba(255,255,255,.7); }
@@ -577,5 +579,79 @@ body.compact #ov-stats .stats-help { font-size: 15px; line-height: 1.55; top: 42
 #ov-phoneflash .phone-cap { position: absolute; left: 0; right: 0; top: 80%; text-align: center; color: #f3ece2; font-size: 22px; letter-spacing: 6px; text-shadow: 0 2px 12px #000; opacity: 0; transition: opacity .9s .3s; }
 #ov-phoneflash .phone-cap.on { opacity: 1; }
 /* 试玩版水印（不挡点击） */
-#wm { position: absolute; inset: 0; z-index: 9999; pointer-events: none; background-repeat: repeat; }
+#wm { position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 9999; pointer-events: none; background-repeat: repeat; }
 #wm span { position: absolute; right: 14px; bottom: 8px; font-size: 12px; letter-spacing: 3px; color: rgba(160,150,140,.45); }
+#ov-statshelp .modal { width: 900px; }   /* 数值说明：放宽、字小一点，一屏看完不用滚 */
+#ov-statshelp .how-text { width: auto; max-width: none; font-size: 19px; line-height: 1.6; }
+body.compact #ov-statshelp .how-text { font-size: 21px; line-height: 1.5; }
+
+/* ———— 测试报告（AI 试玩 阶段一，11/09）———— */
+/* 1. 生成 / 播放中行动列表整块收起；置灰更明显 */
+.actions.busy { visibility: hidden; }
+.btn:disabled { opacity: .38; filter: grayscale(1); cursor: not-allowed; }
+.actions .list .btn[data-over="1"] .cost { color: var(--red); text-decoration: line-through; }
+/* 行动列表：上移、加高；还有更多时底部渐隐 */
+.actions { top: 112px; bottom: 206px; }
+.actions .list { -webkit-mask-image: linear-gradient(#000 calc(100% - 26px), transparent); mask-image: linear-gradient(#000 calc(100% - 26px), transparent); padding-bottom: 22px; }
+.actions .list .btn { min-height: 46px; }
+/* CG 上的剧情选项：放到下方中间，不盖住河的脸 */
+.actions.choosing.over-cg { left: 50%; right: auto; top: auto; bottom: 214px; width: 620px; transform: translateX(-50%); }
+.actions.choosing.over-cg .head { align-self: center; }
+.actions.choosing.over-cg .list { -webkit-mask-image: none; mask-image: none; padding-bottom: 0; }
+/* 对话框底部按钮：加大，「重来」和其他三个隔开 */
+.dialog .ctl { gap: 6px; bottom: 10px; }
+.dialog .ctl button { font-size: 17px; padding: 12px 14px; min-width: 64px; }
+.dialog .ctl button:first-child { margin-right: 34px; }
+body.compact .dialog .ctl button { font-size: 22px; padding: 14px 16px; }
+body.compact .dialog .ctl button:first-child { margin-right: 44px; }
+/* 自由输入「做」 */
+.actions .free .do { width: 68px; height: 46px; font-size: 18px; }
+/* 右上 HUD：深色底板，浅色场景上也看得清 */
+.topbtns { background: rgba(18,14,11,.5); border-radius: 10px; padding: 4px 8px; box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+.icon-btn { color: #f3ece2; text-shadow: 0 1px 3px rgba(0,0,0,.9); }
+/* 约定：直接写出来 */
+.hud .appt-badge { font-size: 15px; padding: 3px 9px; background: rgba(255,250,240,.75); }
+/* 地图：说明栏、锁住的地点、「去这里」固定在底部、时段滤镜、地图上的手机 */
+#ov-map .side { bottom: 38px; }
+#ov-map .side .tip { font-size: 18px; line-height: 1.6; }
+#ov-map .info { flex: 1; min-height: 0; }
+#ov-map .info .grow { flex: 1; }
+#ov-map .info .go { flex: none; }
+.pin.locked { opacity: .55; filter: grayscale(1); }
+.pin .lock { font-style: normal; font-size: 12px; color: #fff; background: #6d655b; padding: 0 5px; line-height: 18px; border-radius: 2px; }
+#ov-map .tint { position: absolute; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none; }
+#ov-map.dusk .tint { background: rgba(196,110,40,.22); mix-blend-mode: multiply; }
+#ov-map.night .tint { background: rgba(20,30,70,.5); mix-blend-mode: multiply; }
+#ov-map .map-phone { position: relative; height: 48px; font-size: 17px; letter-spacing: 4px; text-align: center; }
+#ov-map .map-phone .badge { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); min-width: 22px; height: 22px; border-radius: 11px; background: var(--red); color: #fff; font: 12px/22px var(--sans); text-align: center; padding: 0 5px; letter-spacing: 0; }
+body.compact #ov-map .side .tip { font-size: 22px; }
+/* 弹窗右上角的 × */
+.modal { position: absolute; }
+.modal-x { position: absolute; right: 8px; top: 6px; width: 44px; height: 44px; border: 0; background: none; font-size: 28px; line-height: 1; color: var(--ink2); cursor: pointer; }
+.modal-x:hover { color: var(--red); }
+/* 记录：按天分段 */
+.log-list .log-day { margin: 14px 0 4px; font-size: 15px; letter-spacing: 4px; color: var(--ink2); border-bottom: 1px solid rgba(94,90,83,.3); }
+.log-list .log-day:first-child { margin-top: 0; }
+/* 选打扮：多露一点衣服 */
+#ov-outfit .o img { height: 600px; top: 0; }
+/* 拼图：标题不撑宽窗口；拼完的字 */
+.win98 .tb { overflow: hidden; white-space: nowrap; gap: 4px; }
+.win98 .tb span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.win98 .tb b { flex: none; }
+.puzzle-done { position: absolute; left: 0; right: 0; bottom: 26px; text-align: center; color: #f3ece2; font-size: 22px; letter-spacing: 6px; text-shadow: 0 2px 10px #000; z-index: 600; }
+/* 器官托盘：拖走的位置留空 */
+.piece-gap { width: 110px; height: 110px; }
+/* 锁定画面：牠的那一句（复制出去才是真的） */
+/* 再小一档：电脑上的小窗口（缩放 < 0.6） */
+body.tiny .dialog .text { font-size: 31px; }
+body.tiny .dialog .ctl button { font-size: 26px; padding: 16px 18px; }
+body.tiny .actions { width: 450px; }
+body.tiny .actions .list .btn { font-size: 26px; }
+body.tiny .actions .free input { font-size: 24px; height: 62px; }
+body.tiny .actions .free .do { width: 88px; height: 60px; font-size: 24px; }
+body.tiny .actions .row .btn { font-size: 22px; }
+body.tiny #ov-map .side .tip { font-size: 25px; }
+body.tiny #ov-map .info .ds { font-size: 22px; }
+body.tiny .hud .appt-badge { font-size: 20px; }
+body.tiny .log-list { font-size: 24px; }
+.log-list { overflow-x: hidden; }

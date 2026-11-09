@@ -1,7 +1,7 @@
 // 解析 AI 输出：严格 JSON → 宽松提取 → 纯文本兜底；以及流式中途提取完整的 line 对象
-import { EXPR, CODE_ONLY_EXPR, ORGANS } from './config/world.js?v=1794225433';
+import { EXPR, CODE_ONLY_EXPR, ORGANS } from './config/world.js?v=1794246568';
 const ORGAN_BY_NAME = Object.fromEntries(ORGANS.map(o => [o.name, o.id]));
-import { AI_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794225433';
+import { AI_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794246568';
 
 export function looseJson(raw) {
   if (!raw) return null;
@@ -31,9 +31,25 @@ export function normLine(l) {
   return out;
 }
 
+// 一条 line 的 JSON 坏了（最常见：台词里有没转义的英文引号 "）：按字段名硬取，不再整条丢掉（测试报告「台词丢了」）
+export function rescueLine(src) {
+  try { return JSON.parse(src); } catch {}
+  const sp = /"speaker"\s*:\s*"([^"]{0,12})"/.exec(src); if (!sp) return null;
+  const ex = /"expr"\s*:\s*"([a-z_]{0,12})"/.exec(src);
+  const tm = /"text"\s*:\s*"([\s\S]*?)"\s*(?:,\s*"(?:expr|name|speaker)"\s*:\s*"[^"]*"\s*)*}\s*$/.exec(src); if (!tm) return null;
+  const nm = /"name"\s*:\s*"([^"]{0,4})"/.exec(src); let q = 0;
+  return { speaker: sp[1], expr: ex?.[1], name: nm?.[1], text: tm[1].replace(/\\n/g, ' ').replace(/\\"/g, '"').replace(/"/g, () => (q++ % 2 ? '」' : '「')) };
+}
+// 整段 JSON 坏了时，从 lines 数组里一条一条取（和流式的切法一样，台词不会错位）
+function scanLines(full) {
+  const out = []; const s = new LineStreamer(l => out.push(l)); s.feed(full); return out;
+}
+
 export function normTurn(raw) {
   const j = looseJson(raw);
   if (!j || !Array.isArray(j.lines)) {
+    const rescued = raw ? scanLines(raw) : [];
+    if (rescued.length) return { ok: 'rescued', lines: rescued, tags: [], action_size: 'small', suggestions: [], he_flags: [] };
     // 兜底：把纯文本当旁白
     const txt = (raw || '').replace(/[{}\[\]"]/g, '').split(/\n+/).map(s => s.trim()).filter(Boolean).slice(0, 6);
     return { ok: false, lines: txt.length ? txt.map(t => ({ speaker: 'narration', text: t.slice(0, 120) })) : [{ speaker: 'narration', text: '……' }], tags: [], action_size: 'small', suggestions: [], he_flags: [] };
@@ -72,7 +88,7 @@ export class LineStreamer {
       else if (c === '}') {
         depth--;
         if (depth === 0 && start >= 0) {
-          try { const l = normLine(JSON.parse(full.slice(start, i + 1))); if (l) { this.count++; this.onLine(l); } } catch {}
+          const l = normLine(rescueLine(full.slice(start, i + 1))); if (l) { this.count++; this.onLine(l); }
           this.pos = i + 1; start = -1;
         }
       } else if (c === ']' && depth === 0) { this.closed = true; this.pos = i + 1; return; }

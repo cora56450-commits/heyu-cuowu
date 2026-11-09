@@ -43,8 +43,12 @@ export function toStage(e) {
 // 通用面板弹窗
 export function modal(id, title, body, opts = {}) {
   return new Promise(res => {
-    const done = v => { closeOv(id); res(v); };
-    const box = h('div', { class: 'modal paper' }, title ? h('h3', {}, title) : null, body);
+    // 能点外面关掉的弹窗，也能按 Esc、点右上角 × 关掉（测试报告：记录面板没有关闭按钮，Esc 关不掉）
+    const esc = e => { if (e.key === 'Escape' && document.getElementById('ov-' + id) === topOv()) { e.preventDefault(); done(null); } };
+    const done = v => { removeEventListener('keydown', esc); closeOv(id); res(v); };
+    const box = h('div', { class: 'modal paper' }, title ? h('h3', {}, title) : null, body,
+      opts.noClose ? null : h('button', { class: 'modal-x', 'aria-label': '关闭', onclick: () => done(null) }, '×'));
+    if (!opts.noClose) addEventListener('keydown', esc);
     const ov = h('div', { class: 'dim', onclick: e => { if (e.target === ov && !opts.noClose) done(null); } }, box);
     if (opts.buttons) box.append(h('div', { class: 'list', style: { marginTop: '18px' } },
       opts.buttons.map(b => h('button', { class: 'btn', onclick: () => done(b.value) }, b.label))));

@@ -1,6 +1,6 @@
 // 器官道具查看：CSS 3D 摇摆 + 拖动旋转 + 随角度移动的高光
-import { h, A, openOv, closeOv, toStage, sleep } from './dom.js?v=1794225433';
-import { ORGANS } from '../config/world.js?v=1794225433';
+import { h, A, openOv, closeOv, toStage, sleep } from './dom.js?v=1794246568';
+import { ORGANS } from '../config/world.js?v=1794246568';
 
 export function openOrgan(id, list) {
   list = list && list.length ? list : [id];
@@ -99,6 +99,7 @@ export function organPuzzle(owned, hasTorso) {
         if (Math.hypot(cx - tx, cy - ty) < 60) {
           // 放对了：吸附，带一点「贴合」的动效
           const sw = pw / 100 * W, ratio = (img.naturalHeight || 1) / (img.naturalWidth || 1);
+          img.replaceWith(h('div', { class: 'piece-gap' }));   // 托盘里留个空位，剩下的不重新排位（测试报告：连续拖时抓错器官）
           ov.append(img);
           Object.assign(img.style, { position: 'absolute', transform: '', width: sw + 'px', height: sw * ratio + 'px', left: (tx - sw / 2) + 'px', top: (ty - sw * ratio / 2) + 'px' });
           img.classList.add('fit'); placed.add(id);

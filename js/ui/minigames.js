@@ -1,6 +1,6 @@
 // 三个小游戏（纯前端，不调用 AI，支持触屏）：数花瓣、牠的字条、拼图（弹窗拼贴）
-import { h, A, openOv, closeOv, sleep, toStage } from './dom.js?v=1794225433';
-import { garble } from '../meta.js?v=1794225433';
+import { h, A, openOv, closeOv, sleep, toStage } from './dom.js?v=1794246568';
+import { garble } from '../meta.js?v=1794246568';
 
 // 拼图用的照片（框按照片比例自动调整）
 export const PUZZLES = {
@@ -76,10 +76,10 @@ function flower(s) {
     };
     const body = shell('数花瓣', '这里的花是四瓣或六瓣的。找出那朵不一样的。', () => finish(false));
     const area = h('div', { class: 'flowers' }); body.append(area);
-    const W = 1100, H = 590, N = 30, placed = [];
+    const W = 1100, H = 590, N = 16, placed = [];   // 花少一点、大一点（测试报告：小窗口下 40px 的花分不清四五六瓣）
     const odd = Math.floor(Math.random() * N);
     for (let i = 0; i < N; i++) {
-      const size = 62 + Math.random() * 36;
+      const size = 104 + Math.random() * 30;
       let x, y, tries = 0;
       do { x = Math.random() * (W - size); y = Math.random() * (H - size); tries++; }
       while (tries < 200 && placed.some(p => Math.hypot(p.x - x, p.y - y) < (p.size + size) / 2 * 0.95));
@@ -155,7 +155,8 @@ async function puzzle(s, cfg) {
     let z = 10, left = COLS * ROWS;
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
       const pic = h('div', { class: 'pic', style: { width: cw + 'px', height: ch + 'px', backgroundImage: `url(${A(cfg.img)})`, backgroundSize: `${FW}px ${FH}px`, backgroundPosition: `${-c * cw}px ${-r * ch}px` } });
-      const win = h('div', { class: 'win98' }, h('div', { class: 'tb' }, h('span', {}, `${cfg.title} (${r * COLS + c + 1}/${COLS * ROWS})`), h('b', {}, '×')), pic);
+      // 窗口宽度跟着照片块走（测试报告：标题太长把窗口撑宽，右边一截灰）
+      const win = h('div', { class: 'win98', style: { width: (cw + 2 * PAD) + 'px' } }, h('div', { class: 'tb' }, h('span', {}, `${cfg.title} (${r * COLS + c + 1}/${COLS * ROWS})`), h('b', {}, '×')), pic);
       // 随机散开（避开中间的框）
       let x, y;
       do { x = 20 + Math.random() * (1280 - cw - 60); y = 90 + Math.random() * (720 - ch - 140); }
@@ -175,7 +176,12 @@ async function puzzle(s, cfg) {
           win.style.left = target.x + 'px'; win.style.top = target.y + 'px'; win.classList.add('snap'); win.style.zIndex = 1;
           if (--left === 0) {
             const full = h('img', { src: A(cfg.img), style: { position: 'absolute', left: FX + 'px', top: FY + 'px', width: FW + 'px', height: FH + 'px', opacity: 0, transition: 'opacity 1.2s', zIndex: 500, objectFit: 'cover' } });
-            body.append(full); await sleep(50); full.style.opacity = 1; await sleep(2200); finish(true);
+            body.append(full); await sleep(50); full.style.opacity = 1;
+            // 拼完停下来给玩家看整张，点一下（或 6 秒后）再关（测试报告：拼完直接关闭，没有完成的那一下）
+            await sleep(1300);
+            const cap = h('div', { class: 'puzzle-done' }, '拼好了。点一下继续。'); body.append(cap);
+            await new Promise(r => { const t = setTimeout(r, 6000); body.parentElement.addEventListener('click', () => { clearTimeout(t); r(); }, { once: true }); });
+            finish(true);
           }
         }
       };

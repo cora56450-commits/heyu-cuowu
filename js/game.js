@@ -1,21 +1,21 @@
 // 主循环：主界面、对话播放、行动点、时段推进、事件、结局判定
-import { h, $, A, sleep, showScreen, openOv, closeOv, toast, preload, modal } from './ui/dom.js?v=1794225433';
-import { getSettings, store, unlock, getGallery, organsOpen } from './store.js?v=1794225433';
-import { chat, ApiError } from './api.js?v=1794225433';
-import { buildSystem, summaryPrompt, phonePingPrompt, phoneChatPrompt } from './prompt.js?v=1794225433';
-import { normTurn, LineStreamer, looseJson } from './parse.js?v=1794225433';
-import { AI_TAGS } from './config/values.js?v=1794225433';
-import { SLOTS, LOCATIONS, TOTAL_DAYS, AP_PER_SLOT, DUSK, NIGHT, heLocation, OUTFITS, SPRITE_DIR, DEFAULT_EXPR, FIRST_LINE, EXPR, SPRITE_FIT, spriteBox, NPC_SPRITES, NPC_FIT, DUO, EXPR_FALLBACK, FEIGN_PATCH, PINCH, PINCH_BOX, VILLAGERS, NPC_PRESENCE, motherAway } from './config/world.js?v=1794225433';
-import { DAILY, VILLAGE_OUTFIT_ASSIM, OUTSIDE_OUTFIT_ASSIM, WARM_STREAK, madTier } from './config/values.js?v=1794225433';
-import { ENDINGS, judgeFinal, MID, AFTERMATH, LOOP_LINE } from './config/endings.js?v=1794225433';
-import { newRun, applyTags, saveRun, loadRun, clone, tierOf, knows, taText, phoneStage } from './state.js?v=1794225433';
-import { rollMeta, collectInjections, splitGarble, EXTRA_META, canExtraMeta, markExtraMeta, idleFor } from './meta.js?v=1794225433';
-import { findCliches, CLICHES } from './config/style.js?v=1794225433';
-import { DEMO, DEMO_LAST_DAY } from './config/demo.js?v=1794225433';
-import * as P from './ui/panels.js?v=1794225433';
-import { runMinigame } from './ui/minigames.js?v=1794225433';
-import { openOrgan, organPuzzle } from './ui/organ.js?v=1794225433';
-import { showEnding, showLock } from './ui/ending.js?v=1794225433';
+import { h, $, A, sleep, showScreen, openOv, closeOv, toast, preload, modal } from './ui/dom.js?v=1794246568';
+import { getSettings, store, unlock, getGallery, organsOpen } from './store.js?v=1794246568';
+import { chat, ApiError } from './api.js?v=1794246568';
+import { buildSystem, summaryPrompt, phonePingPrompt, phoneChatPrompt } from './prompt.js?v=1794246568';
+import { normTurn, LineStreamer, looseJson } from './parse.js?v=1794246568';
+import { AI_TAGS } from './config/values.js?v=1794246568';
+import { SLOTS, LOCATIONS, TOTAL_DAYS, AP_PER_SLOT, DUSK, NIGHT, heLocation, OUTFITS, SPRITE_DIR, DEFAULT_EXPR, FIRST_LINE, EXPR, SPRITE_FIT, spriteBox, NPC_SPRITES, NPC_FIT, DUO, EXPR_FALLBACK, FEIGN_PATCH, PINCH, PINCH_BOX, VILLAGERS, NPC_PRESENCE, motherAway, locLocked } from './config/world.js?v=1794246568';
+import { DAILY, VILLAGE_OUTFIT_ASSIM, OUTSIDE_OUTFIT_ASSIM, WARM_STREAK, madTier } from './config/values.js?v=1794246568';
+import { ENDINGS, judgeFinal, MID, AFTERMATH, LOOP_LINE } from './config/endings.js?v=1794246568';
+import { newRun, applyTags, saveRun, loadRun, clone, tierOf, knows, taText, phoneStage } from './state.js?v=1794246568';
+import { rollMeta, collectInjections, splitGarble, EXTRA_META, canExtraMeta, markExtraMeta, idleFor } from './meta.js?v=1794246568';
+import { findCliches, CLICHES } from './config/style.js?v=1794246568';
+import { DEMO, DEMO_LAST_DAY } from './config/demo.js?v=1794246568';
+import * as P from './ui/panels.js?v=1794246568';
+import { runMinigame } from './ui/minigames.js?v=1794246568';
+import { openOrgan, organPuzzle } from './ui/organ.js?v=1794246568';
+import { showEnding, showLock } from './ui/ending.js?v=1794246568';
 
 export const G = { s: null, R: null, events: [], busy: false, last: null, backTitle: null };
 const SIZE_COST = { small: 1, medium: 2, large: 3 };
@@ -30,10 +30,10 @@ function goreAllowed(s) {
 const GORE_HOLD = '今天已经写过内脏、血或缝合了。这一轮不要再写这些，也不要让河主动说起内脏或画；就算玩家问起，也只一笔带过、岔开，不说出器官名字，不描写。把注意力放在人、日常和你们之间。';
 const DRAWINGS_HIDDEN = '河的解剖画还没给「你」看过：被问起就收起来、岔开，不说画的是什么。';
 // 一个时段的最后一件事：让 AI 把场景收住，不要停在河刚问完一句话
-const LAST_ACTION_NOTE = '这是这个时段的最后一件事。写完这件事以后把场景收住（河说完话、各自去忙、或者自然地分开），最后一条不要是等玩家回答的问题。';
+const LAST_ACTION_NOTE = '这是这个时段的最后一件事。写完这件事以后把场景收住（河说完话、各自去忙、或者自然地分开），最后一条不要是等玩家回答的问题。如果这件事是在等人，等到了以后至少写两三句你们之间的来往再收住，不要人一进门就结束。';
 const PLACE_WORDS = [['he_room', /河的房间|他的房间|他屋/], ['room', /偏房|我的房间|我屋|我那屋|回屋/], ['yard', /养母家|院子|回家/], ['creek', /溪/], ['ta_house', /牠的屋|缝者|牠那/], ['fields', /田|晒场/], ['peach', /桃花林/], ['tomb', /后山|古墓/], ['border', /村界|雾/], ['path', /石径|村里转/]];
 const placeIn = t => (PLACE_WORDS.find(([, re]) => re.test(t)) || [])[0];
-const isLockedLoc = id => { const L = LOCATIONS[id]; return !L || (L.unlockDay && G.s.day < L.unlockDay && !(id === 'border' && G.s.f.border_found)); };
+const isLockedLoc = id => locLocked(G.s, id);
 const BIG_ACTION = { yard: '帮养母做完这一段的活', room: '在偏房歇过这一段', he_room: '陪他待过这一段', creek: '沿着溪往下走一趟', fields: '在地里干完这一段', peach: '在桃花林里走远一点', ta_house: '帮牠收拾一整段', tomb: '在后山走一圈', border: '沿着雾边走一段', path: '在村里慢慢转一圈' };
 const SLOT_CLOSE = ['到晌午了。', '日影斜了。', '天暗下来了。', '夜深了。'];
 // 衡分的活（d7_work）：对应地点、时段多一条「干活（2 点）」，一天一次；不加同化（人肉 v3 · 4）
@@ -42,13 +42,15 @@ const JOBS = {
   yard: { loc: 'yard', slots: [0, 2], note: '「你」给养母打下手（择菜、挑水、烧火）。养母边干边讲一段村里的旧事，或者教「你」做一道菜。这只是干活过日子，不要写成「你」在融入村子。' },
   ta: { loc: 'ta_house', slots: [1], note: '「你」给牠送午饭。牠吃得很少，吃完写一张字条推给「你」（牠的台词用字条格式）。这只是送饭，不要写成「你」在融入村子。' },
 };
+// 衡说「明天开始」：分到活的第二天才有「干活」（测试报告 · 5③）
+const jobOn = s => !!s.f.job && s.day >= (s.f.jobFrom || 0);
 // 「河的第一次」之后那一天：回避型，越界之后会自省
 const HE_FIRST_AFTER = '昨晚你们越过了那条线。今天河有点别扭：躲着你、话比平时更少，不提昨晚，也不说任何占有的话。他在跟自己较劲，不是在生你的气。';
 
 export async function loadEvents() {
   // 发布版的 events.json 是编码过的（tools/build_dist.py），以 E1: 开头
-  const t = await fetch('data/events.json?v=1794225433').then(r => r.text());
-  const j = JSON.parse(t.startsWith('E1:') ? (await import('./_k.js?v=1794225433')).decode(t.slice(3)) : t);
+  const t = await fetch('data/events.json?v=1794246568').then(r => r.text());
+  const j = JSON.parse(t.startsWith('E1:') ? (await import('./_k.js?v=1794246568')).decode(t.slice(3)) : t);
   G.events = j.events;
   try { G.assets = new Set(Object.keys(await fetch('assets/manifest.json').then(r => r.json()))); } catch { G.assets = null; }
 }
@@ -60,7 +62,7 @@ function bgFor(loc, slot) {
   const L = LOCATIONS[loc] || LOCATIONS.creek;
   const night = slot === NIGHT; const dusk = slot === DUSK;
   const src = night && L.bg[1] ? L.bg[1] : L.bg[0];
-  const filter = night && !L.bg[1] ? 'brightness(.42) saturate(.7) hue-rotate(-10deg)' : dusk ? 'sepia(.25) brightness(.9)' : 'none';
+  const filter = night && !L.bg[1] ? 'brightness(.38) saturate(.55) sepia(.25) hue-rotate(185deg)' : dusk ? 'sepia(.5) saturate(1.15) brightness(.78) hue-rotate(-12deg)' : 'none';   // 黄昏、夜里没有专门的图：滤镜加重，一眼看得出时段
   return { src: A(`bg/${src}.webp`), filter };
 }
 
@@ -80,7 +82,7 @@ export function buildMain() {
     ib('phone', '手机', () => P.openPhone(), R.badge), ib('map', '地图', () => P.openMap(true)),
     ib('stats', '数值', () => P.openStats()), ib('menu', '菜单', () => P.openMenu()));
   R.actHead = h('div', { class: 'head tag' }); R.actList = h('div', { class: 'list' });
-  R.input = h('input', { type: 'text', placeholder: '或者，自己写想做什么……', 'aria-label': '自己写想做的事', maxlength: 60, onkeydown: e => { if (e.key === 'Enter') freeAct(); } });
+  R.input = h('input', { type: 'text', placeholder: '或者，自己写想做什么（花 1 点）', 'aria-label': '自己写想做的事', maxlength: 60, onkeydown: e => { if (e.key === 'Enter') freeAct(); } });
   R.input.addEventListener('input', () => {
     const n = R.input.value.length; R.inputMax = Math.max(R.inputMax || 0, n);
     if (n === 0 && R.inputMax >= 4) { R.inputMax = 0; if (G.R?.chars?.he) metaLine('erased'); }
@@ -99,6 +101,8 @@ export function buildMain() {
   R.ctl = h('div', { class: 'ctl' }, R.regenBtn, h('button', { onclick: () => P.openLog() }, '记录'), R.autoBtn, h('button', { onclick: () => P.openSaves('save') }, '存档'));
   R.dialog = h('div', { class: 'dialog', onclick: e => { if (!e.target.closest('.ctl') && !e.target.closest('button')) advance(); } }, R.name, R.text, R.next, R.ctl);
   const scr = h('div', {}, R.bg, R.sprite2, R.sprite, R.cg, R.portrait, R.hud, R.top, R.actions, R.dialog);
+  // 点画面空白处（背景、立绘、CG）也能推进对话：行动列表收起时，那块地方点了不再「没反应」
+  scr.addEventListener('click', e => { if (e.target === scr || [R.bg, R.sprite, R.sprite2, R.cg].includes(e.target)) advance(); });
   showScreen('main', scr);
   G.R = R; G.auto = false;
   return R;
@@ -112,7 +116,9 @@ export function refreshHud() {
   R.slots.replaceChildren(...SLOTS.map((n, i) => h('span', { class: i === s.slot ? 'on' : '' }, n)));
   R.ap.replaceChildren(h('span', { class: 'l' }, '行动'), ...Array.from({ length: AP_PER_SLOT }, (_, i) => h('img', { src: A(i < s.ap ? 'ui/ap_full.webp' : 'ui/ap_empty.webp'), alt: '' })), h('span', { class: 'r' }, `剩 ${s.ap} 点`));
   R.badge.textContent = s.unread; R.badge.classList.toggle('hidden', !s.unread);
-  R.appt.classList.toggle('hidden', !(s.appts || []).length); R.appt.textContent = (s.appts || []).length > 1 ? `约 ${s.appts.length}` : '约';
+  const ap = [...(s.appts || [])].sort((x, y) => x.day * 4 + x.slot - (y.day * 4 + y.slot));
+  R.appt.classList.toggle('hidden', !ap.length);   // 直接写出最近的一个约定（测试报告：红色小章「约」不容易发现）
+  if (ap.length) R.appt.textContent = `约 · ${ap[0].day === s.day ? '' : ap[0].day === s.day + 1 ? '明天' : `第 ${ap[0].day} 天`}${SLOTS[ap[0].slot]}·${ap[0].place}${ap.length > 1 ? ` 等 ${ap.length} 个` : ''}`;
   const phoneBtn = R.top.firstChild, has = hasPhone(s);
   if (phoneBtn.classList.contains('hidden') && has) { phoneBtn.classList.add('appear'); setTimeout(() => phoneBtn.classList.remove('appear'), 1200); }
   phoneBtn.classList.toggle('hidden', !has);
@@ -133,7 +139,7 @@ export function pickBgm() {
   if (['ta_house', 'tomb'].includes(s.loc) || UNEASY_EVENTS.includes(s.curEvent)) slot = 'uneasy';
   else if (s.slot === NIGHT && ['he_room', 'room'].includes(s.loc) && (heLocation(s.day, s.slot) === s.loc || s.curEvent)) slot = 'night';
   if (s.curEvent === 'd40_question') slot = 'meta';
-  import('./audio.js?v=1794225433').then(a => a.playBgm(slot));
+  import('./audio.js?v=1794246568').then(a => a.playBgm(slot));
 }
 // 立绘：河在 sprite，其他人在 sprite2；两个人同时在画面上时河往左让
 function charSrc(who, expr) {
@@ -237,10 +243,11 @@ export async function metaLine(id, force = false) {
   const s = G.s, R = G.R; if (!s || !R || !$('#scr-main.active')) return false;
   if (!force && !canExtraMeta(s, id)) return false;
   if (s.phase === 'event' && !force) return false;   // 固定事件进行中不插 meta
+  if (s.phase === 'map' && !force) return false;     // 选地点时不插（测试报告 · 6：系统句挂上河的名牌）
   if (G.busy || G.inTurn || G.waitClick) { if (!G.metaQueue.includes(id)) G.metaQueue.push(id); return true; }
   markExtraMeta(s, id);
   const m = EXTRA_META[id];
-  import('./audio.js?v=1794225433').then(a => a.stutter()).catch(() => {});
+  import('./audio.js?v=1794246568').then(a => a.stutter()).catch(() => {});
   if (m.faint) {   // 一行很淡的字，2 秒后消失
     const f = h('div', { class: 'faint-line' }, m.faint); R.dialog.append(f); setTimeout(() => f.remove(), 2200); return true;
   }
@@ -268,9 +275,11 @@ function makeQueue() {
     async next() { while (!q.length) { if (closed) return null; await new Promise(r => (waiter = r)); } return q.shift(); },
   };
 }
+// 点击推进：一句刚开始打字 / 刚等点击的 300ms 内不接受（AI 生成时多点的几下不会把下一句跳过去，测试报告 · 4）
 export function advance() {
-  if (G.typing) { G.typing.finish(); return; }
-  if (G.waitClick) { const f = G.waitClick; G.waitClick = null; f(); }
+  const now = performance.now();
+  if (G.typing) { if (now - (G.lineAt || 0) > 300) G.typing.finish(); return; }
+  if (G.waitClick && now - (G.waitAt || 0) > 300) { const f = G.waitClick; G.waitClick = null; f(); }
 }
 function typeInto(el, segs) {
   const speed = G.forceAuto ? 30 : getSettings().textSpeed;
@@ -318,10 +327,19 @@ async function showLine(line, opts = {}) {
     t = known ? t.replace(/白头发的人|白发(的)?(男子|男人|人)/g, '牠') : t.replace(/白发(的)?(男子|男人|人)|白头发的(男子|男人)/g, '白头发的人').replace(/牠/g, '白头发的人');
     line = { ...line, text: t };
   }
+  // 旁白写到某人走了：那人的立绘撤下（测试报告：白发人「顺着溪岸走了」后立绘还在）
+  if (narr && !opts.keepSprite) {
+    const o = R.chars?.other;
+    const oName = o && (o.who === '牠' ? '牠|白头发的人' : o.who === '村民·男' ? '石|那个男人' : o.who === '村民·女' ? '芳|那个女人' : o.who);
+    if (o && new RegExp(`(${oName})[^。！？]{0,10}(走了|走远|离开|出去了|转身走|下山|往回走|不见了)`).test(line.text)) { R.chars.other = null; layoutChars(); }
+    // 河在这里、旁白写到他，但他还没开口：先把他的立绘放上来（测试报告：男主常常不在画面上）
+    if (opts.heHere && !R.chars?.he && /河/.test(line.text)) setSprite('河');
+  }
   const segs = splitGarble(line.text, opts.allowGarble);
-  s.log.push({ who: narr ? '' : shown, t: segs.map(x => x.t).join('') });
-  if (s.log.length > 300) s.log.splice(0, s.log.length - 300);
+  s.log.push({ who: narr ? '' : shown, t: segs.map(x => x.t).join(''), d: s.day });
+  if (s.log.length > 800) s.log.splice(0, s.log.length - 800);
   R.next.classList.add('hidden');
+  G.lineAt = performance.now();
   await typeInto(R.text, segs);
   // 乱码句：前两次在对话框中间隐约浮出一句提示，让玩家想到去复制（复制出来才是真话）
   if (segs.some(x => x.g) && (s.c.garbleHint || 0) < 2 && !s.meta.copySeen) {
@@ -332,7 +350,7 @@ async function showLine(line, opts = {}) {
 function waitAdvance(textLen = 20) {
   G.R.next.classList.remove('hidden');
   return new Promise(res => {
-    G.waitClick = res;
+    G.waitClick = res; G.waitAt = performance.now();
     if (G.auto || G.forceAuto) setTimeout(() => { if (G.waitClick === res) { G.waitClick = null; res(); } }, (getSettings().autoDelay + textLen * 0.04) * 1000);
   });
 }
@@ -360,6 +378,7 @@ export function renderActions(mode = 'free', choices = null) {
   const R = G.R, s = G.s;
   R.actions.classList.toggle('hidden', mode === 'none');
   R.actions.classList.toggle('choosing', mode === 'choice');
+  R.actions.classList.toggle('over-cg', mode === 'choice' && R.cg.classList.contains('on'));   // CG 上的选项放到下方中间，不盖住脸
   R.free.classList.toggle('hidden', mode !== 'free');
   R.row.classList.toggle('hidden', mode !== 'free');
   if (mode === 'choice') {
@@ -380,6 +399,7 @@ export function renderActions(mode = 'free', choices = null) {
 }
 export function setBusy(b) {
   G.busy = b; const R = G.R; if (!R) return;
+  R.actions.classList.toggle('busy', !!b);   // 生成 / 播放中整块收起：不再出现「看着能点、其实点不了」（测试报告 · 1）
   for (const el of R.actions.querySelectorAll('button,input')) el.disabled = b || el.dataset.over === '1';
   R.regenBtn.disabled = b || !G.last;
   R.regenBtn.style.opacity = b || !G.last ? .35 : 1;
@@ -402,7 +422,7 @@ function locationActions(s) {
     if (organsOpen() || s.done.includes('d12_drawings')) add('和他一起看画', 1, () => drawingPuzzle());
   }
   if (s.loc === 'tomb') add('墓碑前的旧照片', 1, () => miniAction('puzzle_ta'));
-  const job = JOBS[s.f.job];
+  const job = jobOn(s) && JOBS[s.f.job];
   if (job && job.loc === s.loc && job.slots.includes(s.slot) && s.c.workDay !== s.day) out.unshift({ text: '干活', cost: 2, kind: 'ai', work: true, note: job.note, first: true });
   if (s.loc === 'border' && s.day >= 30) add('往雾里走', 3, () => leaveVillage());
   if (s.loc === 'room' || s.loc === 'yard') add('换衣服', 0, () => P.openOutfit(false));
@@ -424,7 +444,7 @@ function ctxFor(s, kind, ev, req = {}) {
   if (heHere && (s.c.clingy || 0) >= 6) extra.push('「你」这一阵子一直跟着他，他走到哪你就在哪。他有点不自在：会找个理由走开一会儿，或者话更少，但不说破。'); 
   if (heHere && s.day === 32 && s.done.includes('d32_thread') && !ev) extra.push(s.f.thread_picked ? '「你」早上用针把手腕内侧的一截红线头挑掉了，留下一个新的针眼。河看见会愣一下，问一句「谁让你挑的」，然后不说话，拿药给你按上。' : '「你」手腕内侧有一截红线头（「你」可能用袖子藏着）。河看见会愣一下，不解释，只问一句「疼吗」。');
   if (appt?.flaked && !ev) extra.push(`约好的${appt.who}没来：她被家里叫回去了。可以由旁白或路过的人交代一句。`);
-  else if (appt && !ev) extra.push(`之前约好的：${appt.who}和「你」约在第 ${appt.day} 天${SLOTS[appt.slot]}的${appt.place}。${appt.who}已经在这里等你了，接着这个约定演。`);
+  else if (appt && !ev) extra.push(`之前约好的：${appt.who}和「你」约在第 ${appt.day} 天${SLOTS[appt.slot]}的${appt.place}。${appt.who}已经在这里等你了，接着这个约定演。约好的见面要有内容：${appt.who}准备了一件事要做或一句话要说（带「你」看个地方、给一样东西、问一件事），不要只是走一段就天黑散了。`);
   const missed = s.apptMissed;
   if (missed && !ev && (missed.who === '河' ? heHere : present.includes(missed.who))) { s.apptMissed = null; extra.push(`上次${missed.who}和「你」约在${missed.place}，「你」没去。${missed.who}见到你会有一点反应（不用大闹，一句就好）。`); }
   const todayPhone = (s.phone || []).filter(m => m.day === s.day && m.text);
@@ -452,16 +472,34 @@ function userMsg(s, req) {
         (from ? `「你」刚从${from}走到${L.name}，人现在在${L.name}，已经不在${from}了。` : `「你」现在在${L.name}。`) +
         `${L.name}：${L.desc}\n不要接着写上一段，只写「你」到达${L.name}时看到的场景（2–4 条）。挑一个这次的新细节写，不要重复之前到这里时写过的东西。旁白里的位置必须是${L.name}，不要写成别的地方。必须给出 suggestions。`;
     }
-    case 'action': return `【玩家行动】${req.free ? '（玩家自己输入的）' : ''}${req.text}${req.note ? '\n（' + req.note + '）' : ''}\n写这次行动的经过和结果。` +
-      (req.last ? '\n' + LAST_ACTION_NOTE : req.free ? `\n（这个时段还剩 ${req.apLeft} 点行动。small=1、medium=2、large=3；如果这次的规模会把点数用完，${LAST_ACTION_NOTE}）` : '');
+    case 'action': return `${placeLine(s)}【玩家行动】${req.free ? '（玩家自己输入的）' : ''}${req.text}${req.note ? '\n（' + req.note + '）' : ''}\n写这次行动的经过和结果。${PLAYER_FIRST}` +
+      (ASKS.test(req.text) ? '\n' + ANSWER_RULE : '') + (req.last ? '\n' + LAST_ACTION_NOTE : '');
     case 'wake': return `【醒来】「你」从假死中醒过来，地点：${L.name}，${SLOTS[s.slot]}。写醒来那一刻（2–5 条），给出建议行动。`;
     case 'event': {
       const ev = req.event;
-      return `【主线事件】${ev.scene}\n刚才已经出现的固定台词：\n${(ev.lines || []).map(l => (l.speaker === 'narration' ? '' : l.speaker + '：') + l.text.replace('{FIRST_LINE}', FIRST_LINE)).join('\n')}\n接着往下写 3–6 条，上面这些固定台词不要再写一遍。${ev.choices ? '写到玩家需要做选择之前停住。suggestions 给空数组。' : ''}`;
+      return `${placeLine(s)}【主线事件】${ev.scene}\n刚才已经出现的固定台词：\n${eventLinesText(ev)}\n接着往下写 3–6 条，上面这些固定台词不要再写一遍。${ev.choices ? '写到玩家需要做选择之前停住。suggestions 给空数组。' : ''}`;
     }
-    case 'choice': return `【玩家选择】${req.text}\n${req.note ? '（这个选择：' + req.note + '）\n' : ''}${req.event.after || '写这个选择的结果，然后收住场景。'}\n只写玩家选的这一条的结果，别的选项没有发生。suggestions 给空数组。`;
+    // 选项：把地点、时段和这一场的固定台词一起带上（测试报告 · 2：第 6 天溪边的选项被续写成前一晚房间里的场景）
+    case 'choice': {
+      const ev = req.event;
+      return `${placeLine(s)}【这一场】${ev.scene ? ev.scene + '\n' : ''}这一场已经出现的固定台词：\n${eventLinesText(ev)}\n【玩家选择】${req.text}\n${req.note ? '（这个选择：' + req.note + '）\n' : ''}${ev.after || '写这个选择的结果，然后收住场景。'}\n只写玩家选的这一条的结果，别的选项没有发生。接着这一场往下写，不要接到之前别的场景（比如前一晚的房间）里去。${PLAYER_FIRST}${ASKS.test(req.text) ? '\n' + ANSWER_RULE : ''}\nsuggestions 给空数组。`;
+    }
   }
 }
+// 每一轮都先说清楚「现在在哪、什么时候」
+const SLOT_FEEL = ['上午（早饭以后，日头刚上来）', '午后（吃过午饭，日头最高）', '黄昏（太阳快落山，要做晚饭了）', '夜里（天黑了，点着灯）'];
+function placeLine(s) {
+  const L = LOCATIONS[s.loc];
+  return `【现在】第 ${s.day} 天${SLOT_FEEL[s.slot] || SLOTS[s.slot]}，地点：${L ? L.name : s.loc}。台词和旁白里的时间感要对得上（不要在午后说「醒了」「早饭」，不要在上午说「天黑了」）。\n`;
+}
+function eventLinesText(ev) {
+  return (ev.lines || []).filter(l => !l.text.startsWith('{NAME')).map(l => (l.speaker === 'narration' ? '' : l.speaker + '：') + l.text.replace('{FIRST_LINE}', FIRST_LINE)).join('\n') || '（无）';
+}
+// 玩家做的事要先写出来（测试报告：选「把辣子推到他面前」，后文没有一句写我推了）
+const PLAYER_FIRST = '\n第一条先用旁白写出「你」做了这件事（玩家说的话可以用 speaker "你" 原样复述），然后再写别人的反应。';
+// 玩家直接问了问题：要有回应（测试报告：问河的问题大多只换来他的动作）
+const ASKS = /[？?]|问|是不是|为什么|怎么|什么|吗|呢/;
+const ANSWER_RULE = '玩家这次问了问题。被问的人必须有回应：可以很短（一个字、一个「……」、反问一句），也可以明确不答（旁白写出他听见了、停了一下），但不能只写手上的动作当作没听见。';
 
 /** 跑一轮 AI。返回 normTurn 结果；出错时显示重试并等待 */
 export async function doTurn(req) {
@@ -479,16 +517,23 @@ export async function doTurn(req) {
   const messages = [{ role: 'system', content: system }, ...hist, { role: 'user', content: um }];
   setBusy(true); loadingText(); G.inTurn = true;
   const q = makeQueue();
-  const opts = { allowGarble: ctx.allowGarble, keepSprite: req.keepSprite };
+  const opts = { allowGarble: ctx.allowGarble, keepSprite: req.keepSprite, heHere: ctx.heHere && req.kind !== 'event' && req.kind !== 'choice' };   // 固定剧情里的立绘按事件自己的安排
   // 输出检查：不在场的 NPC、不在的河，台词直接丢掉（人肉测试 v2 · 6.4）
   const norm = t => String(t || '').replace(/[「」『』“”"，。,.！？!?…\s]/g, '');
   const okLine = l => {
-    if (l.speaker === '你') return req.kind === 'action' && !!req.free && norm(l.text) !== '' && norm(req.text).includes(norm(l.text));   // 「你」只能原样复述玩家自己写的话
+    if (l.speaker === '你') return ((req.kind === 'action' && !!req.free) || req.kind === 'choice') && norm(l.text) !== '' && norm(req.text).includes(norm(l.text));   // 「你」只能原样复述玩家自己写的话 / 选的那句
     if (req.kind === 'event' || req.kind === 'choice' || ctx.present === undefined) return true;
     if (l.speaker === '河') return ctx.heHere;   // 河不在这个地方（在别处或不在村里）：AI 让他出场的台词删掉
     const npc = { 养母: '养母', '村民·男': '石', '村民·女': '芳', 满: '满', 衡: '衡' }[l.speaker];
-    return !npc || ctx.present.includes(npc);
+    if (!npc || ctx.present.includes(npc)) return true;
+    // 测试报告「台词丢了」：旁白已经把人请出来了（「门拉开，院里站着养母」），台词却被删，只剩「她说完就转身」。
+    // 养母在自己家（院子、偏房、河的房间）不出门的时段都算在；其他人旁白先写到了、这里本来就可能碰到，也算在场
+    const home = ['yard', 'room', 'he_room'].includes(s.loc) && !motherAway(s.day, s.slot);
+    const named = { 养母: /养母|婶/, 石: /石/, 芳: /芳/, 满: /满|小女孩/, 衡: /衡|村长/ }[npc];
+    if ((npc === '养母' && home) || (named && narrSeen.some(t => named.test(t)) && canBeHere(s, npc))) { ctx.present.push(npc); return true; }
+    return false;
   };
+  const narrSeen = [];   // 这一轮旁白里已经写到的内容
   const fixExpr = l => (l.speaker !== '河' ? l : l.expr === 'cold' ? { ...l, expr: 'aloof' } : l.expr === 'blank' && (s.madness || 0) < 2 ? { ...l, expr: 'dazed' } : l);   // 冷视只给代码用；完全失焦只在偏疯时
   // 石、芳第一次开口：AI 没让他们先自报姓名，就由代码补上那句（名牌在这句之后才变成名字）
   const INTRO = { '村民·男': ['know_shi', '石', '石。……后坡老郭家的。'], '村民·女': ['know_fang', '芳', '芳。叫我小芳也行，都这么叫。'] };
@@ -513,7 +558,8 @@ export async function doTurn(req) {
     }
     q.push(fixExpr(l));
   };
-  const streamer = new LineStreamer(l => { if (okLine(l)) pushLine(l); });
+  const take = l => { if (l.speaker === 'narration') narrSeen.push(l.text); if (okLine(l)) pushLine(l); };
+  const streamer = new LineStreamer(take);
   const playing = playQueue(q, opts);
   let raw;
   try {
@@ -527,7 +573,7 @@ export async function doTurn(req) {
   G.lastRaw = raw;  // 调试用
   s.meta.cliche = findCliches(turn.lines);
   // JSON 不完整时 normTurn 会退回「按换行硬切」，切法和流式不一样；流式已经播了就不再拿它补，免得台词错位、被拆开
-  if (turn.ok !== false || streamer.count === 0) for (let i = streamer.count; i < turn.lines.length; i++) if (okLine(turn.lines[i])) pushLine(turn.lines[i]);
+  if (turn.ok !== false || streamer.count === 0) for (let i = streamer.count; i < turn.lines.length; i++) take(turn.lines[i]);
   q.close();
   await playing; G.inTurn = false;
   // 结算
@@ -619,8 +665,12 @@ async function freeAct() {
   const t = G.R.input.value.trim(); if (!t || G.busy) return;
   if (G.s.ap <= 0) return endSlot();
   G.R.input.value = ''; G.R.inputMax = 0;
-  const req = { kind: 'action', text: t, free: true, apLeft: G.s.ap };
-  if (multiAction(t)) { req.multi = true; req.last = true; }   // 一次写了好几件事：这个时段的点数直接用完
+  // 自己写的行动固定花 1 点（测试报告 · 3：原来按 AI 判断的规模扣 1–2 点，玩家看不出来）
+  const req = { kind: 'action', text: t, free: true, apLeft: G.s.ap, last: G.s.ap <= 1 };
+  if (multiAction(t)) {   // 一次写了好几件事：这个时段的点数直接用完（先告诉玩家）
+    req.multi = true; req.last = true;
+    if (G.s.ap > 1) toast('一次写了好几件事：会用掉这个时段剩下的点数。', 3000);
+  }
   const prop = parseProposal(G.s, t, proposeTarget(G.s, t), G.s.loc);
   if (prop) { if (await confirmProposal(prop)) req.propose = prop; else { G.R.input.value = t; return; } }   // 「算了」：把字放回输入框
   const turn = await doTurn(req);
@@ -632,7 +682,7 @@ async function afterTurn(turn, req) {
   await flushMeta();
   const hr = new Date().getHours(); if (hr >= 1 && hr < 5) await metaLine('late');
   if (req.kind === 'action') {
-    const cost = req.multi || (req.free && turn.action_size === 'large') ? s.ap : req.cost ?? SIZE_COST[turn.action_size] ?? 1;
+    const cost = req.multi ? s.ap : req.free ? 1 : req.cost ?? SIZE_COST[turn.action_size] ?? 1;
     s.ap = Math.max(0, s.ap - cost);
   }
   saveRun(s);
@@ -689,14 +739,14 @@ async function miniAction(name) {
 // 器官图 = 河画的解剖图
 const ownedDrawings = () => { const g = getGallery(); return Object.keys(g.organs).filter(id => g.organs[id]); };
 async function giveDrawing(id, how) {
-  const { ORGANS } = await import('./config/world.js?v=1794225433');
+  const { ORGANS } = await import('./config/world.js?v=1794246568');
   const o = ORGANS.find(x => x.id === id); if (!o) return;
   unlock('organs', id);
   if (how === 'he') await playLines([{ speaker: '河', expr: 'shy', text: '……这个给你。画得不好。' }]);
   await openOrgan(id, ownedDrawings());
 }
 async function sketchbook() {
-  const { ORGANS } = await import('./config/world.js?v=1794225433');
+  const { ORGANS } = await import('./config/world.js?v=1794246568');
   const left = ORGANS.filter(o => !ownedDrawings().includes(o.id));
   if (!left.length) return spendLocal(1, [{ speaker: 'narration', text: '画本你都翻过了。每一页的线条都很细，标注写得很工整。' }]);
   const o = left[Math.floor(Math.random() * left.length)];
@@ -706,7 +756,7 @@ async function sketchbook() {
 }
 // 器官归位：十张画全给，拼完一次就全部解锁（回想、「河的画」）
 async function organsGame() {
-  const { ORGANS } = await import('./config/world.js?v=1794225433');
+  const { ORGANS } = await import('./config/world.js?v=1794246568');
   const first = !organsOpen();
   const res = await organPuzzle(ORGANS.map(o => o.id), hasAsset('ui/torso.webp'));
   if (res.success) {
@@ -828,7 +878,7 @@ function morningHint(s) {
   const opts = [];
   const he = heLocation(s.day, 1); if (he) opts.push(`养母说：小河午后在${LOCATIONS[he].name}。`);
   else opts.push('养母说：小河今天一早就出去了，没说去哪。');
-  const job = JOBS[s.f.job]; if (job && s.day < 30) opts.push({ fields: '养母说：今天晒场收豆子，人手不够。', yard: '养母说：今天要腌菜，你早点来帮手。', ta: '养母说：牠那边缺线，送饭的时候顺路带一卷。' }[s.f.job]);
+  const job = jobOn(s) && JOBS[s.f.job]; if (job && s.day < 30) opts.push({ fields: '养母说：今天晒场收豆子，人手不够。', yard: '养母说：今天要腌菜，你早点来帮手。', ta: '养母说：牠那边缺线，送饭的时候顺路带一卷。' }[s.f.job]);
   if (s.f.man_met && s.day < 34) opts.push('养母说：满那孩子又在桃花林里转了一早上。');
   const a = (s.appts || []).find(x => x.day === s.day); if (a) opts.push(`你记得：今天${SLOTS[a.slot]}和${a.who}约在${a.place}。`);
   return a ? opts[opts.length - 1] : opts[s.day % opts.length];
@@ -861,7 +911,7 @@ const HE_DOING = { ta_house: '刚才在牠那儿学手艺', fields: '刚才在�
 export function mapMarks(s) {
   const m = {};
   for (const a of s.appts || []) if (a.day === s.day && a.slot === s.slot) m[a.loc] = `${a.who}在等你`;
-  const job = JOBS[s.f.job];
+  const job = jobOn(s) && JOBS[s.f.job];
   if (job && job.slots.includes(s.slot) && s.c.workDay !== s.day) m[job.loc] ||= '有活';
   for (const ev of G.events) if (ev.trigger === 'visit' && !s.done.includes(ev.id) && condOk(s, ev.cond)) m[ev.loc] ||= '好像有人';
   return m;
@@ -937,7 +987,10 @@ function heInvite(s) {
   const loc = heLocation(d, slot);
   s.c.nextHeAppt = s.day + 3 + (Math.random() < 0.5 ? 1 : 0);
   if (!commitAppt(s, { who: '河', day: d, slot, loc, place: LOCATIONS[loc].name })) return false;
-  pushHe(s, `明天${SLOTS[slot]}，${LOCATIONS[loc].name}。`); pushHe(s, ['来不来随你。', '我在那儿。', '……不来也行。'][s.day % 3], 3000);
+  const tail = ['来不来随你。', '我在那儿。', '……不来也行。', '你要是有空。', '我早点去。'];
+  s.c.inviteTails ||= []; const left = tail.filter(x => !s.c.inviteTails.includes(x)); const pick = (left.length ? left : tail)[s.day % (left.length || tail.length)];
+  s.c.inviteTails.push(pick);   // 模板句一局里不重复（测试报告：「……不来也行。」不同天一字不差出现两次）
+  pushHe(s, `${['明天', '明儿'][s.day % 2]}${SLOTS[slot]}，${LOCATIONS[loc].name}。`); pushHe(s, pick, 3000);
   saveRun(s); refreshHud(); toast('手机震了一下。'); return true;
 }
 async function phoneNight(s) {
@@ -961,9 +1014,10 @@ async function phoneNight(s) {
   s.c.pingDay = s.day; s.f.pingAnswered = false;
   if (stageCgMessages(s)) return;
   try {
-    let text = '你那边现在几点';   // 上一条你没回：他问的是屏幕外的时间
-    if (!ignoredLast) { const j = looseJson(await chat({ messages: [{ role: 'system', content: phonePingPrompt(s) }, { role: 'user', content: '（发一条）' }], stream: false, maxTokens: 120 })); text = msgOnly(String(j?.replies?.[0] || '')).slice(0, 40) || '睡了吗'; }
+    let text = '你那边现在几点';   // 上一条你没回：他问的是屏幕外的时间（一局只问一次，之后照常让 AI 写）
+    if (!ignoredLast || s.f.askedTime) { const j = looseJson(await chat({ messages: [{ role: 'system', content: phonePingPrompt(s) }, { role: 'user', content: '（发一条）' }], stream: false, maxTokens: 120 })); text = msgOnly(String(j?.replies?.[0] || '')).slice(0, 40) || '睡了吗'; }
     if (G.s !== s) return;
+    if (text === '你那边现在几点') s.f.askedTime = true;
     pushHe(s, text); saveRun(s); refreshHud(); toast('手机震了一下。');
   } catch {}
 }
@@ -1005,7 +1059,7 @@ export async function startSlot() {
   if (s.slot === NIGHT) phoneNight(s);   // 夜里：第 39 天约见，或者他隔几天主动发一条
   const ev = dueEvent(s);
   // 连着 3 天没去干活：衡来催一次（第 30 天以后不催）
-  if (!ev && s.slot === 0 && s.f.job && s.day < 30 && s.day - Math.max(s.c.workDay ?? 7, s.c.nagDay ?? 0) >= 3) {
+  if (!ev && s.slot === 0 && jobOn(s) && s.day < 30 && s.day - Math.max(s.c.workDay ?? 7, s.c.nagDay ?? 0) >= 3) {
     s.c.nagDay = s.day;
     await playLines([{ speaker: 'narration', text: '衡在院门口站了一下。' }, { speaker: '衡', text: '活呢。' }]);
   }
@@ -1059,7 +1113,7 @@ export async function endSlot() {
   if (s.outfit === 'outside') applyTags(s, [], [], { assim: OUTSIDE_OUTFIT_ASSIM }, { capExtra: true });   // 外面的衣服：往回拉
   s.slot++;
   if (s.slot >= SLOTS.length) {
-    if (DEMO && s.day >= DEMO_LAST_DAY) return demoEnd();   // 试玩版：最后一天夜里过完就结束
+    if (DEMO && s.day >= DEMO_LAST_DAY) return demoEnd(true);   // 试玩版：最后一天夜里过完就结束
     s.slot = 0; s.day++; s.phoneToday = 0;
     applyTags(s, [], [], DAILY);
   }
@@ -1102,6 +1156,7 @@ export async function runEvent(ev, opts = {}) {
     applyTags(s, c.tags || [], [], c.delta, { noCap: true });   // 固定事件的选项不受每天上限
     if (c.counter) s.c[c.counter] = (s.c[c.counter] || 0) + 1;
     Object.assign(s.f, c.set || {});
+    if (c.set?.job) s.f.jobFrom = s.day + 1;
     // 特殊判定
     if (c.first) return firstNight(ev, c);   // 「第一次」：黑屏 → CG → 第二天早上
     if (ev.special === 'injury') {
@@ -1378,12 +1433,16 @@ async function finalJudge() {
   return triggerEnding(judgeFinal({ ...s, madTier: tierOf(s) }));
 }
 // 试玩版结束：不进结局，谢谢 + 信箱
-async function demoEnd() {
+async function demoEnd(finished = false) {
   const s = G.s; s.ended = 'demo'; saveRun(s);
   closeOv('map'); renderActions('none'); setSprite(null); showCG(null);
-  await P.blackLines([`第 ${DEMO_LAST_DAY} 天过完了。`, '试玩就到这里。', '后面的三十二天，还在做。', '谢谢你陪她住了这几天。']);
+  await P.blackLines(finished ? [`第 ${DEMO_LAST_DAY} 天过完了。`, '试玩就到这里。', '后面的三十二天，还在做。', '谢谢你陪她住了这几天。'] : ['试玩就到这里。', '谢谢你陪她住了这几天。']);
+  if (finished) store.set('demo_done', 1);   // 玩完十天：封面的「结局」可以点开了
   G.R = null; G.backTitle();
-  P.openMailbox();   // 回到标题，顺手打开信箱请他们写几句
+  if (finished) modal('demodone', '谢谢你玩完试玩版', h('div', { class: 'how-text' },
+    '请按照发给你的表格，填一下试玩问卷。你的感受对后面很重要。\n\n另外，封面上的「结局」现在可以点开了：\n能看到完整版有哪些结局，点开每一张，看它怎么达成。\n\n还有想说的，也可以用封面上的「信箱」写给作者。'),
+    { buttons: [{ label: '好', value: 1 }] });
+  else P.openMailbox();
 }
 export async function triggerEnding(id) {
   if (DEMO) return demoEnd();   // 试玩版没有结局（比如离线太久的「等待戈多」）
@@ -1419,7 +1478,7 @@ export async function continueRun(s, offlineMs, alertLine = null) {
   G.s = s; G.last = null;
   buildMain(); setScene(); refreshHud();
   if (alertLine) {   // 当着他的面读档：第一句强制换成「警觉」
-    import('./audio.js?v=1794225433').then(a => a.stutter()).catch(() => {});
+    import('./audio.js?v=1794246568').then(a => a.stutter()).catch(() => {});
     await playLines([{ speaker: '河', expr: 'alert', text: alertLine }]);
     s.meta.saidMeta = alertLine;
   }

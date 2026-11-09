@@ -1,16 +1,17 @@
 // 结局画面、‘楚门的世界’锁定画面、结局后效
-import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794225433';
-import { store } from '../store.js?v=1794225433';
-import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794225433';
-import { madTier } from '../config/values.js?v=1794225433';
-import { userFigure } from '../game.js?v=1794225433';
-import { FILE_NAME, afterwordText, loadAfterword } from '../config/afterword.js?v=1794225433';
+import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794246568';
+import { store } from '../store.js?v=1794246568';
+import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794246568';
+import { madTier } from '../config/values.js?v=1794246568';
+import { userFigure } from '../game.js?v=1794246568';
+import { FILE_NAME, afterwordText, loadAfterword } from '../config/afterword.js?v=1794246568';
+import { garble } from '../meta.js?v=1794246568';
 
 const waitClick = el => new Promise(r => el.addEventListener('click', r, { once: true }));
 
 export async function showEnding(id, s) {
   const e = ENDINGS[id]; const L = ENDING_LINES[id] || {};
-  import('../audio.js?v=1794225433').then(a => a.playBgm('meta'));
+  import('../audio.js?v=1794246568').then(a => a.playBgm('meta'));
   if (id === 'truman') loadAfterword();   // 先读好后日谈，最后那一下点击时直接下载
   const tier = madTier(s?.madness || 0);
   const cg = h('img', { class: 'cg' + (e.glitch ? ' glitch' : ''), src: A(`cg/${e.cg}.webp`), alt: '' });
@@ -72,13 +73,15 @@ export function showLock() {
   const petals = Array.from({ length: 14 }, (_, i) => h('i', { class: 'petal', style: { left: (Math.random() * 100) + '%', animationDelay: (-Math.random() * 16) + 's', animationDuration: (12 + Math.random() * 10) + 's', transform: `scale(${0.6 + Math.random() * 0.8})` } }));
   showScreen('lock', h('div', {}, river, ...petals,
     h('div', { class: 'line' }, '灯我关了。你那边，还亮着吧。'),
+    // 牠的一句：乱码，选中复制出去才是「？呢我那」（倒着读：那我呢？）。每次打开重新生成，复制钩子在 boot() 里装好了
+    h('div', { class: 'ta-garble' }, garble('？呢我那')),
     knot,
     h('div', { class: 'tiny' }, '清除这个网站的数据也能打开，但存档、Key 和图鉴会一起被清掉。')));
 }
 
 // 结局后效：之后打开游戏时
 export async function showAftermath(a) {
-  const bg = h('img', { class: 'bg', src: A('bg/room_night.webp'), alt: '', style: { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(.7)' } });
+  const bg = h('img', { class: 'bg', src: A('bg/room_night.webp'), alt: '', style: { position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(.7)' } });
   const kids = [bg];
   let line = '';
   if (a.kind === 'fade') { const f = userFigure(a.outfit, false); f.firstChild.classList.add('fx-fade'); kids.push(f); line = '床上那具身体，已经不在了。'; }

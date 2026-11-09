@@ -1,20 +1,21 @@
 // 启动：缩放、读设置、离线判定、标题画面
-import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794225433';
-import { store, getSettings, saveSettings, getGallery } from './store.js?v=1794225433';
-import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, hasAsset } from './game.js?v=1794225433';
-import { newRun, loadRun, hasActiveRun, saveRun } from './state.js?v=1794225433';
-import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794225433';
-import { MID } from './config/endings.js?v=1794225433';
-import { madTier } from './config/values.js?v=1794225433';
-import * as P from './ui/panels.js?v=1794225433';
-import { DEMO, DEMO_KEY, DEMO_BASE, DEMO_LAST_DAY, DEMO_TAG } from './config/demo.js?v=1794225433';
-import { showLock, showAftermath } from './ui/ending.js?v=1794225433';
+import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794246568';
+import { store, getSettings, saveSettings, getGallery, endingsOpen } from './store.js?v=1794246568';
+import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, hasAsset } from './game.js?v=1794246568';
+import { newRun, loadRun, hasActiveRun, saveRun } from './state.js?v=1794246568';
+import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794246568';
+import { MID } from './config/endings.js?v=1794246568';
+import { madTier } from './config/values.js?v=1794246568';
+import * as P from './ui/panels.js?v=1794246568';
+import { DEMO, DEMO_KEY, DEMO_BASE, DEMO_LAST_DAY, DEMO_TAG } from './config/demo.js?v=1794246568';
+import { showLock, showAftermath } from './ui/ending.js?v=1794246568';
 
 // 1280×720 等比缩放，四周黑边
 function fit() {
   const s = Math.min(innerWidth / 1280, innerHeight / 720);
   document.documentElement.style.setProperty('--s', s);
   document.body.classList.toggle('compact', s < 0.75);   // 手机横屏、平板竖屏：文字和按钮放大
+  document.body.classList.toggle('tiny', s < 0.6);      // 再小一档（电脑上的小窗口，测试报告：666px 宽时按钮只有 33×27px）
 }
 addEventListener('resize', fit); fit();
 
@@ -47,20 +48,20 @@ document.getElementById('rotate-go')?.addEventListener('click', async () => {
 // 键盘推进对话
 addEventListener('keydown', e => {
   if (e.target.matches('input,textarea')) return;
-  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794225433').then(m => m.advance()); }
+  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794246568').then(m => m.advance()); }
 });
 
 let bootOffline = 0;
 
 function showTitle() {
   G.R = null; G.s = null;
-  import('./audio.js?v=1794225433').then(a => a.playBgm('title'));
+  import('./audio.js?v=1794246568').then(a => a.playBgm('title'));
   for (const o of [...$('#overlays').children]) o.remove();
   const active = hasActiveRun();
   const items = [
     // 继续：只有自动存档就直接进；有手动存档就打开存档列表。结局：一个都没打出来时点不开。信箱：给作者写建议
-    ['开始', start], ['继续', cont, !active && !hasManualSave()], ['结局', () => P.openGallery(), !Object.keys(getGallery().endings || {}).length], ['回想', () => P.openMemories()], ['设置', () => P.openSettings()], ['信箱', () => P.openMailbox()],
-  ].filter(([label]) => !(DEMO && label === '结局'));   // 试玩版没有结局
+    ['开始', start], ['继续', cont, !active && !hasManualSave()], ['结局', () => P.openGallery(), !endingsOpen()], ['回想', () => P.openMemories()], ['设置', () => P.openSettings()], ['信箱', () => P.openMailbox()],
+  ];
   const st = getSettings();
   // 菜单：选中项两侧的针 + 红线从两边滑进来；点击时红线抖一下、按钮下沉，再进入下一个界面
   const orn = hasAsset('ui/menu_ornament.webp');
@@ -132,7 +133,7 @@ async function start(resume = null) {
     if (!resume) {
       if (!(await needKey())) return;
       if (hasActiveRun() && !(await confirmBox('开始', '会从第一天重新开始，当前的自动存档会被覆盖。（手动存档和图鉴保留）', '重新开始'))) return;
-      if (!(await contentWarning())) return;
+      if (!(await startNotice())) return;   // 内容提示 + 调 AI 合成一个弹窗（测试报告：开局连弹两个，「换 pro」说了三次）
       await P.blackLines(P.PROLOGUE);            // 序：屏幕外的你、选一张脸、四十二天
     }
     let pick = resume?.pick;
@@ -151,14 +152,32 @@ async function start(resume = null) {
     systemNoticeSafe('进村子的时候出了点问题。再点一次「开始」试试。');
   } finally { starting = false; }
 }
-// 开始之前的提示：血腥内容、AI 现场生成（每个浏览器第一次开始时出现，之后不再问）
-async function contentWarning() {
-  if (store.get('cw_ok')) return true;
-  const ok = await modal('cw', '开始之前', h('div', { class: 'how-text' },
-    '· 这个游戏有血腥内容：人体缝合、内脏、伤口的描写，还有压抑、让人不安的情节。\n· 大部分剧情和台词由 AI 现场生成，偶尔会前后对不上、逻辑不太通顺。在设置里换成 pro 模型会好很多。\n· 虚拟剧情演绎，和现实中的人、地方、习俗都无关。'),
-    { buttons: [{ label: '我知道了，开始', value: true }, { label: '返回', value: false }], noClose: true });
-  if (ok) store.set('cw_ok', 1);
-  return !!ok;
+// 开始之前：内容提示（每个浏览器第一次）+ 调 AI（没用推荐设置时）合成一个弹窗；都不需要就不弹
+async function startNotice() {
+  const st = getSettings();
+  const needCw = !store.get('cw_ok');
+  const isPro = /pro/i.test(st.model || ''), think = st.thinking || 'off';
+  const needAi = !st.mock && !(isPro && think !== 'off');
+  if (!needCw && !needAi) return true;
+  const parts = [];
+  if (needCw) parts.push('· 这个游戏有血腥内容：人体缝合、内脏、伤口的描写，还有压抑、让人不安的情节。\n· 剧情和台词由 AI 现场写，偶尔会前后对不上。\n· 虚拟剧情演绎，和现实中的人、地方、习俗都无关。');
+  let rec = null;
+  if (needAi) {
+    const modelName = isPro ? 'pro' : /flash/i.test(st.model || '') ? 'flash' : (st.model || '默认');
+    const thinkName = { off: '关', events: '只在固定剧情开', all: '全部开' }[think] || think;
+    const want = [!isPro && /deepseek/i.test(st.baseUrl || 'deepseek') ? '换成 pro 模型（人物更像自己、前后更连贯；慢一点，费用高 4–5 倍）' : '', think === 'off' ? '打开思维链（只在固定剧情：关键剧情先想再写，少出错）' : ''].filter(Boolean);
+    if (want.length) {
+      parts.push(`现在的 AI：${modelName}，思维链「${thinkName}」。推荐：\n` + want.map(w => '· ' + w).join('\n') + '\n之后随时可以在「设置」里改。');
+      rec = { ...st, model: !isPro && /deepseek/i.test(st.baseUrl || 'deepseek') ? 'deepseek-v4-pro' : st.model, thinking: think === 'off' ? 'events' : think };
+    }
+  }
+  if (!parts.length) return true;
+  const buttons = rec ? [{ label: '用推荐的，开始', value: 'rec' }, { label: '保持现在，开始', value: 'keep' }, { label: '返回', value: false }] : [{ label: '我知道了，开始', value: 'keep' }, { label: '返回', value: false }];
+  const v = await modal('cw', '开始之前', h('div', { class: 'how-text' }, parts.join('\n\n')), { buttons, noClose: true });
+  if (!v) return false;
+  if (needCw) store.set('cw_ok', 1);
+  if (v === 'rec' && rec) saveSettings(rec);
+  return true;
 }
 function systemNoticeSafe(t) { try { P.systemNotice(t, [{ label: '好', value: 1 }]); } catch {} }
 function hasManualSave() { return ['slot1', 'slot2', 'slot3'].some(id => { const s = loadRun(id); return s && !s.ended; }); }
@@ -187,6 +206,7 @@ function otherTabOpen() {
 let tabChannel = null;
 function showElsewhere() {
   G.blocked = true;
+  import('./audio.js?v=1794246568').then(a => a.stopAll()).catch(() => {});   // 被接管的页面不能还在放音乐，不然两边的 BGM 叠在一起
   for (const o of [...$('#overlays').children]) o.remove();
   // 测试记录 7 #A：忘了关的后台页面也会把人卡在这里，所以给一个「在这里继续」：通知另一边停下，这边重新进
   const take = () => { try { tabChannel?.postMessage('takeover'); sessionStorage.setItem('gucun_takeover', '1'); } catch {} location.reload(); };
@@ -210,9 +230,9 @@ async function boot() {
   const qs = new URLSearchParams(location.search);
   if (qs.has('debug') && LOCAL) saveSettings({ ...getSettings(), debug: true });
   if (!LOCAL && getSettings().debug) saveSettings({ ...getSettings(), debug: false });   // 线上版不开调试
-  const tookOver = (() => { try { const v = sessionStorage.getItem('gucun_takeover'); sessionStorage.removeItem('gucun_takeover'); return !!v; } catch { return false; } })();
-  if (await otherTabOpen() && !tookOver) return showElsewhere();
-  if (tookOver) tabChannel?.postMessage('takeover');
+  // 同一个浏览器里还有别的页面开着（常是忘了关的旧标签页、微信里没关的旧窗口）：新打开的这个直接接管，旧的那边停下、静音
+  try { sessionStorage.removeItem('gucun_takeover'); } catch {}
+  if (await otherTabOpen()) tabChannel?.postMessage('takeover');
   let lastActive = readLastActive();
   // 调试：?debug=1&offline=小时数，模拟离开了这么久
   if (qs.has('debug') && qs.has('offline')) lastActive = Date.now() - parseFloat(qs.get('offline')) * 3600e3;

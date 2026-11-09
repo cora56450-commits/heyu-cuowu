@@ -1,18 +1,18 @@
 // 各个浮层：地图、手机、数值页、菜单、记录、存读档、设置、选装扮、图鉴
-import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794225433';
-import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen } from '../store.js?v=1794225433';
-import { chat, testConnection, ApiError } from '../api.js?v=1794225433';
-import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794225433';
-import { looseJson } from '../parse.js?v=1794225433';
-import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT, motherAway } from '../config/world.js?v=1794225433';
-import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794225433';
-import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794225433';
-import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags, taText } from '../state.js?v=1794225433';
-import { rollMeta } from '../meta.js?v=1794225433';
-import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm, mapMarks, PHONE_CG, hasAsset } from '../game.js?v=1794225433';
-import { DEMO } from '../config/demo.js?v=1794225433';
-import { openOrgan } from './organ.js?v=1794225433';
-import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794225433';
+import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794246568';
+import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen, endingsOpen } from '../store.js?v=1794246568';
+import { chat, testConnection, ApiError } from '../api.js?v=1794246568';
+import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794246568';
+import { looseJson } from '../parse.js?v=1794246568';
+import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT, motherAway, locLocked, lockNote } from '../config/world.js?v=1794246568';
+import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794246568';
+import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794246568';
+import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags, taText } from '../state.js?v=1794246568';
+import { rollMeta } from '../meta.js?v=1794246568';
+import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm, mapMarks, PHONE_CG, hasAsset, hasPhone as hasPhoneNow } from '../game.js?v=1794246568';
+import { DEMO } from '../config/demo.js?v=1794246568';
+import { openOrgan } from './organ.js?v=1794246568';
+import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794246568';
 
 // 系统样式的提示框（冷冰冰的电子界面，不是河说的）
 export function systemNotice(text, buttons) {
@@ -30,14 +30,14 @@ export function openMap(fromButton) {
   if (fromButton && (G.busy || s.phase === 'event')) { toast('现在走不开。'); return; }
   const mustChoose = s.phase === 'map';
   const heAt = heLocation(s.day, s.slot);
-  let sel = mustChoose ? (heAt || (s.loc && LOCATIONS[s.loc] && !(LOCATIONS[s.loc].unlockDay > s.day) ? s.loc : 'yard')) : s.loc;   // 河不在的时段：默认选你现在待的地方
+  let sel = mustChoose ? (heAt || (s.loc && LOCATIONS[s.loc] && !locLocked(s, s.loc) ? s.loc : 'yard')) : s.loc;   // 河不在的时段：默认选你现在待的地方
   const marks = mapMarks(s);   // 有事的地点：小红点
-  const isLocked = id => { const L = LOCATIONS[id]; return L.unlockDay && s.day < L.unlockDay && !(id === 'border' && s.f.border_found); };
+  const isLocked = id => locLocked(s, id);
   if (!LOCATIONS[sel] || isLocked(sel)) sel = 'yard';   // 默认不停在去不了的地方
   const pins = Object.entries(LOCATIONS).map(([id, L]) => {
     const here = id === s.loc && !mustChoose;
     const b = h('button', { type: 'button', class: 'pin ' + (here ? 'tag here' : 'btn') + (isLocked(id) ? ' locked' : ''), style: { left: L.pos[0] + 'px', top: L.pos[1] + 'px' }, onclick: () => { sel = id; draw(); } },
-      here ? h('img', { src: A('ui/ap_full.webp'), alt: '' }) : null, here ? taText(s, `${L.name}（你在这里）`) : taText(s, L.name), id === heAt ? h('i', { class: 'he' }, '河？') : null, marks[id] && !isLocked(id) ? h('i', { class: 'dot', title: marks[id] }) : null);
+      here ? h('img', { src: A('ui/ap_full.webp'), alt: '' }) : null, here ? taText(s, `${L.name}（你在这里）`) : taText(s, L.name), isLocked(id) ? h('i', { class: 'lock' }, '锁') : null, id === heAt ? h('i', { class: 'he' }, '河？') : null, marks[id] && !isLocked(id) ? h('i', { class: 'dot', title: marks[id] }) : null);
     b.dataset.id = id; return b;
   });
   const info = h('div', { class: 'info pp' });
@@ -45,23 +45,28 @@ export function openMap(fromButton) {
     for (const p of pins) if (!p.classList.contains('here')) { p.classList.toggle('btnsel', p.dataset.id === sel); p.classList.toggle('btn', p.dataset.id !== sel); }
     const L = LOCATIONS[sel]; const locked = isLocked(sel);
     const same = !mustChoose && sel === s.loc;
+    // 说明在上、「去这里」固定在卡片底部，不随内容上下漂（测试报告：两次点空）
     info.replaceChildren(...[
       h('div', { class: 'nm' }, taText(s, L.name + (L.sub ? ' · ' + L.sub : ''))),
       h('div', { class: 'ds' }, taText(s, L.desc)),
       sel === heAt ? h('div', { class: 'hehint' }, '这个时段：河可能在这里') : null,
       marks[sel] && !locked ? h('div', { class: 'hehint' }, marks[sel] + '。') : null,
       sel === 'yard' && motherAway(s.day, s.slot) ? h('div', { class: 'ds' }, '养母上后坡了。') : null,
-      locked ? h('div', { class: 'ds' }, '现在还去不了。') : null,
+      locked ? h('div', { class: 'ds' }, lockNote(s, sel)) : null,
+      h('div', { class: 'grow' }),
       h('button', { type: 'button', class: 'go', disabled: locked || same, onclick: () => { closeOv('map'); arrive(sel, !mustChoose); } },
-        same ? '你就在这里' : mustChoose ? '去这里' : '去这里（花 1 点）')].filter(Boolean));
+        locked ? '还去不了' : same ? '你就在这里' : mustChoose ? '去这里' : '去这里（花 1 点）')].filter(Boolean));
   };
   const side = h('div', { class: 'side' },
     h('div', { class: 'when' }, h('b', {}, `第 ${s.day} 天`), h('span', {}, SLOTS[s.slot])),
     mustChoose && s.slot === 0 && s.c.hintText && s.c.hintDay === s.day ? h('div', { class: 'tip morning' }, s.c.hintText) : null,
-    h('div', { class: 'tip' }, mustChoose ? `选一个地方去。到了那里有 ${AP_PER_SLOT} 点行动，用完或者离开，就进入下一个时段。` : '换个地方要花 1 点行动。'),
+    h('div', { class: 'tip' }, mustChoose ? `每个地方 ${AP_PER_SLOT} 点行动，用完进下一个时段。` : '换个地方要花 1 点行动。'),
     info,
+    // 地图上也能看手机（测试报告：有未读也要先进地点才能打开）
+    hasPhoneNow(s) ? h('button', { type: 'button', class: 'btn map-phone', onclick: () => openPhone() }, '手机', s.unread ? h('span', { class: 'badge' }, s.unread) : null) : null,
     mustChoose ? null : h('button', { type: 'button', class: 'btn back', onclick: () => closeOv('map') }, '返回'));
-  const ov = h('div', {}, h('div', { class: 'mapwrap' }, h('img', { src: A('ui/map.webp'), alt: '手绘的村子地图' }), ...pins), side);
+  const ov = h('div', { class: ['', '', 'dusk', 'night'][s.slot] || '' }, h('div', { class: 'mapwrap' }, h('img', { src: A('ui/map.webp'), alt: '手绘的村子地图' }), h('div', { class: 'tint' }), ...pins), side);
+  if (mustChoose && G.R) G.R.name.classList.add('hidden');   // 系统句不挂上一个人的名牌（测试报告 · 6）
   openOv('map', ov); draw();
 }
 
@@ -81,7 +86,7 @@ export function openPhone(noFlash) {
     const cap = h('div', { class: 'phone-cap' }, PHONE_CG[cgId]?.cap || '');
     const f = h('div', { style: { background: '#000' } }, img, cap);
     openOv('phoneflash', f); setTimeout(() => { img.style.opacity = 1; cap.classList.add('on'); }, 30); setTimeout(() => { closeOv('phoneflash'); G.phoneFlashed = false; openPhone(true); }, 1800);
-    import('../store.js?v=1794225433').then(m => m.unlock('cgs', cgId)); return;
+    import('../store.js?v=1794246568').then(m => m.unlock('cgs', cgId)); return;
   }
   s.unread = 0; refreshHud(); saveRun(s);
   // 「睡了吗。」→ 打开手机 3 秒后变成「对方撤回了一条消息」
@@ -116,12 +121,12 @@ export function openPhone(noFlash) {
     const last = s.phone[s.phone.length - 1]; if (last?.from === 'me') delete last.note;
     s.phone.push({ from: 'me', text: t, ts: Date.now(), note: '已送达', day: s.day }); s.f.pingAnswered = true;
     if (s.day === 39 && s.f.d39_phone && !s.f.d39_replied) { s.f.d39_replied = true; render(); saveRun(s); await sleep(1800); s.phone[s.phone.length - 1].note = '已读'; s.phone.push({ from: 'he', text: '嗯。睡吧。', ts: Date.now() }); render(); saveRun(s); return; }
-    const g = await import('../game.js?v=1794225433');
+    const g = await import('../game.js?v=1794246568');
     if (!s.phonePending) {
       if ((s.phoneToday || 0) >= 3) s.phone[s.phone.length - 1].note = '已送达 · 他今天不会再回了';   // 每天最多回 3 次
       else {
         s.phoneToday = (s.phoneToday || 0) + 1; s.phonePending = { day: s.day, slot: s.slot };
-        const { phoneStage } = await import('../state.js?v=1794225433');
+        const { phoneStage } = await import('../state.js?v=1794246568');
         if (phoneStage(s) === 'near' && s.slot !== 3) setTimeout(() => g.phoneReplyNow(), 12000 + Math.random() * 15000);   // 近了：这一时段内就回
       }
     }
@@ -135,7 +140,7 @@ export function openPhone(noFlash) {
   const home = h('button', { class: 'home', 'aria-label': 'Home 键，关掉手机', onclick: () => closeOv('phone') });
   const bg = $('#scr-main .bg');
   const ov = h('div', {},
-    bg ? h('img', { class: 'bgdim', src: bg.src, alt: '' }) : null,
+    bg?.src && !bg.src.endsWith('/') && bg.getAttribute('src') ? h('img', { class: 'bgdim', src: bg.src, alt: '' }) : null,   // 没有背景图就不放（空地址在旧浏览器里会画成一块白）
     h('div', { class: 'phone' }, scr, h('img', { class: 'body', src: A('ui/phone.webp'), alt: '' }), home),
     h('div', { class: 'cap' }, h('b', {}, '他给你的手机'), h('div', {}, '只有他一个联系人。'), h('div', {}, '按 Home 键回到村子。')));
   openOv('phone', ov); render();
@@ -161,17 +166,18 @@ export async function fetchOfflineMessages(ms) {
 }
 
 // ———————————————— 数值页 ————————————————
-const EYE_X = [150, 345, 540, 735, 930];
-const STATS_HELP = `这五个数，是他看你的方式。
-· 爱慕：他有多在意你。陪着他、在他靠近的时候接住他，会慢慢变高；冷淡和推开会让它降下来。
-· 怨恨：他有多羡慕、多恨你能离开。冷淡、拒绝、总说要走会让它变高；温柔一点、答应他的事，还有时间，都会让它慢慢消下去。
-· 希望：他有多相信你能带他走。说起外面、许下承诺会让它变高。
-· 克制：他还能忍住自己多少。他冲动的时候你怎么回应，会决定它往哪边走。
-· 同化：你有多像这里的人。在村里待着、做村里的事，它会自己慢慢涨。
+const EYE_X = [120, 290, 460, 630, 800];   // 第 5 颗眼球不压在右边立绘的脸上
+const STATS_HELP = `· 爱慕：他有多在意你。陪着他、接住他的靠近会变高；冷淡、推开会降。
+· 怨恨：他有多恨你能离开。冷淡、拒绝、总说要走会变高；温柔、守约、时间会让它消下去。
+· 希望：他有多信你能带他走。说起外面、许下承诺会变高。
+· 克制：他还能忍住自己多少。他冲动时你怎么回应，决定它往哪边走。
+· 同化：你有多像这里的人。待在村里、做村里的事、穿村里的衣服，它会自己涨。
+· 同化往回拉的办法：跟他说起外面、说你想离开；换上「外面的衣服」；身上多出不该有的东西时，别当它本来就在那里。
 没有哪个数是越高越好。`;
 export function openStats() {
   const s = G.s; if (!s) return;
-  if (!store.get('stats_help')) { store.set('stats_help', 1); setTimeout(() => modal('statshelp', '他看你的方式', h('div', { class: 'how-text' }, STATS_HELP), { buttons: [{ label: '知道了', value: 1 }] }), 400); }
+  const help = () => modal('statshelp', '他看你的方式', h('div', { class: 'how-text' }, STATS_HELP), { buttons: [{ label: '知道了', value: 1 }] });
+  if (!store.get('stats_help')) { store.set('stats_help', 1); setTimeout(help, 400); }   // 第一次自动弹，之后点「这些数是什么」再看
   const kids = [];
   VALUE_KEYS.forEach((k, i) => {
     const v = Math.round(s.v[k]); const size = 90 + v * 0.9;   // 眼球大小跟数值走
@@ -184,8 +190,8 @@ export function openStats() {
     h('img', { class: 'thread', src: A('ui/thread.webp'), alt: '' }),
     ...kids,
     h('div', { class: 'head' }, h('b', {}, '你在他眼里'), h('span', {}, '眼球越大，数值越高；太低时会转开，不再看你')),
-    h('div', { class: 'stats-help' }, STATS_HELP),   // 说明一直留在页面下面（有人反馈只看一次会忘）
-    h('button', { type: 'button', class: 'shut', onclick: close }, '关掉'));
+    h('button', { type: 'button', class: 'shut', onclick: close }, '关掉'),
+    h('button', { type: 'button', class: 'stats-q', onclick: help }, '这些数是什么？'));   // 说明太密，不再铺在页面上，点了才弹
   openOv('stats', ov);
 }
 
@@ -197,7 +203,8 @@ export function openMenu() {
     ['回到标题', async () => { if (await confirmBox('回到标题', '进度已经自动保存。（关掉页面，就等于你在河的世界里倒下了。）')) G.backTitle(); }],
   ];
   if (getSettings().debug) items.splice(items.length - 1, 0, ['调试', () => openDebug()]);
-  modal('menu', '菜单', h('div', { class: 'list' }, items.map(([t, f]) => h('button', { class: 'btn', onclick: () => { closeOv('menu'); f(); } }, t))));
+  const dis = t => t === '结局' && !endingsOpen();   // 和封面一致：还没打出结局（试玩版：还没玩完十天）时灰着
+  modal('menu', '菜单', h('div', { class: 'list' }, items.map(([t, f]) => h('button', { class: 'btn', disabled: dis(t), onclick: () => { closeOv('menu'); f(); } }, t))));
 }
 export function openOrganShelf() {
   const g = getGallery(); const got = organsOpen() ? ORGANS.filter(o => g.organs[o.id]) : [];
@@ -208,7 +215,15 @@ export function openOrganShelf() {
 // ———————————————— 记录 ————————————————
 export function openLog() {
   const s = G.s; if (!s) return;
-  const list = h('div', { class: 'log-list' }, s.log.slice(-150).map(l => h('div', {}, l.who ? h('span', { class: 'who' }, l.who) : null, h('span', { class: l.who ? '' : 'n' }, l.t))));
+  // 看记录时自动播放先停下（测试报告：开着自动打开记录，剧情继续往下走，走到地图后记录关不掉）
+  if (G.auto) { G.auto = false; G.R?.autoBtn?.classList.remove('on'); }
+  // 按天分段：每一天一个标题（旧记录没有天数就不分）
+  let day = null; const rows = [];
+  for (const l of s.log) {
+    if (l.d && l.d !== day) { day = l.d; rows.push(h('div', { class: 'log-day' }, `第 ${day} 天`)); }
+    rows.push(h('div', {}, l.who ? h('span', { class: 'who' }, l.who) : null, h('span', { class: l.who ? '' : 'n' }, l.t)));
+  }
+  const list = h('div', { class: 'log-list' }, rows);
   modal('log', '记录', list); setTimeout(() => (list.scrollTop = 1e6), 30);
 }
 
@@ -258,7 +273,7 @@ export function openSettings() {
     if (key === 'apiKey' && st.apiKey && st.mock) { st.mock = false; if (boxes.mock) boxes.mock.checked = false; }
     saveSettings(st);
   } });
-  const after = () => { import('../audio.js?v=1794225433').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
+  const after = () => { import('../audio.js?v=1794246568').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
   const rng = (key, min, max, step) => h('input', { type: 'range', min, max, step, value: st[key], oninput: e => { st[key] = +e.target.value; saveSettings(st); after(); } });
   const chk = key => (boxes[key] = h('input', { type: 'checkbox', checked: !!st[key], onchange: e => { st[key] = e.target.checked; saveSettings(st); after(); } }));
   const status = h('span', { class: 'note' });
@@ -309,7 +324,7 @@ export function openSettings() {
     h('p', { class: 'note' }, '浏览器里「清除网站数据」也会把存档、Key 和图鉴一起清掉。'),
     st.debug ? h('div', { class: 'row' }, h('button', { class: 'btn', onclick: async () => {
       if (!(await confirmBox('全通存档', '图鉴全部解锁，三个手动存档位会被覆盖成测试节点（自动存档不动）。', '写入'))) return;
-      const d = await import('../debug.js?v=1794225433'); await d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
+      const d = await import('../debug.js?v=1794246568'); await d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
     } }, '调试：全通存档')) : null);
   openOv('settings', h('div', {}, panel));
 }
@@ -328,16 +343,16 @@ export function openOutfit(isStart) {
     const nameIn = isStart ? h('input', { class: 'name-in', type: 'text', maxlength: 8, placeholder: '你的名字（可以不填）', autocomplete: 'off' }) : null;
     const startBar = isStart ? h('div', { class: 'namebar' }, nameIn,
       h('button', { class: 'btn go', onclick: () => { closeOv('outfit'); res({ outfit: sel, name: nameIn.value.trim().slice(0, 8) }); } }, '就这样'),
-      h('div', { class: 'name-hint' }, 'AI 偶尔会说出前后对不上的话。在设置里换成 pro 模型会好很多。')) : null;
+      null) : null;
     function pick(id) {
       closeOv('outfit');
       if (!isStart && s && id !== s.outfit) {
         s.outfit = id; s.meta.outfitChanged = true; saveRun(s); refreshHud(); toast('换好了。');
-        if (G.R?.chars?.he) import('../game.js?v=1794225433').then(g => g.metaLine('outfit'));
+        if (G.R?.chars?.he) import('../game.js?v=1794246568').then(g => g.metaLine('outfit'));
       }
       res(id);
     }
-    const ov = h('div', {}, h('div', { class: 'cap' }, isStart ? '选一张脸' : '换一张脸', h('small', {}, isStart ? '游戏里随时可以换。' : '在他眼里，你随时能换一张脸。')),
+    const ov = h('div', {}, h('div', { class: 'cap' }, isStart ? '选一身打扮' : '换一身打扮', h('small', {}, isStart ? '五套的区别在衣服上。游戏里随时可以换。' : '在他眼里，你随时能换一张脸。')),
       h('div', { class: 'row' + (isStart ? ' with-name' : '') }, cards), startBar,
       h('button', { class: 'close-x', onclick: () => { closeOv('outfit'); res(null); } }, '×'));
     openOv('outfit', ov);
