@@ -562,3 +562,7 @@ body.compact .msg-sys { font-size: 16px; }
 body.compact .prologue-lines p { font-size: 32px; }
 /* 回想 · 河的画：门缝下的那张（只有字） */
 .gcard.card.door-drawing { justify-content: center; align-items: center; color: #3b342c; background: #efe6d6 !important; border-image: none; border: 1px solid #b9ab94; font-size: 16px; letter-spacing: 4px; }
+/* HUD：约好的事（人肉 v3 · 2） */
+.hud .slots-row { display: flex; align-items: center; gap: 10px; }
+.hud .appt-badge { font-size: 13px; padding: 1px 7px; border: 1px solid var(--red); color: var(--red); background: transparent; border-radius: 3px; cursor: pointer; font-family: inherit; }
+body.compact .hud .appt-badge { font-size: 16px; }

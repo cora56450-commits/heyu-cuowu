@@ -14,7 +14,7 @@ export async function mockChat(o) {
   else {
     const meta = sys.includes('本轮允许河说');
     const garble = sys.includes('<乱>');
-    const lines = [{ speaker: 'narration', text: pick(NARR) }, { speaker: '河', expr: pick(['normal', 'smile', 'pout', 'cold']), text: pick(HE_LINES) }];
+    const lines = [{ speaker: 'narration', text: pick(NARR) }, { speaker: '河', expr: pick(['normal', 'smile', 'pout', 'aloof']), text: pick(HE_LINES) }];
     if (meta) lines.push({ speaker: '河', expr: 'blank', text: '你刚才睡了好久。' });
     if (garble) lines.push({ speaker: '河', expr: 'dazed', text: '……<乱>你睡着的时候我数过你的心跳</乱>' });
     lines.push({ speaker: 'narration', text: '（测试模式：没有调用 AI）' });

@@ -1,13 +1,13 @@
 // 启动：缩放、读设置、离线判定、标题画面
-import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794187505';
-import { store, getSettings, saveSettings, getGallery } from './store.js?v=1794187505';
-import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, hasAsset } from './game.js?v=1794187505';
-import { newRun, loadRun, hasActiveRun } from './state.js?v=1794187505';
-import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794187505';
-import { MID } from './config/endings.js?v=1794187505';
-import { madTier } from './config/values.js?v=1794187505';
-import * as P from './ui/panels.js?v=1794187505';
-import { showLock, showAftermath } from './ui/ending.js?v=1794187505';
+import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794189900';
+import { store, getSettings, saveSettings, getGallery } from './store.js?v=1794189900';
+import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, hasAsset } from './game.js?v=1794189900';
+import { newRun, loadRun, hasActiveRun } from './state.js?v=1794189900';
+import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794189900';
+import { MID } from './config/endings.js?v=1794189900';
+import { madTier } from './config/values.js?v=1794189900';
+import * as P from './ui/panels.js?v=1794189900';
+import { showLock, showAftermath } from './ui/ending.js?v=1794189900';
 
 // 1280×720 等比缩放，四周黑边
 function fit() {
@@ -46,14 +46,14 @@ document.getElementById('rotate-go')?.addEventListener('click', async () => {
 // 键盘推进对话
 addEventListener('keydown', e => {
   if (e.target.matches('input,textarea')) return;
-  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794187505').then(m => m.advance()); }
+  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794189900').then(m => m.advance()); }
 });
 
 let bootOffline = 0;
 
 function showTitle() {
   G.R = null; G.s = null;
-  import('./audio.js?v=1794187505').then(a => a.playBgm('title'));
+  import('./audio.js?v=1794189900').then(a => a.playBgm('title'));
   for (const o of [...$('#overlays').children]) o.remove();
   const active = hasActiveRun();
   const items = [
@@ -110,16 +110,38 @@ async function needKey() {
   if (v === 'mock') { saveSettings({ ...st, mock: true }); return true; }
   return false;
 }
-async function start() {
-  if (!(await needKey())) return;
-  if (hasActiveRun() && !(await confirmBox('开始', '会从第一天重新开始，当前的自动存档会被覆盖。（手动存档和图鉴保留）', '重新开始'))) return;
-  await P.blackLines(P.PROLOGUE);            // 序：屏幕外的你、选一张脸、四十二天
-  const pick = await P.openOutfit(true);
-  if (!pick) return;
-  await P.blackLines(['进去吧。'], { hold: true });
-  const run = newRun(pick.outfit); run.name = pick.name || '';
-  await startRun(run);
+// 开局：序 → 选脸 → 起名 → 「进去吧」。人肉 v3 · 1.1：起完名常跳回封面。
+// 防两点：连点「开始」会同时跑两条开局流程；手机上页面在选脸时被系统刷新会回到封面。
+// 所以开局进行到哪一步记在 sessionStorage，刷新后从那一步接着走。
+const START_KEY = 'gucun_starting';
+const startStage = { get: () => { try { return JSON.parse(sessionStorage.getItem(START_KEY)); } catch { return null; } }, set: v => { try { v ? sessionStorage.setItem(START_KEY, JSON.stringify(v)) : sessionStorage.removeItem(START_KEY); } catch {} } };
+let starting = false;
+async function start(resume = null) {
+  if (starting) return;
+  starting = true;
+  try {
+    if (!resume) {
+      if (!(await needKey())) return;
+      if (hasActiveRun() && !(await confirmBox('开始', '会从第一天重新开始，当前的自动存档会被覆盖。（手动存档和图鉴保留）', '重新开始'))) return;
+      await P.blackLines(P.PROLOGUE);            // 序：屏幕外的你、选一张脸、四十二天
+    }
+    let pick = resume?.pick;
+    if (!pick) {
+      startStage.set({ stage: 'outfit' });
+      pick = await P.openOutfit(true);
+      if (!pick) { startStage.set(null); return; }
+    }
+    startStage.set({ stage: 'go', pick });
+    await P.blackLines(['进去吧。'], { hold: true });
+    const run = newRun(pick.outfit); run.name = pick.name || '';
+    startStage.set(null);
+    await startRun(run);
+  } catch (e) {
+    console.error(e); startStage.set(null);
+    systemNoticeSafe('进村子的时候出了点问题。再点一次「开始」试试。');
+  } finally { starting = false; }
 }
+function systemNoticeSafe(t) { try { P.systemNotice(t, [{ label: '好', value: 1 }]); } catch {} }
 function hasManualSave() { return ['slot1', 'slot2', 'slot3'].some(id => { const s = loadRun(id); return s && !s.ended; }); }
 async function loadMenu() { if (await needKey()) P.openSaves('load'); }
 async function cont() {
@@ -176,5 +198,8 @@ async function boot() {
   const after = store.get('after');
   if (after) await showAftermath(after);
   showTitle();
+  const st = startStage.get();   // 开局走到一半页面被刷新了：接着走，不回封面
+  if (st?.stage === 'outfit') start({});
+  else if (st?.stage === 'go' && st.pick) start({ pick: st.pick });
 }
 boot();

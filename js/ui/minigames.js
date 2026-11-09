@@ -1,6 +1,6 @@
 // 三个小游戏（纯前端，不调用 AI，支持触屏）：数花瓣、牠的字条、拼图（弹窗拼贴）
-import { h, A, openOv, closeOv, sleep, toStage } from './dom.js?v=1794187505';
-import { garble } from '../meta.js?v=1794187505';
+import { h, A, openOv, closeOv, sleep, toStage } from './dom.js?v=1794189900';
+import { garble } from '../meta.js?v=1794189900';
 
 // 拼图用的照片（框按照片比例自动调整）
 export const PUZZLES = {
@@ -11,7 +11,20 @@ export const PUZZLES = {
 };
 // 牠的字条：句子；hidden 是拼完以后那行「看不清」的字（复制出来才是真的）
 const NOTES = ['河的针脚比我的正', '线头要剪干净', '你的手腕很凉', '我不老只是慢', '别在夜里去溪边', '外面的花有五瓣', '他记得的比他说的多'];
-const HIDDEN = ['他用的是我的针', '我也在溪边醒过', '二十年前我也选过脸', '他会变成我'];
+// 字条里的乱码真句子：按天数和牠线分档，同一句只出一次；档位不够就不出乱码（人肉 v3 · 5）
+const HIDDEN_TIERS = [
+  { ok: s => s.day <= 14, lines: ['针要烫过', '今天的线太新', '花不要摘'] },
+  { ok: s => s.day >= 15 && (s.c.taLine || 0) >= 3, lines: ['他的手比我年轻时稳', '溪水比以前浅', '我也怕过这里'] },
+  { ok: s => s.day >= 30 && (s.c.taLine || 0) >= 6, lines: ['他用的是我的针', '我也在溪边醒过'] },
+  { ok: s => s.day >= 36 && (s.c.taLine || 0) >= 10 && s.f.puzzle_ta_young, lines: ['二十年前我也选过脸', '他会变成我'] },
+];
+function pickHidden(s) {
+  s.c.hiddenSeen ||= [];
+  const tier = [...HIDDEN_TIERS].reverse().find(t => t.ok(s) && t.lines.some(l => !s.c.hiddenSeen.includes(l)));
+  if (!tier) return null;
+  const left = tier.lines.filter(l => !s.c.hiddenSeen.includes(l));
+  const l = left[Math.floor(Math.random() * left.length)]; s.c.hiddenSeen.push(l); return l;
+}
 
 export function runMinigame(name, s) {
   if (name === 'flower') return flower(s);
@@ -43,7 +56,7 @@ function flower(s) {
       closeOv('mini');
       if (ok) { s.c.flowerFound = (s.c.flowerFound || 0) + 1; s.f.flower_found = true; }
       res({ success: ok, lines: ok
-        ? [{ speaker: 'narration', text: '你找到了那朵五瓣的。' }, { speaker: 'narration', text: '在这里，它看起来反而像一个错误。' }]
+        ? [{ speaker: 'narration', text: '你找到了那朵五瓣的。' }, { speaker: 'narration', text: '在这里，它看起来反而像一个错误。' }, { speaker: 'narration', text: '你把它放进了口袋。第二天早上，它还没有谢。' }]
         : [{ speaker: 'narration', text: '花太多了。你数到一半就忘了数到哪。' }] });
     };
     const body = shell('数花瓣', '这里的花是四瓣或六瓣的。找出那朵不一样的。', () => finish(false));
@@ -99,8 +112,8 @@ function note(s) {
       if (answer.length < chars.length) return;
       if (answer.map(t => t.c).join('') === sentence) {
         poolEl.replaceChildren(); ctl.replaceChildren();
-        const hidden = HIDDEN[Math.floor(Math.random() * HIDDEN.length)];
-        paper.append(h('div', { style: { fontSize: '20px', marginTop: '16px', opacity: .55, userSelect: 'text', webkitUserSelect: 'text', letterSpacing: '2px' } }, garble(hidden)));
+        const hidden = pickHidden(s);
+        if (hidden) paper.append(h('div', { style: { fontSize: '20px', marginTop: '16px', opacity: .55, userSelect: 'text', webkitUserSelect: 'text', letterSpacing: '2px' } }, garble(hidden)));
         paper.append(h('div', { style: { marginTop: '24px' } }, h('button', { class: 'btn', style: { width: 'auto', height: 'auto', fontSize: '20px', boxShadow: 'none', padding: '8px 26px' }, onclick: () => finish(true) }, '收起字条')));
       } else { paper.classList.remove('wrong'); void paper.offsetWidth; paper.style.animation = 'shake .3s'; await sleep(350); paper.style.animation = ''; answer.length = 0; draw(); }
     };
