@@ -21,7 +21,8 @@ export async function mockChat(o) {
     const lastUser = [...o.messages].reverse().find(m => m.role === 'user')?.content || '';
     var appointment = /约/.test(lastUser) ? { who: '河', day: '明天', slot: '上午', place: '溪边' } : null;
     const t = pick(TAGS);
-    out = { lines, tags: t ? [t] : [], action_size: pick(['small', 'medium', 'large']), suggestions: [0, 1, 2].map(() => ({ text: pick(SUGG), cost: 1 + Math.floor(Math.random() * 3) })), he_flags: [], appointment, cg: null };
+    const free = lastUser.match(/（玩家自己输入的）(.*)/);   // 测试模式：自己写的行动按空格数件数，规模固定 small，方便看扣点
+    out = { lines, tags: t ? [t] : [], action_size: free ? 'small' : pick(['small', 'medium', 'large']), action_count: free ? free[1].trim().split(/\s+/).length : 1, suggestions: [0, 1, 2].map(() => ({ text: pick(SUGG), cost: 1 + Math.floor(Math.random() * 3) })), he_flags: [], appointment, cg: null };
   }
   const s = JSON.stringify(out);
   let full = '';

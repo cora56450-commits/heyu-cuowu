@@ -634,3 +634,6 @@ body.compact #ov-statshelp .how-text { font-size: 21px; line-height: 1.5; }
 .log-list { overflow-x: hidden; }
 #ov-stats .pocket { position: absolute; left: 0; width: 940px; top: 420px; text-align: center; font-size: 17px; letter-spacing: 4px; color: #A9A39A; }
 .phone .msgs .typing { font-style: italic; }
+.hud .ap { position: relative; }
+.ap-flash { position: absolute; left: 100%; margin-left: 8px; top: 0; color: var(--red); font-weight: 700; animation: apflash 1.6s ease forwards; pointer-events: none; }
+@keyframes apflash { 0% { opacity: 0; transform: translateY(4px); } 15% { opacity: 1; transform: none; } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-8px); } }
