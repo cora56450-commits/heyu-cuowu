@@ -1,17 +1,17 @@
 // 结局画面、‘楚门的世界’锁定画面、结局后效
-import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794342080';
-import { store, unlock } from '../store.js?v=1794342080';
-import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794342080';
-import { madTier } from '../config/values.js?v=1794342080';
-import { userFigure } from '../game.js?v=1794342080';
-import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794342080';
-import { garble } from '../meta.js?v=1794342080';
+import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794342750';
+import { store, unlock } from '../store.js?v=1794342750';
+import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794342750';
+import { madTier } from '../config/values.js?v=1794342750';
+import { userFigure } from '../game.js?v=1794342750';
+import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794342750';
+import { garble } from '../meta.js?v=1794342750';
 
 const waitClick = el => new Promise(r => el.addEventListener('click', r, { once: true }));
 
 export async function showEnding(id, s) {
   const e = ENDINGS[id]; const L = ENDING_LINES[id] || {};
-  import('../audio.js?v=1794342080').then(a => a.playBgm('meta'));
+  import('../audio.js?v=1794342750').then(a => a.playBgm('meta'));
   if (FILES[id]) loadAfterword(id);   // 先读好后日谈 / 字条，最后那一下点击时直接下载（楚门、前目的地）
   const tier = madTier(s?.madness || 0);
   const cg = h('img', { class: 'cg' + (e.glitch ? ' glitch' : ''), src: A(`cg/${e.cg}.webp`), alt: '' });

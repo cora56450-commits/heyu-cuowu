@@ -1,6 +1,6 @@
 // meta 系统：离线心跳、抽签、乱码句与复制替换、各种注入
-import { store } from './store.js?v=1794342080';
-import { offlineText } from './prompt.js?v=1794342080';
+import { store } from './store.js?v=1794342750';
+import { offlineText } from './prompt.js?v=1794342750';
 
 // —— 离线按「人不在」算：lastActive 在每次点击、按键、触摸、滚动时更新；切到后台时也记一次 ——
 // 只用时间戳相减，不依赖计时器（后台标签页、电脑睡眠时计时器会被暂停）
