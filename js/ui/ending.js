@@ -1,18 +1,18 @@
 // 结局画面、‘楚门的世界’锁定画面、结局后效
-import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794324185';
-import { store } from '../store.js?v=1794324185';
-import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794324185';
-import { madTier } from '../config/values.js?v=1794324185';
-import { userFigure } from '../game.js?v=1794324185';
-import { FILE_NAME, afterwordText, loadAfterword } from '../config/afterword.js?v=1794324185';
-import { garble } from '../meta.js?v=1794324185';
+import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794326124';
+import { store } from '../store.js?v=1794326124';
+import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794326124';
+import { madTier } from '../config/values.js?v=1794326124';
+import { userFigure } from '../game.js?v=1794326124';
+import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794326124';
+import { garble } from '../meta.js?v=1794326124';
 
 const waitClick = el => new Promise(r => el.addEventListener('click', r, { once: true }));
 
 export async function showEnding(id, s) {
   const e = ENDINGS[id]; const L = ENDING_LINES[id] || {};
-  import('../audio.js?v=1794324185').then(a => a.playBgm('meta'));
-  if (id === 'truman') loadAfterword();   // 先读好后日谈，最后那一下点击时直接下载
+  import('../audio.js?v=1794326124').then(a => a.playBgm('meta'));
+  if (FILES[id]) loadAfterword(id);   // 先读好后日谈 / 字条，最后那一下点击时直接下载（楚门、巴顿）
   const tier = madTier(s?.madness || 0);
   const cg = h('img', { class: 'cg' + (e.glitch ? ' glitch' : ''), src: A(`cg/${e.cg}.webp`), alt: '' });
   const title = h('div', { class: 'card-title' }, `‘${e.title}’`);
@@ -24,6 +24,15 @@ export async function showEnding(id, s) {
     say.className = 'end-say ' + cls; say.textContent = text; await sleep(60); say.classList.add('on');
     await sleep(700); await waitClick(scr); say.classList.remove('on'); await sleep(450);
   };
+  // 0. 结局前的固定段落（‘祖与占’，测试记录 17 §8）：最后一句带 CG
+  if (L.intro?.length) {
+    const ic = h('img', { class: 'cg', alt: '' }); scr.insertBefore(ic, say);
+    for (const [cls, text, cgId] of L.intro) {
+      if (cgId) { const src = A(`cg/${cgId}.webp`); await preload(src).catch(() => {}); ic.src = src; ic.classList.add('on'); }
+      await line(text, cls);
+    }
+    ic.classList.remove('on'); await sleep(900); ic.remove();
+  }
   // 1. 黑屏旁白
   for (const p of L.pre || []) await line(p, 'narr');
   // 2. user 的样子（结局差分 / 落灰）
@@ -47,15 +56,15 @@ export async function showEnding(id, s) {
   title.classList.add('on'); await sleep(1800);
   tap.classList.add('on');
   // ‘楚门的世界’：最后这一下点击里触发下载（用户手势里，浏览器一般不拦）
-  await new Promise(r => scr.addEventListener('click', () => { if (id === 'truman') downloadAfterword(s?.name); r(); }, { once: true }));
+  await new Promise(r => scr.addEventListener('click', () => { if (FILES[id]) downloadAfterword(s?.name, id); r(); }, { once: true }));   // 巴顿也下载，但不锁网页
 }
 
 // UTF-8 带 BOM，Windows 记事本打开不乱码
-export function downloadAfterword(name = '') {
+export function downloadAfterword(name = '', kind = 'truman') {
   try {
-    const blob = new Blob(['\ufeff' + afterwordText(name).replace(/\n/g, '\r\n')], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob(['\ufeff' + afterwordText(name, kind).replace(/\n/g, '\r\n')], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const a = h('a', { href: url, download: FILE_NAME, style: { display: 'none' } });
+    const a = h('a', { href: url, download: FILES[kind].name, style: { display: 'none' } });
     document.body.append(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   } catch (e) { console.warn('后日谈下载失败', e); }
@@ -83,11 +92,12 @@ export function showLock() {
 
 // 结局后效：之后打开游戏时
 export async function showAftermath(a) {
-  const bg = h('img', { class: 'bg', src: A('bg/room_night.webp'), alt: '', style: { position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(.7)' } });
+  const bgId = a.kind === 'dust' ? ({ god: 'creek', mad: 'he_room' }[a.tier] || 'room_night') : 'room_night';   // 等待戈多：神档放回溪边、疯档搬到他屋里、中间留在偏房（测试记录 17 §10）
+  const bg = h('img', { class: 'bg', src: A(`bg/${bgId}.webp`), alt: '', style: { position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(.7)' } });
   const kids = [bg];
   let line = '';
   if (a.kind === 'fade') { const f = userFigure(a.outfit, false); f.firstChild.classList.add('fx-fade'); kids.push(f); line = '床上那具身体，已经不在了。'; }
-  if (a.kind === 'dust') { const f = userFigure(a.outfit, true); f.firstChild.classList.add('fx-dust'); f.append(h('div', { class: 'dust-layer' })); kids.push(f); line = '……'; }
+  if (a.kind === 'dust') { const f = h('div', { class: 'user-fig' }, h('img', { class: 'fx-dust', src: A('sprite/user/feign.webp'), alt: '' }), h('div', { class: 'dust-layer' })); kids.push(f); line = '……'; }   // 假死立绘 + 落灰（测试记录 17 §7）
   if (a.kind === 'gone') line = '偏房里没有人。';
   if (a.kind === 'kept') { kids.push(userFigure(a.outfit, true)); line = '它还是你走的时候的样子。'; }   // ‘沉默的羔羊’：原样，不落灰、不变透明
   kids.push(h('div', { class: 'after-line' }, line));

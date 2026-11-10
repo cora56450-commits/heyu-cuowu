@@ -1,18 +1,18 @@
 // 各个浮层：地图、手机、数值页、菜单、记录、存读档、设置、选装扮、图鉴
-import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794324185';
-import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen, endingsOpen } from '../store.js?v=1794324185';
-import { chat, testConnection, ApiError } from '../api.js?v=1794324185';
-import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794324185';
-import { looseJson } from '../parse.js?v=1794324185';
-import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT, motherAway, locLocked, lockNote } from '../config/world.js?v=1794324185';
-import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794324185';
-import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794324185';
-import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags, taText } from '../state.js?v=1794324185';
-import { rollMeta } from '../meta.js?v=1794324185';
-import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm, mapMarks, PHONE_CG, hasAsset, hasPhone as hasPhoneNow } from '../game.js?v=1794324185';
-import { DEMO, DEMO_TAG } from '../config/demo.js?v=1794324185';
-import { openOrgan } from './organ.js?v=1794324185';
-import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794324185';
+import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794326124';
+import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen, endingsOpen } from '../store.js?v=1794326124';
+import { chat, testConnection, ApiError } from '../api.js?v=1794326124';
+import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794326124';
+import { looseJson } from '../parse.js?v=1794326124';
+import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT, motherAway, locLocked, lockNote } from '../config/world.js?v=1794326124';
+import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794326124';
+import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794326124';
+import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags, taText } from '../state.js?v=1794326124';
+import { rollMeta } from '../meta.js?v=1794326124';
+import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm, mapMarks, PHONE_CG, hasAsset, hasPhone as hasPhoneNow } from '../game.js?v=1794326124';
+import { DEMO, DEMO_TAG } from '../config/demo.js?v=1794326124';
+import { openOrgan } from './organ.js?v=1794326124';
+import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794326124';
 
 // 系统样式的提示框（冷冰冰的电子界面，不是河说的）
 export function systemNotice(text, buttons) {
@@ -86,7 +86,7 @@ export function openPhone(noFlash) {
     const cap = h('div', { class: 'phone-cap' }, PHONE_CG[cgId]?.cap || '');
     const f = h('div', { style: { background: '#000' } }, img, cap);
     openOv('phoneflash', f); setTimeout(() => { img.style.opacity = 1; cap.classList.add('on'); }, 30); setTimeout(() => { closeOv('phoneflash'); G.phoneFlashed = false; openPhone(true); }, 1800);
-    import('../store.js?v=1794324185').then(m => m.unlock('cgs', cgId)); return;
+    import('../store.js?v=1794326124').then(m => m.unlock('cgs', cgId)); return;
   }
   s.unread = 0; refreshHud(); saveRun(s);
   // 「睡了吗。」→ 打开手机 3 秒后变成「对方撤回了一条消息」
@@ -128,13 +128,13 @@ export function openPhone(noFlash) {
     const last = s.phone[s.phone.length - 1]; if (last?.from === 'me') delete last.note;
     s.phone.push({ from: 'me', text: t, ts: Date.now(), note: '已送达', day: s.day, ...(altered ? { altered } : {}) }); s.f.pingAnswered = true;
     if (s.day === 39 && s.f.d39_phone && !s.f.d39_replied) { s.f.d39_replied = true; render(); saveRun(s); await sleep(1800); s.phone[s.phone.length - 1].note = '已读'; s.phone.push({ from: 'he', text: '嗯。睡吧。', ts: Date.now() }); render(); saveRun(s); return; }
-    const g = await import('../game.js?v=1794324185');
+    const g = await import('../game.js?v=1794326124');
     if (!s.phonePending) {
       if ((s.phoneToday || 0) >= 3) s.phone[s.phone.length - 1].note = '已送达 · 他今天不会再回了';   // 每天最多回 3 次
       else {
         s.phoneToday = (s.phoneToday || 0) + 1; s.phonePending = { day: s.day, slot: s.slot };
         // 秒回按关系掷骰子（主线 1109 §2）：生 30%、熟 50%、近 70%、冷从不；第 22–24 天他躲着你，不掷
-        const { phoneStage } = await import('../state.js?v=1794324185');
+        const { phoneStage } = await import('../state.js?v=1794326124');
         const p = { raw: 0.3, warm: 0.5, near: 0.7, cold: 0 }[phoneStage(s)] ?? 0.3;
         if (!(s.day >= 22 && s.day <= 24) && !s.f.first_msg_reply && Math.random() < p) quick = true;
       }
@@ -164,7 +164,7 @@ export function openPhone(noFlash) {
   const memoBtn = h('span', { class: 'memo-tab', onclick: () => show('memo') }, '备忘录');
   function show(v) {
     const memo = v === 'memo';
-    if (memo) { import('../game.js?v=1794324185').then(g => { g.memoSync(s); renderMemo(); }); renderMemo(); }
+    if (memo) { import('../game.js?v=1794326124').then(g => { g.memoSync(s); renderMemo(); }); renderMemo(); }
     title.textContent = memo ? '备忘录' : '河';
     back.classList.toggle('hidden', !memo); memoBtn.classList.toggle('hidden', memo);
     msgs.classList.toggle('hidden', memo); inp.classList.toggle('hidden', memo); memoEl.classList.toggle('hidden', !memo);
@@ -330,7 +330,7 @@ export function openSettings() {
     if (key === 'apiKey' && st.apiKey && st.mock) { st.mock = false; if (boxes.mock) boxes.mock.checked = false; }
     saveSettings(st);
   } });
-  const after = () => { import('../audio.js?v=1794324185').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
+  const after = () => { import('../audio.js?v=1794326124').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
   const rng = (key, min, max, step) => h('input', { type: 'range', min, max, step, value: st[key], oninput: e => { st[key] = +e.target.value; saveSettings(st); after(); } });
   const chk = key => (boxes[key] = h('input', { type: 'checkbox', checked: !!st[key], onchange: e => { st[key] = e.target.checked; saveSettings(st); after(); } }));
   const status = h('span', { class: 'note' });
@@ -381,7 +381,7 @@ export function openSettings() {
     h('p', { class: 'note' }, '浏览器里「清除网站数据」也会把存档、Key 和图鉴一起清掉。'),
     st.debug ? h('div', { class: 'row' }, h('button', { class: 'btn', onclick: async () => {
       if (!(await confirmBox('全通存档', '图鉴全部解锁，三个手动存档位会被覆盖成测试节点（自动存档不动）。', '写入'))) return;
-      const d = await import('../debug.js?v=1794324185'); await d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
+      const d = await import('../debug.js?v=1794326124'); await d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
     } }, '调试：全通存档')) : null);
   openOv('settings', h('div', {}, panel));
 }
@@ -405,7 +405,7 @@ export function openOutfit(isStart) {
       closeOv('outfit');
       if (!isStart && s && id !== s.outfit) {
         s.outfit = id; s.meta.outfitChanged = true; saveRun(s); refreshHud(); toast('换好了。');
-        if (G.R?.chars?.he) import('../game.js?v=1794324185').then(g => { g.addResent(G.s, 1, '当面换装'); g.metaLine('outfit'); });   // 数值与怨恨 §1-5
+        if (G.R?.chars?.he) import('../game.js?v=1794326124').then(g => { g.addResent(G.s, 1, '当面换装'); g.metaLine('outfit'); });   // 数值与怨恨 §1-5
       }
       res(id);
     }
@@ -418,7 +418,7 @@ export function openOutfit(isStart) {
 
 // ———————————————— 图鉴 ————————————————
 // 回想里的剧情 / 日常 CG（结局 CG 不放这里）
-export const STORY_CGS = ['first_meet', 'd1_night', 'd2_walk', 'd2_phone', 'daily_breakfast', 'daily_table', 'daily_lamp', 'daily_chili', 'd4_heng', 'ta_suture', 'd6_creek', 'd8_man', 'puzzle_photo', 'phone_night', 'phone_warm', 'phone_near', 'phone_sour', 'phone_cold', 'user_offline', 'master', 'd12_drawings', 'festival', 'd16_teach', 'he_suture', 'd20_rain', 'first_cross', 'd24_door', 'daily_table_mid', 'daily_lamp_mid', 'daily_laundry', 'ta_mad', 'ta_lick', 'd26_guo', 'd28_tomb', 'border', 'd32_thread', 'd34_flowers', 'outside', 'd36_roof', 'd38_unbind', 'daily_table_late', 'daily_lamp_late', 'daily_wait_late', 'he_first', 'ta_first', 'day40', 'd41_night'];
+export const STORY_CGS = ['first_meet', 'd1_night', 'd2_walk', 'd2_phone', 'daily_breakfast', 'daily_table', 'daily_lamp', 'daily_chili', 'd4_heng', 'ta_suture', 'd6_creek', 'd8_man', 'puzzle_photo', 'phone_night', 'phone_warm', 'phone_near', 'phone_sour', 'phone_cold', 'user_offline', 'master', 'd12_drawings', 'festival', 'd16_teach', 'he_suture', 'd20_rain', 'first_cross', 'd24_door', 'daily_table_mid', 'daily_lamp_mid', 'daily_laundry', 'ta_mad', 'ta_lick', 'd26_guo', 'd28_tomb', 'border', 'd32_thread', 'd34_flowers', 'outside', 'd36_roof', 'd38_unbind', 'daily_table_late', 'daily_lamp_late', 'daily_wait_late', 'he_first', 'ta_first', 'julesjim_hands', 'day40', 'd41_night'];
 function viewCG(id, title) {
   const v = h('div', { style: { background: '#000' }, onclick: () => closeOv('cgview') },
     h('img', { src: A(`cg/${id}.webp`), style: { width: '100%', height: '100%', objectFit: 'contain' }, alt: '' }),
@@ -468,7 +468,7 @@ export function openMemories() {
   const textCard = (title, lines) => h('div', { class: 'gcard card on door-drawing', onclick: () => openOv('cgview', h('div', { style: { background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }, onclick: () => closeOv('cgview') }, h('div', { class: 'paper', style: { width: '560px', padding: '48px 56px', fontSize: '22px', lineHeight: '2.1', color: '#3b342c' } }, ...lines.flatMap((l, k) => k ? [h('br'), l] : [l])))) }, h('span', {}, title));
   // 门缝下的画：用第 24 天的 CG（主线 1109 §5.2：原来误用了小时候的河）；图没到就不显示这张卡
   if (g.misc.door_drawing && hasAsset('cg/d24_door.webp')) body.lastChild.append(h('div', { class: 'gcard card on img organ', onclick: () => viewCG('d24_door') }, h('img', { src: A('cg/d24_door.webp'), alt: '门缝下的画', style: { objectFit: 'cover' } })));
-  if (g.misc.five_petal) body.lastChild.append(textCard('五瓣的花', ['桃花林里那朵五瓣的。', '在这里，它看起来反而像一个错误。']));
+  if (g.misc.five_petal) body.lastChild.append(hasAsset('cg/five_petal.webp') ? h('div', { class: 'gcard card on img organ', onclick: () => viewCG('five_petal') }, h('img', { src: A('cg/five_petal.webp'), alt: '五瓣的花', style: { objectFit: 'cover' } })) : textCard('五瓣的花', ['桃花林里那朵五瓣的。', '在这里，它看起来反而像一个错误。']));
   galleryShell('回想', `${seen} / ${CGS.length}`, body);
 }
 
