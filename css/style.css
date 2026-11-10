@@ -642,6 +642,7 @@ body.compact #ov-statshelp .how-text { font-size: 21px; line-height: 1.5; }
 .phone .memo-day { margin-top: 8px; font-size: 12px; color: #8A7F72; border-bottom: 1px solid #DDD4C4; }
 .phone .memo-item { padding: 2px 0; }
 .phone .memo-item.done { color: #A9A196; text-decoration: line-through; }
+.phone .memo-extra { margin: -2px 0 4px 10px; color: #8E4B3A; opacity: .8; font-style: italic; transform: rotate(-1deg); transform-origin: left center; }   /* 不是玩家写的那一行：褪色红褐、歪一点 */
 .phone .memo-empty { margin-top: 30px; text-align: center; color: #A9A196; }
 body.compact .phone .memo { font-size: 19px; }
 .hud .ap { position: relative; }

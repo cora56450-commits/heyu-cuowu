@@ -1,7 +1,7 @@
 // 解析 AI 输出：严格 JSON → 宽松提取 → 纯文本兜底；以及流式中途提取完整的 line 对象
-import { EXPR, CODE_ONLY_EXPR, ORGANS } from './config/world.js?v=1794268193';
+import { EXPR, CODE_ONLY_EXPR, ORGANS } from './config/world.js?v=1794303750';
 const ORGAN_BY_NAME = Object.fromEntries(ORGANS.map(o => [o.name, o.id]));
-import { AI_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794268193';
+import { AI_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794303750';
 
 export function looseJson(raw) {
   if (!raw) return null;
@@ -68,6 +68,8 @@ export function normTurn(raw) {
     he_flags: Array.isArray(j.he_flags) ? j.he_flags.filter(x => typeof x === 'string') : [],
     appointment: j.appointment && typeof j.appointment === 'object' && j.appointment.who ? j.appointment : null,
     action_count: Math.min(5, Math.max(1, parseInt(j.action_count) || 1)),   // 玩家这次实际做了几件事（二测 · 1）
+    player_fact: typeof j.player_fact === 'string' && j.player_fact.trim() && !/^(null|无|没有)$/i.test(j.player_fact.trim()) ? [...j.player_fact.trim()].slice(0, 20).join('') : null,   // 「你」亲口说的关于自己的事（借鉴机制与结局 §2）
+    persuaded: j.persuaded === true,   // 说服养母（§4）
     he_owes: typeof j.he_owes === 'string' && j.he_owes.trim() && !/^(null|无|没有)$/i.test(j.he_owes.trim()) ? [...j.he_owes.trim()].slice(0, 20).join('') : null,   // 他躲开的那句（主线 1109 §1.4）
   };
 }

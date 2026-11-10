@@ -1,14 +1,14 @@
 // 启动：缩放、读设置、离线判定、标题画面
-import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794268193';
-import { store, getSettings, saveSettings, getGallery, endingsOpen } from './store.js?v=1794268193';
-import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, hasAsset } from './game.js?v=1794268193';
-import { newRun, loadRun, hasActiveRun, saveRun } from './state.js?v=1794268193';
-import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794268193';
-import { MID } from './config/endings.js?v=1794268193';
-import { madTier } from './config/values.js?v=1794268193';
-import * as P from './ui/panels.js?v=1794268193';
-import { DEMO, DEMO_KEY, DEMO_BASE, DEMO_LAST_DAY, DEMO_TAG, TEST_BUILD } from './config/demo.js?v=1794268193';
-import { showLock, showAftermath } from './ui/ending.js?v=1794268193';
+import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794303750';
+import { store, getSettings, saveSettings, getGallery, endingsOpen } from './store.js?v=1794303750';
+import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, installTitleMeta, hasAsset } from './game.js?v=1794303750';
+import { newRun, loadRun, hasActiveRun, saveRun } from './state.js?v=1794303750';
+import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794303750';
+import { MID } from './config/endings.js?v=1794303750';
+import { madTier } from './config/values.js?v=1794303750';
+import * as P from './ui/panels.js?v=1794303750';
+import { DEMO, DEMO_KEY, DEMO_BASE, DEMO_LAST_DAY, DEMO_TAG, TEST_BUILD } from './config/demo.js?v=1794303750';
+import { showLock, showAftermath } from './ui/ending.js?v=1794303750';
 
 // 1280×720 等比缩放，四周黑边
 function fit() {
@@ -47,14 +47,14 @@ document.getElementById('rotate-go')?.addEventListener('click', async () => {
 // 键盘推进对话
 addEventListener('keydown', e => {
   if (e.target.matches('input,textarea')) return;
-  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794268193').then(m => m.advance()); }
+  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794303750').then(m => m.advance()); }
 });
 
 let bootOffline = 0;
 
 function showTitle() {
   G.R = null; G.s = null;
-  import('./audio.js?v=1794268193').then(a => a.playBgm('title'));
+  import('./audio.js?v=1794303750').then(a => a.playBgm('title'));
   for (const o of [...$('#overlays').children]) o.remove();
   const active = hasActiveRun();
   const items = [
@@ -205,7 +205,7 @@ function otherTabOpen() {
 let tabChannel = null;
 function showElsewhere() {
   G.blocked = true;
-  import('./audio.js?v=1794268193').then(a => a.stopAll()).catch(() => {});   // 被接管的页面不能还在放音乐，不然两边的 BGM 叠在一起
+  import('./audio.js?v=1794303750').then(a => a.stopAll()).catch(() => {});   // 被接管的页面不能还在放音乐，不然两边的 BGM 叠在一起
   for (const o of [...$('#overlays').children]) o.remove();
   // 测试记录 7 #A：忘了关的后台页面也会把人卡在这里，所以给一个「在这里继续」：通知另一边停下，这边重新进
   const take = () => { try { tabChannel?.postMessage('takeover'); sessionStorage.setItem('gucun_takeover', '1'); } catch {} location.reload(); };
@@ -239,6 +239,7 @@ async function boot() {
   // 回来了（切回前台 / 久没操作后又点了一下）：游戏里走离线流程；在标题画面就记下来，点「继续」时用
   installActivity((gap, e, info) => { if (G.blocked) return; if (!playerReturned(gap, e, info)) bootOffline = Math.max(bootOffline, gap); });
   startIdleWatch();
+  installTitleMeta();
   try { await loadEvents(); } catch (e) { document.body.append(h('div', { style: { color: '#fff', padding: '20px' } }, '事件表加载失败。请用本地服务器或 GitHub Pages 打开（不能直接双击 index.html）。')); throw e; }
   if (store.get('lock_truman')) return showLock();
   const s = loadRun('auto');

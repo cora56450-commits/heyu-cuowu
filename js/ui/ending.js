@@ -1,17 +1,17 @@
 // 结局画面、‘楚门的世界’锁定画面、结局后效
-import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794268193';
-import { store } from '../store.js?v=1794268193';
-import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794268193';
-import { madTier } from '../config/values.js?v=1794268193';
-import { userFigure } from '../game.js?v=1794268193';
-import { FILE_NAME, afterwordText, loadAfterword } from '../config/afterword.js?v=1794268193';
-import { garble } from '../meta.js?v=1794268193';
+import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794303750';
+import { store } from '../store.js?v=1794303750';
+import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794303750';
+import { madTier } from '../config/values.js?v=1794303750';
+import { userFigure } from '../game.js?v=1794303750';
+import { FILE_NAME, afterwordText, loadAfterword } from '../config/afterword.js?v=1794303750';
+import { garble } from '../meta.js?v=1794303750';
 
 const waitClick = el => new Promise(r => el.addEventListener('click', r, { once: true }));
 
 export async function showEnding(id, s) {
   const e = ENDINGS[id]; const L = ENDING_LINES[id] || {};
-  import('../audio.js?v=1794268193').then(a => a.playBgm('meta'));
+  import('../audio.js?v=1794303750').then(a => a.playBgm('meta'));
   if (id === 'truman') loadAfterword();   // 先读好后日谈，最后那一下点击时直接下载
   const tier = madTier(s?.madness || 0);
   const cg = h('img', { class: 'cg' + (e.glitch ? ' glitch' : ''), src: A(`cg/${e.cg}.webp`), alt: '' });
@@ -41,6 +41,8 @@ export async function showEnding(id, s) {
   if (L.note) await line(`「${L.note}」`, 'note');
   // 5. 河的最后一句（按疯神档位）
   for (const t of L[tier] || []) await line(t, 'he');
+  // 5.5 结局交代（post：河那句之后、标题之前，和 pre 一样的黑屏旁白；借鉴机制与结局 §8）
+  for (const p of L.post || []) await line(p, 'narr');
   // 6. 标题卡
   title.classList.add('on'); await sleep(1800);
   tap.classList.add('on');
@@ -87,6 +89,7 @@ export async function showAftermath(a) {
   if (a.kind === 'fade') { const f = userFigure(a.outfit, false); f.firstChild.classList.add('fx-fade'); kids.push(f); line = '床上那具身体，已经不在了。'; }
   if (a.kind === 'dust') { const f = userFigure(a.outfit, true); f.firstChild.classList.add('fx-dust'); f.append(h('div', { class: 'dust-layer' })); kids.push(f); line = '……'; }
   if (a.kind === 'gone') line = '偏房里没有人。';
+  if (a.kind === 'kept') { kids.push(userFigure(a.outfit, true)); line = '它还是你走的时候的样子。'; }   // ‘沉默的羔羊’：原样，不落灰、不变透明
   kids.push(h('div', { class: 'after-line' }, line));
   const scr = showScreen('after', h('div', { style: { background: '#000' } }, ...kids));
   await sleep(2500);
