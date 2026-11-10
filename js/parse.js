@@ -1,7 +1,7 @@
 // 解析 AI 输出：严格 JSON → 宽松提取 → 纯文本兜底；以及流式中途提取完整的 line 对象
-import { EXPR, CODE_ONLY_EXPR, ORGANS } from './config/world.js?v=1794335883';
+import { EXPR, CODE_ONLY_EXPR, ORGANS } from './config/world.js?v=1794340654';
 const ORGAN_BY_NAME = Object.fromEntries(ORGANS.map(o => [o.name, o.id]));
-import { AI_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794335883';
+import { AI_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794340654';
 
 export function looseJson(raw) {
   if (!raw) return null;
@@ -14,13 +14,15 @@ export function looseJson(raw) {
   return null;
 }
 
+// AI 偶尔在台词里写 HTML 标签（如「牠也记。</br>」，Cora 11/10）：标签一律去掉，<br> 类当成空格
+export const stripTags = s => String(s ?? '').replace(/<\s*\/?\s*br\s*\/?\s*>/gi, ' ').replace(/<\/?[a-z][a-z0-9]*(?:\s[^<>]*)?\/?>/gi, '').replace(/&nbsp;/g, ' ').replace(/[ \t]{2,}/g, ' ');
 const SPEAKERS = new Set(['narration', '河', '牠', '养母', '村民', '村民·男', '村民·女', '你']);
 export function normLine(l) {
   if (!l || typeof l !== 'object') return null;
   let sp = String(l.speaker || 'narration').trim();
   if (/^(旁白|narrator|系统)$/i.test(sp)) sp = 'narration';
   if (sp === '我' || sp === '玩家') sp = '你';
-  const text = String(l.text ?? '').trim();
+  const text = stripTags(l.text).trim();
   if (!text) return null;
   sp = sp.replace(/^村民[·・.\-\s]?(男|女)$/, '村民·$1');
   const out = { speaker: SPEAKERS.has(sp) || sp.length <= 3 ? sp : 'narration', text };
@@ -51,7 +53,7 @@ export function normTurn(raw) {
     const rescued = raw ? scanLines(raw) : [];
     if (rescued.length) return { ok: 'rescued', lines: rescued, tags: [], action_size: 'small', suggestions: [], he_flags: [] };
     // 兜底：把纯文本当旁白
-    const txt = (raw || '').replace(/[{}\[\]"]/g, '').split(/\n+/).map(s => s.trim()).filter(Boolean).slice(0, 6);
+    const txt = stripTags(raw || '').replace(/[{}\[\]"]/g, '').split(/\n+/).map(s => s.trim()).filter(Boolean).slice(0, 6);
     return { ok: false, lines: txt.length ? txt.map(t => ({ speaker: 'narration', text: t.slice(0, 120) })) : [{ speaker: 'narration', text: '……' }], tags: [], action_size: 'small', suggestions: [], he_flags: [] };
   }
   const rawTags = Array.isArray(j.tags) ? j.tags.map(String) : [];
@@ -59,7 +61,7 @@ export function normTurn(raw) {
   const om = rawTags.map(t => t.match(/^organ[:：](.+)$/)).find(Boolean);
   const organ = om ? ORGAN_BY_NAME[om[1].trim()] || null : null;
   const sugg = (Array.isArray(j.suggestions) ? j.suggestions : []).map(x => typeof x === 'string' ? { text: x, cost: 1 } : x)
-    .filter(x => x && x.text).map(x => ({ text: String(x.text).slice(0, 20), cost: Math.min(3, Math.max(1, parseInt(x.cost) || 1)) })).slice(0, 4);
+    .filter(x => x && x.text).map(x => ({ text: stripTags(x.text).trim().slice(0, 20), cost: Math.min(3, Math.max(1, parseInt(x.cost) || 1)) })).slice(0, 4);
   return {
     ok: true,
     lines: j.lines.map(normLine).filter(Boolean),

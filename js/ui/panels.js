@@ -1,18 +1,18 @@
 // 各个浮层：地图、手机、数值页、菜单、记录、存读档、设置、选装扮、图鉴
-import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794335883';
-import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen, endingsOpen } from '../store.js?v=1794335883';
-import { chat, testConnection, ApiError } from '../api.js?v=1794335883';
-import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794335883';
-import { looseJson } from '../parse.js?v=1794335883';
-import { SLOTS, LOCATIONS, heLocation, OUTFITS, START_OUTFITS, ORGANS, AP_PER_SLOT, motherAway, locLocked, lockNote } from '../config/world.js?v=1794335883';
-import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794335883';
-import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794335883';
-import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags, taText } from '../state.js?v=1794335883';
-import { rollMeta } from '../meta.js?v=1794335883';
-import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm, mapMarks, mapRecall, mapMaybe, PHONE_CG, hasAsset, hasPhone as hasPhoneNow } from '../game.js?v=1794335883';
-import { DEMO, DEMO_TAG } from '../config/demo.js?v=1794335883';
-import { openOrgan } from './organ.js?v=1794335883';
-import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794335883';
+import { h, $, A, openOv, closeOv, toast, modal, confirmBox, sleep } from './dom.js?v=1794340654';
+import { getSettings, saveSettings, store, getGallery, DEFAULT_SETTINGS, organsOpen, endingsOpen } from '../store.js?v=1794340654';
+import { chat, testConnection, ApiError } from '../api.js?v=1794340654';
+import { phoneOfflinePrompt, phoneChatPrompt } from '../prompt.js?v=1794340654';
+import { looseJson, stripTags } from '../parse.js?v=1794340654';
+import { SLOTS, LOCATIONS, heLocation, OUTFITS, STATS_EYE5, START_OUTFITS, ORGANS, AP_PER_SLOT, motherAway, locLocked, lockNote } from '../config/world.js?v=1794340654';
+import { VALUE_KEYS, VALUE_NAMES, AI_TAGS } from '../config/values.js?v=1794340654';
+import { ENDINGS, GROUP_ORDER } from '../config/endings.js?v=1794340654';
+import { saveRun, loadRun, slotInfo, SLOT_IDS, clone, tierOf, applyTags, taText } from '../state.js?v=1794340654';
+import { rollMeta } from '../meta.js?v=1794340654';
+import { G, arrive, refreshHud, continueRun, userFigure, outfitNorm, statsNorm, mapMarks, mapRecall, mapMaybe, heHintShown, PHONE_CG, hasAsset, hasPhone as hasPhoneNow } from '../game.js?v=1794340654';
+import { DEMO, DEMO_TAG } from '../config/demo.js?v=1794340654';
+import { openOrgan } from './organ.js?v=1794340654';
+import { WEB3FORMS_KEY, MAIL_SUBJECT } from '../config/mail.js?v=1794340654';
 
 // 系统样式的提示框（冷冰冰的电子界面，不是河说的）
 export function systemNotice(text, buttons) {
@@ -29,7 +29,7 @@ export function openMap(fromButton) {
   const s = G.s; if (!s) return;
   if (fromButton && (G.busy || s.phase === 'event')) { toast('现在走不开。'); return; }
   const mustChoose = s.phase === 'map';
-  const heAt = heLocation(s.day, s.slot);
+  const heAt = heHintShown(s) ? heLocation(s.day, s.slot) : null;   // 只有 30% 的时段告诉玩家河在哪
   let sel = mustChoose ? (heAt || (s.loc && LOCATIONS[s.loc] && !locLocked(s, s.loc) ? s.loc : 'yard')) : s.loc;   // 河不在的时段：默认选你现在待的地方
   const marks = mapMarks(s);   // 有事的地点：小红点
   const isLocked = id => locLocked(s, id);
@@ -88,7 +88,7 @@ export function openPhone(noFlash) {
     const cap = h('div', { class: 'phone-cap' }, PHONE_CG[cgId]?.cap || '');
     const f = h('div', { style: { background: '#000' } }, img, cap);
     openOv('phoneflash', f); setTimeout(() => { img.style.opacity = 1; cap.classList.add('on'); }, 30); setTimeout(() => { closeOv('phoneflash'); G.phoneFlashed = false; openPhone(true); }, 1800);
-    import('../store.js?v=1794335883').then(m => m.unlock('cgs', cgId)); return;
+    import('../store.js?v=1794340654').then(m => m.unlock('cgs', cgId)); return;
   }
   s.unread = 0; refreshHud(); saveRun(s);
   // 「睡了吗。」→ 打开手机 3 秒后变成「对方撤回了一条消息」
@@ -130,13 +130,13 @@ export function openPhone(noFlash) {
     const last = s.phone[s.phone.length - 1]; if (last?.from === 'me') delete last.note;
     s.phone.push({ from: 'me', text: t, ts: Date.now(), note: '已送达', day: s.day, ...(altered ? { altered } : {}) }); s.f.pingAnswered = true;
     if (s.day === 39 && s.f.d39_phone && !s.f.d39_replied) { s.f.d39_replied = true; render(); saveRun(s); await sleep(1800); s.phone[s.phone.length - 1].note = '已读'; s.phone.push({ from: 'he', text: '嗯。睡吧。', ts: Date.now() }); render(); saveRun(s); return; }
-    const g = await import('../game.js?v=1794335883');
+    const g = await import('../game.js?v=1794340654');
     if (!s.phonePending) {
       if ((s.phoneToday || 0) >= 3) s.phone[s.phone.length - 1].note = '已送达 · 他今天不会再回了';   // 每天最多回 3 次
       else {
         s.phoneToday = (s.phoneToday || 0) + 1; s.phonePending = { day: s.day, slot: s.slot };
         // 秒回按关系掷骰子（主线 1109 §2）：生 30%、熟 50%、近 70%、冷从不；第 22–24 天他躲着你，不掷
-        const { phoneStage } = await import('../state.js?v=1794335883');
+        const { phoneStage } = await import('../state.js?v=1794340654');
         const p = { raw: 0.3, warm: 0.5, near: 0.7, cold: 0 }[phoneStage(s)] ?? 0.3;
         if (!(s.day >= 22 && s.day <= 24) && !s.f.first_msg_reply && Math.random() < p) quick = true;
       }
@@ -166,7 +166,7 @@ export function openPhone(noFlash) {
   const memoBtn = h('span', { class: 'memo-tab', onclick: () => show('memo') }, '备忘录');
   function show(v) {
     const memo = v === 'memo';
-    if (memo) { import('../game.js?v=1794335883').then(g => { g.memoSync(s); renderMemo(); }); renderMemo(); }
+    if (memo) { import('../game.js?v=1794340654').then(g => { g.memoSync(s); renderMemo(); }); renderMemo(); }
     title.textContent = memo ? '备忘录' : '河';
     back.classList.toggle('hidden', !memo); memoBtn.classList.toggle('hidden', memo);
     msgs.classList.toggle('hidden', memo); inp.classList.toggle('hidden', memo); memoEl.classList.toggle('hidden', !memo);
@@ -201,7 +201,7 @@ export async function fetchOfflineMessages(ms) {
     const now = Date.now(); const maxH = ms / H;
     for (const m of list) {
       const ago = Math.min(maxH * 0.95, Math.max(0.05, +m.hours_ago || 1));
-      s.phone.push({ from: 'he', text: String(m.text || '。'), ts: now - ago * H, sep: first ? '你不在的时候' : null });
+      s.phone.push({ from: 'he', text: stripTags(m.text).trim() || '。', ts: now - ago * H, sep: first ? '你不在的时候' : null });
       first = false;
     }
     s.unread += list.length; refreshHud(); saveRun(s);
@@ -209,7 +209,8 @@ export async function fetchOfflineMessages(ms) {
 }
 
 // ———————————————— 数值页 ————————————————
-const EYE_X = [120, 290, 460, 630, 800];   // 第 5 颗眼球不压在右边立绘的脸上
+const EYE_X = [110, 300, 490, 680, STATS_EYE5.x];   // 第 5 颗（同化）压在女主右眼上
+const LABEL_X = [110, 300, 490, 680, 805];   // 同化的标签放在她头发边上，不挡脸
 const STATS_HELP = `· 爱慕：他有多在意你。陪着他、接住他的靠近会变高；冷淡、推开会降。
 · 怨恨：他有多恨你能离开。你不在的时候、约好了没去、他的消息你没回、你总待在别人那里，它都会涨；冷淡、拒绝、总说要走涨得更快。越到后面越容易涨。温柔、守约、时间会让它慢慢消下去；那天你冷过他，它就不消。
 · 希望：他有多信你能带他走。说起外面、许下承诺会变高。
@@ -224,13 +225,13 @@ export function openStats() {
   const kids = [];
   VALUE_KEYS.forEach((k, i) => {
     const v = Math.round(s.v[k]); const size = 90 + v * 0.9;   // 眼球大小跟数值走
-    kids.push(h('img', { class: 'eye', src: A(v < 20 ? 'ui/eye_away.webp' : 'ui/eye_look.webp'), alt: '', style: { left: EYE_X[i] + 'px', width: size + 'px', height: size + 'px' } }));
-    kids.push(h('div', { class: 'lb', style: { left: EYE_X[i] + 'px' } }, h('span', {}, VALUE_NAMES[k]), h('b', {}, v)));
+    kids.push(h('img', { class: 'eye', src: A(v < 20 ? 'ui/eye_away.webp' : 'ui/eye_look.webp'), alt: '', style: { left: EYE_X[i] + 'px', width: size + 'px', height: size + 'px', ...(i === 4 ? { top: STATS_EYE5.y + 'px' } : {}) } }));
+    kids.push(h('div', { class: 'lb', style: { left: LABEL_X[i] + 'px' } }, h('span', {}, VALUE_NAMES[k]), h('b', {}, v)));
   });
   const close = () => { closeOv('stats'); s.meta.sawStats = true; saveRun(s); };
   // d9 窗外之后第一次打开：0.8 秒后五颗眼球一起看过来（放大一点），停 1.5 秒再回去；没有字，只一次（关得早也不补）
-  if (s.f.seen_empty && !s.c.eyesLooked) {
-    s.c.eyesLooked = true; saveRun(s);
+  if (!s.c.eyesFirst || (s.f.seen_empty && !s.c.eyesLooked)) {   // 第一次打开就看过来一次；d9 窗外之后再看一次（Cora 11/10）
+    if (s.c.eyesFirst) s.c.eyesLooked = true; s.c.eyesFirst = true; saveRun(s);
     setTimeout(() => {
       const eyes = [...document.querySelectorAll('#ov-stats .eye')]; if (!eyes.length) return;
       const keep = eyes.map(e => [e.src, e.style.width]);
@@ -239,7 +240,7 @@ export function openStats() {
     }, 800);
   }
   const ov = h('div', {},
-    h('img', { class: 'user', src: A(`sprite/user/${s.outfit}.webp`), alt: '你的样子，灰色', style: outfitNorm(s.outfit) }),   // 按脸对齐：眼睛正好在红线上
+    h('img', { class: 'user', src: A(`sprite/user/${s.outfit}.webp`), alt: '你的样子，灰色', style: statsNorm(s.outfit) }),   // 两眼正好压在红线最平的那一段上
     h('img', { class: 'thread', src: A('ui/thread.webp'), alt: '' }),
     ...kids,
     // 口袋里的五瓣花（主线 1109 §4）：0 朵不显示；第 34 天看过他的盒子以后多半句
@@ -332,7 +333,7 @@ export function openSettings() {
     if (key === 'apiKey' && st.apiKey && st.mock) { st.mock = false; if (boxes.mock) boxes.mock.checked = false; }
     saveSettings(st);
   } });
-  const after = () => { import('../audio.js?v=1794335883').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
+  const after = () => { import('../audio.js?v=1794340654').then(a => a.applyVolume()); document.body.classList.toggle('calm', !!st.reduceMotion); };
   const rng = (key, min, max, step) => h('input', { type: 'range', min, max, step, value: st[key], oninput: e => { st[key] = +e.target.value; saveSettings(st); after(); } });
   const chk = key => (boxes[key] = h('input', { type: 'checkbox', checked: !!st[key], onchange: e => { st[key] = e.target.checked; saveSettings(st); after(); } }));
   const status = h('span', { class: 'note' });
@@ -383,7 +384,7 @@ export function openSettings() {
     h('p', { class: 'note' }, '浏览器里「清除网站数据」也会把存档、Key 和图鉴一起清掉。'),
     st.debug ? h('div', { class: 'row' }, h('button', { class: 'btn', onclick: async () => {
       if (!(await confirmBox('全通存档', '图鉴全部解锁，三个手动存档位会被覆盖成测试节点（自动存档不动）。', '写入'))) return;
-      const d = await import('../debug.js?v=1794335883'); await d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
+      const d = await import('../debug.js?v=1794340654'); await d.unlockAll(); await d.makeTestSaves(); toast('写好了。');
     } }, '调试：全通存档')) : null);
   openOv('settings', h('div', {}, panel));
 }
@@ -407,7 +408,7 @@ export function openOutfit(isStart) {
       closeOv('outfit');
       if (!isStart && s && id !== s.outfit) {
         s.outfit = id; s.meta.outfitChanged = true; saveRun(s); refreshHud(); toast('换好了。');
-        if (G.R?.chars?.he) import('../game.js?v=1794335883').then(g => { g.addResent(G.s, 1, '当面换装'); g.metaLine('outfit'); });   // 数值与怨恨 §1-5
+        if (G.R?.chars?.he) import('../game.js?v=1794340654').then(g => { g.addResent(G.s, 1, '当面换装'); g.metaLine('outfit'); });   // 数值与怨恨 §1-5
       }
       res(id);
     }
@@ -478,7 +479,7 @@ export function openMemories() {
 function openDebug() {
   const s = G.s;
   const box = h('div', { class: 'list' },
-    h('button', { class: 'btn', onclick: () => import('../game.js?v=1794335883').then(g => g.glitchOnce(undefined, { force: true })) }, '立绘花屏一次（看效果）'),
+    h('button', { class: 'btn', onclick: () => import('../game.js?v=1794340654').then(g => g.glitchOnce(undefined, { force: true })) }, '立绘花屏一次（看效果）'),
     ...VALUE_KEYS.map(k => h('label', { style: { display: 'flex', gap: '10px', alignItems: 'center' } }, h('span', { style: { width: '60px' } }, VALUE_NAMES[k]),
       h('input', { type: 'range', min: 0, max: 100, value: s.v[k], oninput: e => { s.v[k] = +e.target.value; e.target.nextSibling.textContent = e.target.value; } }), h('span', {}, s.v[k]))),
     h('label', {}, '疯神 ', h('input', { type: 'range', min: -5, max: 5, step: 0.5, value: s.madness, oninput: e => { s.madness = +e.target.value; } })),
@@ -523,7 +524,7 @@ export function blackLines(lines, { hold = false, faint = false } = {}) {
     openOv('prologue', ov); let i = 0;
     const next = () => {
       if (i >= lines.length) { ov.removeEventListener('click', next); ov.style.transition = 'opacity .8s'; ov.style.opacity = 0; setTimeout(() => { closeOv('prologue'); res(); }, hold ? 1600 : 800); return; }
-      const p = h('p', faint ? { style: { fontSize: '15px', letterSpacing: '4px', color: 'rgba(220,210,195,.45)' } } : {}, lines[i++]); box.append(p);   // faint：很淡的小字 setTimeout(() => p.classList.add('on'), 30);
+      const p = h('p', faint ? { style: { fontSize: '15px', letterSpacing: '4px', color: 'rgba(220,210,195,.45)' } } : {}, lines[i++]); box.append(p); setTimeout(() => p.classList.add('on'), 30);   // faint：很淡的小字（11/10 修：之前这条注释把 setTimeout 注释掉了，黑屏上的字都不显示）
     };
     ov.addEventListener('click', next); next();
   });
