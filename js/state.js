@@ -1,7 +1,7 @@
 // 一局游戏的状态、数值结算、存档 / 读档
-import { store } from './store.js?v=1794344635';
-import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, CAP_UP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794344635';
-import { AP_PER_SLOT } from './config/world.js?v=1794344635';
+import { store } from './store.js?v=1794345987';
+import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, CAP_UP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN, OUTWARD_TAGS, NO_SCALE_HOPE } from './config/values.js?v=1794345987';
+import { AP_PER_SLOT } from './config/world.js?v=1794345987';
 
 export function newRun(outfit = 'initial', loop = 0) {
   return {
@@ -24,6 +24,7 @@ export const tierOf = s => madTier(s.madness);
 export function applyTags(s, tags = [], heFlags = [], extra = null, opts = {}) {
   tags = [...new Set(tags)];
   for (const grp of EXCLUSIVE_TAGS) { const hit = tags.filter(t => grp.includes(t)); if (hit.length > 1) tags = tags.filter(t => !grp.includes(t) || t === hit[0]); }
+  if (tags.includes('想离开') && tags.some(t => OUTWARD_TAGS.includes(t))) tags = tags.filter(t => t !== '想离开');
   tags = tags.slice(0, MAX_TAGS_PER_TURN);
   if (tags.some(t => t === '冷淡' || t === '拒绝' || t === '想离开')) (s.c ||= {}).negDay = s.day;   // 这一天有负面标签：明早怨恨不自动消
   if (tags.includes('承诺带他走')) (s.c ||= {}).promiseDay = s.day;   // 第 35–39 天：最近 3 天有没有给他准话
@@ -53,7 +54,9 @@ export function applyTags(s, tags = [], heFlags = [], extra = null, opts = {}) {
   // 回避型依恋：连续热烈回应
   if (warm) { s.c.warmStreak = (s.c.warmStreak || 0) + 1; WARM_STREAK.apply(s.c.warmStreak, dc); }
   else if (tags.length) s.c.warmStreak = Math.max(0, (s.c.warmStreak || 0) - WARM_STREAK.decay);
-  if (opts.scale != null && opts.scale !== 1) for (const k in dc) dc[k] *= opts.scale;   // 1 点的小事 ×0.5（固定事件、选项不打折）
+  const hopeFull = tags.filter(t => NO_SCALE_HOPE.includes(t)).reduce((x, t) => x + (TAGS[t]?.hope || 0), 0);   // 说外面的希望不打五折
+  if (opts.scale != null && opts.scale !== 1) for (const k in dc) dc[k] *= opts.scale;
+  if (opts.scale != null && opts.scale !== 1 && hopeFull) dc.hope = (dc.hope || 0) + hopeFull * (1 - opts.scale);   // 1 点的小事 ×0.5（固定事件、选项不打折）
   if (extra) for (const [k, x] of Object.entries(extra)) add(opts.capExtra ? dc : de, k, x);
   // 每天上限：今天已经加了多少、减了多少
   if (opts.noCap) { for (const [k, x] of Object.entries(dc)) add(de, k, x); for (const k in dc) delete dc[k]; }   // 固定剧情的选项：不受每天上限
