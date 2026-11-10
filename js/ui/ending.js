@@ -1,18 +1,18 @@
 // 结局画面、‘楚门的世界’锁定画面、结局后效
-import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794327409';
-import { store, unlock } from '../store.js?v=1794327409';
-import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794327409';
-import { madTier } from '../config/values.js?v=1794327409';
-import { userFigure } from '../game.js?v=1794327409';
-import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794327409';
-import { garble } from '../meta.js?v=1794327409';
+import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794332364';
+import { store, unlock } from '../store.js?v=1794332364';
+import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794332364';
+import { madTier } from '../config/values.js?v=1794332364';
+import { userFigure } from '../game.js?v=1794332364';
+import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794332364';
+import { garble } from '../meta.js?v=1794332364';
 
 const waitClick = el => new Promise(r => el.addEventListener('click', r, { once: true }));
 
 export async function showEnding(id, s) {
   const e = ENDINGS[id]; const L = ENDING_LINES[id] || {};
-  import('../audio.js?v=1794327409').then(a => a.playBgm('meta'));
-  if (FILES[id]) loadAfterword(id);   // 先读好后日谈 / 字条，最后那一下点击时直接下载（楚门、巴顿）
+  import('../audio.js?v=1794332364').then(a => a.playBgm('meta'));
+  if (FILES[id]) loadAfterword(id);   // 先读好后日谈 / 字条，最后那一下点击时直接下载（楚门、前目的地）
   const tier = madTier(s?.madness || 0);
   const cg = h('img', { class: 'cg' + (e.glitch ? ' glitch' : ''), src: A(`cg/${e.cg}.webp`), alt: '' });
   const title = h('div', { class: 'card-title' }, `‘${e.title}’`);
@@ -47,17 +47,19 @@ export async function showEnding(id, s) {
   }
   // 3. 结局 CG
   cg.classList.add('on'); await sleep(2400);
-  // 4. 牠的字条（‘本杰明·巴顿奇事’）
+  // 4. 牠的字条（‘前目的地’）
   if (L.note) await line(`「${L.note}」`, 'note');
   // 5. 河的最后一句（按疯神档位）
   for (const t of L[tier] || []) await line(t, 'he');
   // 5.5 结局交代（post：河那句之后、标题之前，和 pre 一样的黑屏旁白；借鉴机制与结局 §8）
   for (const p of L.post || []) await line(p, 'narr');
+  // 5.6 致敬原作的最后一句（结局致敬与改名 1110）：所有交代播完以后单独一句；楚门在锁屏前、前目的地在下载字条前、土拨鼠在回第 1 天前（都在这之后发生）
+  if (L.homage) await line(L.homage, 'narr');
   // 6. 标题卡
   title.classList.add('on'); await sleep(1800);
   tap.classList.add('on');
   // ‘楚门的世界’：最后这一下点击里触发下载（用户手势里，浏览器一般不拦）
-  await new Promise(r => scr.addEventListener('click', () => { if (FILES[id]) downloadAfterword(s?.name, id); r(); }, { once: true }));   // 巴顿也下载，但不锁网页
+  await new Promise(r => scr.addEventListener('click', () => { if (FILES[id]) downloadAfterword(s?.name, id); r(); }, { once: true }));   // 前目的地也下载，但不锁网页
 }
 
 // UTF-8 带 BOM，Windows 记事本打开不乱码
