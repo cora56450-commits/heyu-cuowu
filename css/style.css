@@ -135,6 +135,8 @@ body.loose .dialog::before { filter: contrast(.92); transform: rotate(-.25deg); 
 #ov-map .info { margin-top: 8px; color: var(--ink); display: flex; flex-direction: column; gap: 10px; padding: 0 4px; }
 #ov-map .info .nm { font-size: 20px; font-weight: 600; }
 #ov-map .info .ds { font-size: 14px; line-height: 1.8; color: var(--ink2); }
+#ov-map .info .recall { font-size: 13px; line-height: 1.6; color: var(--ink2); opacity: .7; margin-top: -4px; }   /* 上次在这里 / 可能碰到谁：小一号、淡一点 */
+body.compact #ov-map .info .recall { font-size: 17px; }
 #ov-map .info .hehint { font-size: 13px; color: var(--red); }
 #ov-map .info .go { margin-top: 4px; height: 44px; background: var(--red); color: #fff; border: 0; font-size: 16px; letter-spacing: 4px; }
 #ov-map .info .go:disabled { background: #8a8378; }
