@@ -1,26 +1,26 @@
 // 主循环：主界面、对话播放、行动点、时段推进、事件、结局判定
-import { h, $, A, sleep, showScreen, openOv, closeOv, toast, preload, modal } from './ui/dom.js?v=1794345987';
-import { getSettings, store, unlock, getGallery, organsOpen } from './store.js?v=1794345987';
-import { chat, ApiError } from './api.js?v=1794345987';
-import { KEY_EVENTS, ADULT_NOTE, buildSystem, summaryPrompt, phonePingPrompt, phoneChatPrompt } from './prompt.js?v=1794345987';
-import { normTurn, LineStreamer, looseJson, stripTags } from './parse.js?v=1794345987';
-import { AI_TAGS } from './config/values.js?v=1794345987';
-import { SLOTS, LOCATIONS, TOTAL_DAYS, AP_PER_SLOT, DUSK, NIGHT, heLocation, OUTFITS, STATS_EYE5, SPRITE_DIR, DEFAULT_EXPR, FIRST_LINE, EXPR, SPRITE_FIT, spriteBox, NPC_SPRITES, NPC_FIT, DUO, EXPR_FALLBACK, FEIGN_PATCH, PINCH, PINCH_BOX, VILLAGERS, NPC_PRESENCE, motherAway, locLocked } from './config/world.js?v=1794345987';
-import { DAILY, VILLAGE_OUTFIT_ASSIM, OUTSIDE_OUTFIT_ASSIM, WARM_STREAK, madTier } from './config/values.js?v=1794345987';
-import { ENDINGS, judgeFinal, MID, AFTERMATH, LOOP_LINE } from './config/endings.js?v=1794345987';
-import { newRun, applyTags, saveRun, loadRun, clone, tierOf, knows, taText, phoneStage } from './state.js?v=1794345987';
-import { rollMeta, collectInjections, splitGarble, EXTRA_META, canExtraMeta, markExtraMeta, idleFor, touchActive } from './meta.js?v=1794345987';
-import { findCliches, CLICHES } from './config/style.js?v=1794345987';
-import { canonViolation, META_RE } from './config/canon.js?v=1794345987';
-import { DEMO, DEMO_LAST_DAY } from './config/demo.js?v=1794345987';
-import { memoAdd, memoDone, memoTick, apptMemoId } from './memo.js?v=1794345987';
-import * as P from './ui/panels.js?v=1794345987';
-import { runMinigame } from './ui/minigames.js?v=1794345987';
-import { openOrgan, organPuzzle } from './ui/organ.js?v=1794345987';
-import { showEnding, showLock } from './ui/ending.js?v=1794345987';
+import { h, $, A, sleep, showScreen, openOv, closeOv, toast, preload, modal } from './ui/dom.js?v=1794347372';
+import { getSettings, store, unlock, getGallery, organsOpen } from './store.js?v=1794347372';
+import { chat, ApiError } from './api.js?v=1794347372';
+import { KEY_EVENTS, ADULT_NOTE, buildSystem, summaryPrompt, phonePingPrompt, phoneChatPrompt } from './prompt.js?v=1794347372';
+import { normTurn, LineStreamer, looseJson, stripTags } from './parse.js?v=1794347372';
+import { AI_TAGS } from './config/values.js?v=1794347372';
+import { SLOTS, LOCATIONS, TOTAL_DAYS, AP_PER_SLOT, DUSK, NIGHT, heLocation, OUTFITS, STATS_EYE5, SPRITE_DIR, DEFAULT_EXPR, FIRST_LINE, EXPR, SPRITE_FIT, spriteBox, NPC_SPRITES, NPC_FIT, DUO, EXPR_FALLBACK, FEIGN_PATCH, PINCH, PINCH_BOX, VILLAGERS, NPC_PRESENCE, motherAway, locLocked } from './config/world.js?v=1794347372';
+import { DAILY, VILLAGE_OUTFIT_ASSIM, OUTSIDE_OUTFIT_ASSIM, WARM_STREAK, madTier } from './config/values.js?v=1794347372';
+import { ENDINGS, judgeFinal, MID, AFTERMATH, LOOP_LINE } from './config/endings.js?v=1794347372';
+import { newRun, applyTags, saveRun, loadRun, clone, tierOf, knows, taText, phoneStage } from './state.js?v=1794347372';
+import { rollMeta, collectInjections, splitGarble, EXTRA_META, canExtraMeta, markExtraMeta, idleFor, touchActive } from './meta.js?v=1794347372';
+import { findCliches, CLICHES } from './config/style.js?v=1794347372';
+import { canonViolation, META_RE } from './config/canon.js?v=1794347372';
+import { DEMO, DEMO_LAST_DAY } from './config/demo.js?v=1794347372';
+import { memoAdd, memoDone, memoTick, apptMemoId } from './memo.js?v=1794347372';
+import * as P from './ui/panels.js?v=1794347372';
+import { runMinigame } from './ui/minigames.js?v=1794347372';
+import { openOrgan, organPuzzle } from './ui/organ.js?v=1794347372';
+import { showEnding, showLock } from './ui/ending.js?v=1794347372';
 
 export const G = { s: null, R: null, events: [], busy: false, last: null, backTitle: null };
-const SIZE_COST = { small: 1, medium: 2, large: 3 };
+const SIZE_COST = { small: 1, medium: 2, large: 2 };   // 每个时段只有 2 点：一整段的大事就是 2 点
 const HISTORY_KEEP = 12;
 // 血腥限频（目标：恋爱六成、血腥三成）：前 4 天两天最多一次，之后每天最多一次。主线事件本身不受限，但写了也会记一次
 const GORE_RE = /内脏|器官|胃|肺|肝|肾|脾|胰|胆囊|大肠|小肠|肠子|膀胱|心脏|开膛|剖开|血|缝合|伤口/;
@@ -92,8 +92,8 @@ const HE_FIRST_AFTER = '昨晚你们越过了那条线。今天河有点别扭�
 
 export async function loadEvents() {
   // 发布版的 events.json 是编码过的（tools/build_dist.py），以 E1: 开头
-  const t = await fetch('data/events.json?v=1794345987').then(r => r.text());
-  const j = JSON.parse(t.startsWith('E1:') ? (await import('./_k.js?v=1794345987')).decode(t.slice(3)) : t);
+  const t = await fetch('data/events.json?v=1794347372').then(r => r.text());
+  const j = JSON.parse(t.startsWith('E1:') ? (await import('./_k.js?v=1794347372')).decode(t.slice(3)) : t);
   G.events = j.events;
   try { G.assets = new Set(Object.keys(await fetch('assets/manifest.json').then(r => r.json()))); } catch { G.assets = null; }
 }
@@ -246,14 +246,14 @@ export function pickBgm() {
   else if (s.slot === NIGHT && ['he_room', 'room'].includes(s.loc) && (heLocation(s.day, s.slot) === s.loc || s.curEvent)) slot = 'night';
   if (s.curEvent === 'd40_question') slot = 'meta';
   if (s.phase === 'event' && G.eventBgm && G.eventBgm.ev === s.curEvent) slot = G.eventBgm.slot === 'none' ? null : G.eventBgm.slot;   // 事件自己定的 BGM（BGM 与固定小剧情 §1）
-  import('./audio.js?v=1794345987').then(a => a.playBgm(slot));
+  import('./audio.js?v=1794347372').then(a => a.playBgm(slot));
 }
 // 立绘：河在 sprite，其他人在 sprite2；两个人同时在画面上时河往左让
 // 事件 / 某一句切 BGM：daily / night / uneasy / meta / title / none（none = 渐弱到静音）
 function setEventBgm(slot) {
   const s = G.s; if (!s || !slot) return;
   G.eventBgm = { ev: s.curEvent, slot };
-  import('./audio.js?v=1794345987').then(a => a.playBgm(slot === 'none' ? null : slot));
+  import('./audio.js?v=1794347372').then(a => a.playBgm(slot === 'none' ? null : slot));
 }
 function charSrc(who, expr) {
   if (SPRITE_DIR[who]) {
@@ -394,7 +394,7 @@ export async function metaLine(id, force = false) {
   if (G.busy || G.inTurn || G.waitClick) { if (!G.metaQueue.includes(id)) G.metaQueue.push(id); return true; }
   markExtraMeta(s, id);
   const m = EXTRA_META[id];
-  import('./audio.js?v=1794345987').then(a => a.stutter()).catch(() => {});
+  import('./audio.js?v=1794347372').then(a => a.stutter()).catch(() => {});
   if (m.faint) {   // 一行很淡的字，2 秒后消失
     const f = h('div', { class: 'faint-line' }, m.faint); R.dialog.append(f); setTimeout(() => f.remove(), 2200); return true;
   }
@@ -594,7 +594,7 @@ function locationActions(s) {
     add('问养母小河小时候的事', 1, () => { G.persuade = true; G.R.input.placeholder = '你想怎么问？'; G.R.input.focus(); });
   const job = jobOn(s) && JOBS[s.f.job];
   if (job && job.loc === s.loc && job.slots.includes(s.slot) && s.c.workDay !== s.day) out.unshift({ text: '干活', cost: 2, kind: 'ai', work: true, note: job.note, first: true });
-  if (s.loc === 'border' && s.day >= 30) add('往雾里走', 3, () => leaveVillage());
+  if (s.loc === 'border' && s.day >= 30) add('往雾里走', 2, () => leaveVillage());   // 一整个时段（往雾里走点数 1111：原来 3 点，每段只有 2 点，永远点不了）
   if (s.loc === 'room' || s.loc === 'yard') add('换衣服', 0, () => P.openOutfit(false));
   return out;
 }
@@ -1101,14 +1101,14 @@ async function miniAction(name) {
 // 器官图 = 河画的解剖图
 const ownedDrawings = () => { const g = getGallery(); return Object.keys(g.organs).filter(id => g.organs[id]); };
 async function giveDrawing(id, how) {
-  const { ORGANS } = await import('./config/world.js?v=1794345987');
+  const { ORGANS } = await import('./config/world.js?v=1794347372');
   const o = ORGANS.find(x => x.id === id); if (!o) return;
   unlock('organs', id);
   if (how === 'he') await playLines([{ speaker: '河', expr: 'shy', text: '……这个给你。画得不好。' }]);
   await openOrgan(id, ownedDrawings());
 }
 async function sketchbook() {
-  const { ORGANS } = await import('./config/world.js?v=1794345987');
+  const { ORGANS } = await import('./config/world.js?v=1794347372');
   const left = ORGANS.filter(o => !ownedDrawings().includes(o.id));
   if (!left.length) return spendLocal(1, [{ speaker: 'narration', text: '画本你都翻过了。每一页的线条都很细，标注写得很工整。' }]);
   const o = left[Math.floor(Math.random() * left.length)];
@@ -1118,7 +1118,7 @@ async function sketchbook() {
 }
 // 器官归位：十张画全给，拼完一次就全部解锁（回想、「河的画」）
 async function organsGame() {
-  const { ORGANS } = await import('./config/world.js?v=1794345987');
+  const { ORGANS } = await import('./config/world.js?v=1794347372');
   const first = !organsOpen();
   const res = await organPuzzle(ORGANS.map(o => o.id), hasAsset('ui/torso.webp'));
   if (res.success) {
@@ -1141,7 +1141,7 @@ async function leaveVillage() {
     return triggerEnding('gonegirl');
   }
   const stopped = MID.heStops(s);
-  const req = { kind: 'action', text: '往雾里走，想离开村子', cost: 3, note: stopped ? '河追上来，拦住了玩家。按越界规则写，不写占有。' : '雾把路绕了回来，玩家又走回了村界。河不在。' };
+  const req = { kind: 'action', text: '往雾里走，想离开村子', cost: 2, note: stopped ? '河追上来，拦住了玩家。按越界规则写，不写占有。' : '雾把路绕了回来，玩家又走回了村界。河不在。' };
   await afterTurn(await doTurn(req), req);
 }
 
@@ -2098,7 +2098,7 @@ export async function continueRun(s, offlineMs, alertLine = null) {
   G.s = s; G.last = null;
   buildMain(); setScene(); refreshHud();
   if (alertLine) {   // 当着他的面读档：第一句强制换成「警觉」
-    import('./audio.js?v=1794345987').then(a => a.stutter()).catch(() => {});
+    import('./audio.js?v=1794347372').then(a => a.stutter()).catch(() => {});
     await playLines([{ speaker: '河', expr: 'alert', text: alertLine, glitch: true }]);
     addResent(s, 2, '当面读档');   // 数值与怨恨 §1-5
     s.meta.saidMeta = alertLine;

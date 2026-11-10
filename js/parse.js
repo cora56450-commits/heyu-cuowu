@@ -1,7 +1,7 @@
 // 解析 AI 输出：严格 JSON → 宽松提取 → 纯文本兜底；以及流式中途提取完整的 line 对象
-import { EXPR, CODE_ONLY_EXPR, ORGANS } from './config/world.js?v=1794345987';
+import { EXPR, CODE_ONLY_EXPR, ORGANS } from './config/world.js?v=1794347372';
 const ORGAN_BY_NAME = Object.fromEntries(ORGANS.map(o => [o.name, o.id]));
-import { AI_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794345987';
+import { AI_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794347372';
 
 export function looseJson(raw) {
   if (!raw) return null;
@@ -62,7 +62,7 @@ export function normTurn(raw) {
   const organ = om ? ORGAN_BY_NAME[om[1].trim()] || null : null;
   const sugg = (Array.isArray(j.suggestions) ? j.suggestions : []).map(x => typeof x === 'string' ? { text: x, cost: 1 } : x)
     .filter(x => x && x.text && !/发(条|个|一条)?(信息|消息|短信)|短信|打(个)?电话|手机/.test(String(x.text))).map(x => ({ text: stripTags(x.text).trim().slice(0, 20),   // 用手机的建议不要（Cora 11/11：选了也不会真发）
-       cost: Math.min(3, Math.max(1, parseInt(x.cost) || 1)) })).slice(0, 4);
+       cost: Math.min(2, Math.max(1, parseInt(x.cost) || 1)) })).slice(0, 4);
   return {
     ok: true,
     lines: j.lines.map(normLine).filter(Boolean),
