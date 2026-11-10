@@ -1,6 +1,6 @@
 // BGM：5 个播放位，场景切换时淡入淡出约 1.5 秒；文件放在 assets/bgm/<播放位>.mp3，没有就不响
 // title 标题 / daily 日常 / uneasy 不安（缝合、牠、后山）/ night 夜里和河独处 / meta meta 时刻与结局
-import { getSettings } from './store.js?v=1794309273';
+import { getSettings } from './store.js?v=1794311196';
 
 export const SLOTS = ['title', 'daily', 'uneasy', 'night', 'meta'];
 const FADE = 1500;
