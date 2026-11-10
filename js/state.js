@@ -1,7 +1,7 @@
 // 一局游戏的状态、数值结算、存档 / 读档
-import { store } from './store.js?v=1794303750';
-import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, CAP_UP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794303750';
-import { AP_PER_SLOT } from './config/world.js?v=1794303750';
+import { store } from './store.js?v=1794309273';
+import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, CAP_UP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794309273';
+import { AP_PER_SLOT } from './config/world.js?v=1794309273';
 
 export function newRun(outfit = 'initial', loop = 0) {
   return {
@@ -25,6 +25,7 @@ export function applyTags(s, tags = [], heFlags = [], extra = null, opts = {}) {
   tags = [...new Set(tags)];
   for (const grp of EXCLUSIVE_TAGS) { const hit = tags.filter(t => grp.includes(t)); if (hit.length > 1) tags = tags.filter(t => !grp.includes(t) || t === hit[0]); }
   tags = tags.slice(0, MAX_TAGS_PER_TURN);
+  if (tags.some(t => t === '冷淡' || t === '拒绝' || t === '想离开')) (s.c ||= {}).negDay = s.day;   // 这一天有负面标签：明早怨恨不自动消
   const dc = {}, de = {};
   const add = (o, k, x) => { o[k] = (o[k] || 0) + x; };
   let warm = false;
