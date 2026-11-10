@@ -24,6 +24,7 @@ export async function mockChat(o) {
     const free = lastUser.match(/（玩家自己输入的）(.*)/);   // 测试模式：自己写的行动按空格数件数，规模固定 small，方便看扣点
     out = { lines, tags: t ? [t] : [], action_size: free ? 'small' : pick(['small', 'medium', 'large']), action_count: free ? free[1].trim().split(/\s+/).length : 1, suggestions: [0, 1, 2].map(() => ({ text: pick(SUGG), cost: 1 + Math.floor(Math.random() * 3) })), he_flags: [], appointment, cg: null };
   }
+  if (globalThis.__mockNext) { out = globalThis.__mockNext; globalThis.__mockNext = null; }   // 测试用：指定下一次 AI 返回什么
   const s = JSON.stringify(out);
   let full = '';
   for (let i = 0; i < s.length; i += 12) { full += s.slice(i, i + 12); o.onDelta?.(s.slice(i, i + 12), full); await new Promise(r => setTimeout(r, 15)); }
