@@ -440,14 +440,17 @@ body.calm .petal, body.calm .drift { animation: none; }
 #ov-gallery .grid.organs .gcard { height: 120px; }
 #ov-gallery .grid.organs .gcard.img img { object-fit: contain; padding: 10px; background: rgba(239,234,226,.92); }
 /* 标题封面「下坠」：在水里轻轻漂。人物上缘本来就裁在画外，整体先往上提 24px，浮动幅度不超过它，边就不会露出来 */
-#scr-title .cover-wrap.fall { top: -24px; transform-origin: 40% 0; animation: float-in-water 11s ease-in-out infinite alternate; will-change: transform; }
-@keyframes float-in-water {
-  0%   { transform: translate(0, 0) rotate(0deg); }
-  35%  { transform: translate(3px, 6px) rotate(.25deg); }
-  70%  { transform: translate(-2px, 10px) rotate(-.15deg); }
-  100% { transform: translate(4px, 4px) rotate(.4deg); }
-}
-body.calm #scr-title .cover-wrap.fall { animation: none; }
+/* 标题封面「下坠」悬在水里（11/10 Cora：要像悬浮在水中那样平滑起伏，不要一顿一顿的折线）
+   两层各自只在两个端点之间 ease-in-out 往返（接近正弦，没有中途停顿）；周期不同（7s / 11s），叠起来不会机械重复
+   外层：上下浮沉；里层（人物和贴在人物上的几层效果用同一个动画，保持对齐）：左右轻摆 + 一点倾斜 */
+#scr-title .cover-wrap.fall, #scr-title .cover-wrap.fall_blood { top: -40px; animation: water-bob 5.5s ease-in-out infinite alternate; will-change: transform; }
+#scr-title .cover-wrap.fall > *, #scr-title .cover-wrap.fall_blood > * { transform-origin: 45% 35%; animation: water-sway 9s ease-in-out infinite alternate; }
+@keyframes water-bob { from { transform: translateY(0); } to { transform: translateY(22px); } }
+@keyframes water-sway { from { transform: translateX(-5px) rotate(-.7deg); } to { transform: translateX(5px) rotate(.7deg); } }
+/* 身上那层河水的光慢慢流 */
+#scr-title .cover-wrap.fall .cover-layer.water, #scr-title .cover-wrap.fall_blood .cover-layer.water { animation: water-sway 9s ease-in-out infinite alternate, water-flow 14s ease-in-out infinite alternate; }
+@keyframes water-flow { from { background-position: 0 0; } to { background-position: -50px 24px; } }
+body.calm #scr-title .cover-wrap.fall, body.calm #scr-title .cover-wrap.fall_blood, body.calm #scr-title .cover-wrap.fall > *, body.calm #scr-title .cover-wrap.fall_blood > *, body.calm #scr-title .cover-layer.water { animation: none; }
 /* 开局选脸：下面填名字 */
 #ov-outfit .row.with-name { bottom: 110px; }
 #ov-outfit .namebar { position: absolute; left: 0; right: 0; bottom: 34px; display: flex; justify-content: center; align-items: center; gap: 16px; }

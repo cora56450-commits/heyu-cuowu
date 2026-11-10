@@ -1,17 +1,17 @@
 // 结局画面、‘楚门的世界’锁定画面、结局后效
-import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794326124';
-import { store } from '../store.js?v=1794326124';
-import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794326124';
-import { madTier } from '../config/values.js?v=1794326124';
-import { userFigure } from '../game.js?v=1794326124';
-import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794326124';
-import { garble } from '../meta.js?v=1794326124';
+import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794327409';
+import { store, unlock } from '../store.js?v=1794327409';
+import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794327409';
+import { madTier } from '../config/values.js?v=1794327409';
+import { userFigure } from '../game.js?v=1794327409';
+import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794327409';
+import { garble } from '../meta.js?v=1794327409';
 
 const waitClick = el => new Promise(r => el.addEventListener('click', r, { once: true }));
 
 export async function showEnding(id, s) {
   const e = ENDINGS[id]; const L = ENDING_LINES[id] || {};
-  import('../audio.js?v=1794326124').then(a => a.playBgm('meta'));
+  import('../audio.js?v=1794327409').then(a => a.playBgm('meta'));
   if (FILES[id]) loadAfterword(id);   // 先读好后日谈 / 字条，最后那一下点击时直接下载（楚门、巴顿）
   const tier = madTier(s?.madness || 0);
   const cg = h('img', { class: 'cg' + (e.glitch ? ' glitch' : ''), src: A(`cg/${e.cg}.webp`), alt: '' });
@@ -28,10 +28,11 @@ export async function showEnding(id, s) {
   if (L.intro?.length) {
     const ic = h('img', { class: 'cg', alt: '' }); scr.insertBefore(ic, say);
     for (const [cls, text, cgId] of L.intro) {
-      if (cgId) { const src = A(`cg/${cgId}.webp`); await preload(src).catch(() => {}); ic.src = src; ic.classList.add('on'); }
+      if (cgId) { const src = A(`cg/${cgId}.webp`); await preload(src).catch(() => {}); ic.src = src; ic.classList.add('on'); unlock('cgs', cgId); }   // 测试记录 18 §3：结局中途出的 CG 也进回想
       await line(text, cls);
     }
     ic.classList.remove('on'); await sleep(900); ic.remove();
+    cg.classList.add('on');   // 测试记录 18 §7：接着「门关上了……」就出结局 CG
   }
   // 1. 黑屏旁白
   for (const p of L.pre || []) await line(p, 'narr');
