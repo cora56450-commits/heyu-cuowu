@@ -1,14 +1,14 @@
 // 启动：缩放、读设置、离线判定、标题画面
-import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794316585';
-import { store, getSettings, saveSettings, getGallery, endingsOpen } from './store.js?v=1794316585';
-import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, installTitleMeta, hasAsset } from './game.js?v=1794316585';
-import { newRun, loadRun, hasActiveRun, saveRun } from './state.js?v=1794316585';
-import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794316585';
-import { MID } from './config/endings.js?v=1794316585';
-import { madTier } from './config/values.js?v=1794316585';
-import * as P from './ui/panels.js?v=1794316585';
-import { DEMO, DEMO_KEY, DEMO_BASE, DEMO_LAST_DAY, DEMO_TAG, TEST_BUILD } from './config/demo.js?v=1794316585';
-import { showLock, showAftermath } from './ui/ending.js?v=1794316585';
+import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794324185';
+import { store, getSettings, saveSettings, getGallery, endingsOpen } from './store.js?v=1794324185';
+import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, installTitleMeta, hasAsset } from './game.js?v=1794324185';
+import { newRun, loadRun, hasActiveRun, saveRun } from './state.js?v=1794324185';
+import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794324185';
+import { MID } from './config/endings.js?v=1794324185';
+import { madTier } from './config/values.js?v=1794324185';
+import * as P from './ui/panels.js?v=1794324185';
+import { DEMO, DEMO_KEY, DEMO_BASE, DEMO_LAST_DAY, DEMO_TAG, TEST_BUILD } from './config/demo.js?v=1794324185';
+import { showLock, showAftermath } from './ui/ending.js?v=1794324185';
 
 // 1280×720 等比缩放，四周黑边
 function fit() {
@@ -47,14 +47,15 @@ document.getElementById('rotate-go')?.addEventListener('click', async () => {
 // 键盘推进对话
 addEventListener('keydown', e => {
   if (e.target.matches('input,textarea')) return;
-  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794316585').then(m => m.advance()); }
+  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794324185').then(m => m.advance()); }
 });
 
-let bootOffline = 0;
+// 打开网页时算出来的离线时长，等玩家点「继续」时用（放在 G 上：读档列表那条路也要拿得到，测试记录 17）
+G.bootOffline = 0;
 
 function showTitle() {
   G.R = null; G.s = null;
-  import('./audio.js?v=1794316585').then(a => a.playBgm('title'));
+  import('./audio.js?v=1794324185').then(a => a.playBgm('title'));
   for (const o of [...$('#overlays').children]) o.remove();
   const active = hasActiveRun();
   const items = [
@@ -185,7 +186,7 @@ async function cont() {
   if (!(await needKey())) return;
   if (hasManualSave()) return P.openSaves('load');   // 有手动存档：让玩家选（自动存档排第一个）
   const s = loadRun('auto'); if (!s || s.ended) return;
-  const off = bootOffline; bootOffline = 0;
+  const off = G.bootOffline; G.bootOffline = 0;
   await continueRun(s, off);
 }
 
@@ -205,7 +206,7 @@ function otherTabOpen() {
 let tabChannel = null;
 function showElsewhere() {
   G.blocked = true;
-  import('./audio.js?v=1794316585').then(a => a.stopAll()).catch(() => {});   // 被接管的页面不能还在放音乐，不然两边的 BGM 叠在一起
+  import('./audio.js?v=1794324185').then(a => a.stopAll()).catch(() => {});   // 被接管的页面不能还在放音乐，不然两边的 BGM 叠在一起
   for (const o of [...$('#overlays').children]) o.remove();
   // 测试记录 7 #A：忘了关的后台页面也会把人卡在这里，所以给一个「在这里继续」：通知另一边停下，这边重新进
   const take = () => { try { tabChannel?.postMessage('takeover'); sessionStorage.setItem('gucun_takeover', '1'); } catch {} location.reload(); };
@@ -237,7 +238,7 @@ async function boot() {
   if (qs.has('debug') && qs.has('offline')) lastActive = Date.now() - parseFloat(qs.get('offline')) * 3600e3;
   touchActive();
   // 回来了（切回前台 / 久没操作后又点了一下）：游戏里走离线流程；在标题画面就记下来，点「继续」时用
-  installActivity((gap, e, info) => { if (G.blocked) return; if (!playerReturned(gap, e, info)) bootOffline = Math.max(bootOffline, gap); });
+  installActivity((gap, e, info) => { if (G.blocked) return; if (!playerReturned(gap, e, info)) G.bootOffline = Math.max(G.bootOffline, gap); });
   startIdleWatch();
   installTitleMeta();
   try { await loadEvents(); } catch (e) { document.body.append(h('div', { style: { color: '#fff', padding: '20px' } }, '事件表加载失败。请用本地服务器或 GitHub Pages 打开（不能直接双击 index.html）。')); throw e; }
@@ -250,7 +251,7 @@ async function boot() {
     if (off >= MID.godotDays * 24 * 3600e3) return triggerEnding('godot');
     if (off >= MID.lambsMinOfflineH * 3600e3 && MID.lambs({ ...s, madTier: madTier(s.madness) })) return triggerEnding('lambs');
     G.s = null;
-    bootOffline = off;
+    G.bootOffline = off;
   }
   const after = store.get('after');
   if (after) await showAftermath(after);
