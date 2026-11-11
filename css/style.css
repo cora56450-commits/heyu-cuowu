@@ -266,7 +266,9 @@ body.compact #ov-map .info .recall { font-size: 17px; }
 #scr-lock .line { position: absolute; left: 0; right: 0; top: 46%; text-align: center; color: #d6cfc6; font-size: 26px; letter-spacing: 8px; opacity: 0; animation: fadein 4s 1.5s forwards; }
 #scr-lock .ta-garble { position: absolute; left: 0; right: 0; top: calc(46% + 58px); text-align: center; color: #d6cfc6; font-size: 18px; letter-spacing: 2px; opacity: 0; animation: fadein-ta 4s 4s forwards; user-select: text; -webkit-user-select: text; cursor: text; }
 @keyframes fadein-ta { to { opacity: .45; } }
-#scr-lock .knot { position: absolute; right: 18px; bottom: 16px; width: 26px; height: 26px; opacity: .22; }
+#scr-lock .knot { position: absolute; left: 50%; top: calc(46% + 110px); width: 64px; height: 64px; margin-left: -32px; object-fit: contain; opacity: .22; cursor: pointer; -webkit-user-drag: none; user-select: none; touch-action: none; }
+#scr-lock .knot-hint { position: absolute; left: 0; right: 0; top: calc(46% + 184px); text-align: center; color: #d6cfc6; font-size: 14px; letter-spacing: 4px; opacity: 0; transition: opacity 4s; pointer-events: none; }
+#scr-lock .knot-hint.on { opacity: .35; }
 #scr-lock .tiny { position: absolute; left: 14px; bottom: 10px; color: #444; font-size: 11px; font-family: var(--sans); }
 
 /* —— 结局后效 / 假死 —— */

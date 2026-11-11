@@ -14,7 +14,7 @@
  "sprite/he/normal.webp": "v3 河 常规",
  "sprite/he/smile.webp": "v3 河 微笑 近神",
  "sprite/he/pout.webp": "v3 河 抿嘴 微微不爽",
- "sprite/he/dazed.webp": "from-PixAI-2075563788566262015_透明补肩.png",
+ "sprite/he/dazed.webp": "失神_近疯子_透明.webp",
  "sprite/he/turn.webp": "from-PixAI-2075577769377188852_透明补肩.png",
  "sprite/he/blank.webp": "from-PixAI-2075577936868543498_透明补肩.png",
  "sprite/he/sewing.webp": "from-PixAI-2075577850164846494_透明补肩.png",
@@ -158,5 +158,6 @@
  "sprite/ta/cry.webp": "牠 哭.png",
  "cg/ta_lick.webp": "牠 舔血.png",
  "cg/five_petal.webp": "五瓣花.png",
- "cg/julesjim_hands.webp": "祖与占 三只手.png"
+ "cg/julesjim_hands.webp": "祖与占 三只手.png",
+ "ui/knot_tongxin.webp": "复古水彩手绘同心结.png"
 }

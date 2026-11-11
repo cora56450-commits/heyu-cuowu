@@ -1,17 +1,17 @@
 // 结局画面、‘楚门的世界’锁定画面、结局后效
-import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794349186';
-import { store, unlock } from '../store.js?v=1794349186';
-import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794349186';
-import { madTier } from '../config/values.js?v=1794349186';
-import { userFigure } from '../game.js?v=1794349186';
-import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794349186';
-import { garble } from '../meta.js?v=1794349186';
+import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794356587';
+import { store, unlock } from '../store.js?v=1794356587';
+import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794356587';
+import { madTier } from '../config/values.js?v=1794356587';
+import { userFigure } from '../game.js?v=1794356587';
+import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794356587';
+import { garble } from '../meta.js?v=1794356587';
 
 const waitClick = el => new Promise(r => el.addEventListener('click', r, { once: true }));
 
 export async function showEnding(id, s) {
   const e = ENDINGS[id]; const L = ENDING_LINES[id] || {};
-  import('../audio.js?v=1794349186').then(a => a.playBgm('meta'));
+  import('../audio.js?v=1794356587').then(a => a.playBgm('meta'));
   if (FILES[id]) loadAfterword(id);   // 先读好后日谈 / 字条，最后那一下点击时直接下载（楚门、前目的地）
   const tier = madTier(s?.madness || 0);
   const cg = h('img', { class: 'cg' + (e.glitch ? ' glitch' : ''), src: A(`cg/${e.cg}.webp`), alt: '' });
@@ -74,7 +74,11 @@ export function downloadAfterword(name = '', kind = 'truman') {
 }
 
 export function showLock() {
-  const knot = h('img', { class: 'knot', src: A('ui/ap_empty.webp'), alt: '' });
+  // 楚门锁屏 1111：同心结挪到正中、64px；新图 ui/knot_tongxin.webp 没到之前用原来的结
+  const knot = h('img', { class: 'knot', src: A('ui/knot_tongxin.webp'), alt: '' });
+  knot.onerror = () => { knot.onerror = null; knot.src = A('ui/ap_empty.webp'); };
+  const hint = h('div', { class: 'knot-hint' }, '攥紧了，就解得开。');
+  setTimeout(() => hint.classList.add('on'), 20000);   // 进锁屏 20 秒后浮出
   let timer = null;
   const start = () => { timer = setTimeout(async () => {
     if (await confirmBox('', '要把门再打开吗？', '打开', '不')) { store.del('lock_truman'); location.reload(); }
@@ -89,7 +93,7 @@ export function showLock() {
     h('div', { class: 'line' }, '灯我关了。你那边，还亮着吧。'),
     // 牠的一句：乱码，选中复制出去才是「？呢我那」（倒着读：那我呢？）。每次打开重新生成，复制钩子在 boot() 里装好了
     h('div', { class: 'ta-garble' }, garble('？呢我那')),
-    knot,
+    knot, hint,
     h('div', { class: 'tiny' }, '清除这个网站的数据也能打开，但存档、Key 和图鉴会一起被清掉。')));
 }
 
