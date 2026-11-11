@@ -1,17 +1,17 @@
 // 结局画面、‘楚门的世界’锁定画面、结局后效
-import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794358570';
-import { store, unlock } from '../store.js?v=1794358570';
-import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794358570';
-import { madTier } from '../config/values.js?v=1794358570';
-import { userFigure } from '../game.js?v=1794358570';
-import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794358570';
-import { garble } from '../meta.js?v=1794358570';
+import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794359192';
+import { store, unlock } from '../store.js?v=1794359192';
+import { ENDINGS, ENDING_LINES, BUTTON_RETURNS } from '../config/endings.js?v=1794359192';
+import { madTier } from '../config/values.js?v=1794359192';
+import { userFigure } from '../game.js?v=1794359192';
+import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794359192';
+import { garble } from '../meta.js?v=1794359192';
 
 const waitClick = el => new Promise(r => el.addEventListener('click', r, { once: true }));
 
 export async function showEnding(id, s) {
   const e = ENDINGS[id]; const L = ENDING_LINES[id] || {};
-  import('../audio.js?v=1794358570').then(a => a.playBgm('meta'));
+  import('../audio.js?v=1794359192').then(a => a.playBgm('meta'));
   if (FILES[id]) loadAfterword(id);   // 先读好后日谈 / 字条，最后那一下点击时直接下载（楚门、前目的地）
   const tier = madTier(s?.madness || 0);
   const cg = h('img', { class: 'cg' + (e.glitch ? ' glitch' : ''), src: A(`cg/${e.cg}.webp`), alt: '' });
@@ -82,6 +82,22 @@ export async function replayAfter(id) {
   const line = async (text, cls) => { say.className = 'end-say ' + cls; say.textContent = text; await sleep(60); say.classList.add('on'); await sleep(700); await waitClick(scr); say.classList.remove('on'); await sleep(450); };
   await playAfter(scr, say, L.after, line);
   scr.remove();
+}
+// 前目的地后日谈 B：之后每次回来（只是过场：不读存档、不改存档，播完回封面）
+export async function showButtonReturn(offMs) {
+  const n = (store.get('button_returns', 0) || 0) + 1; store.set('button_returns', n);
+  const sc = BUTTON_RETURNS[n === 10 ? 5 : (n - 1) % (n > 10 ? 6 : 5)];
+  const days = Math.floor(offMs / 86400e3);
+  const gone = days < 1 ? '一会儿' : days < 7 ? `${'一二三四五六'[days - 1]}天` : '很久';
+  const say = h('div', { class: 'end-say' });
+  const bg = h('img', { class: 'cg', src: A(`bg/${sc.bg}.webp`), alt: '' });
+  const scr = showScreen('ending', h('div', {}, bg, say));
+  await preload(A(`bg/${sc.bg}.webp`)).catch(() => {});
+  const line = async (text, cls) => { say.className = 'end-say ' + cls; say.textContent = text; await sleep(60); say.classList.add('on'); await sleep(700); await waitClick(scr); say.classList.remove('on'); await sleep(450); };
+  await line(`你走了${gone}。`, 'narr');   // 第一句按离开时长；他不冷、不怨
+  bg.classList.add('on'); await sleep(900);
+  for (const [cls, text] of sc.lines) await line(text.replace('{N}', gone), cls);
+  bg.classList.remove('on'); await sleep(700);
 }
 // UTF-8 带 BOM，Windows 记事本打开不乱码
 export function downloadAfterword(name = '', kind = 'truman') {
