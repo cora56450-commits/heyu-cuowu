@@ -1,17 +1,17 @@
 // 结局画面、‘楚门的世界’锁定画面、结局后效
-import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794359605';
-import { store, unlock } from '../store.js?v=1794359605';
-import { ENDINGS, ENDING_LINES, BUTTON_RETURNS } from '../config/endings.js?v=1794359605';
-import { madTier } from '../config/values.js?v=1794359605';
-import { userFigure } from '../game.js?v=1794359605';
-import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794359605';
-import { garble } from '../meta.js?v=1794359605';
+import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794359785';
+import { store, unlock } from '../store.js?v=1794359785';
+import { ENDINGS, ENDING_LINES, BUTTON_RETURNS } from '../config/endings.js?v=1794359785';
+import { madTier } from '../config/values.js?v=1794359785';
+import { userFigure } from '../game.js?v=1794359785';
+import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794359785';
+import { garble } from '../meta.js?v=1794359785';
 
 const waitClick = el => new Promise(r => el.addEventListener('click', r, { once: true }));
 
 export async function showEnding(id, s) {
   const e = ENDINGS[id]; const L = ENDING_LINES[id] || {};
-  import('../audio.js?v=1794359605').then(a => a.playBgm('meta'));
+  import('../audio.js?v=1794359785').then(a => a.playBgm('meta'));
   if (FILES[id]) loadAfterword(id);   // 先读好后日谈 / 字条，最后那一下点击时直接下载（楚门、前目的地）
   const tier = madTier(s?.madness || 0);
   const cg = h('img', { class: 'cg' + (e.glitch ? ' glitch' : ''), src: A(`cg/${e.cg}.webp`), alt: '' });
@@ -68,7 +68,11 @@ export async function showEnding(id, s) {
 async function playAfter(host, say, items, line) {
   const bg = h('img', { class: 'cg', alt: '' }); host.insertBefore(bg, say);
   for (const [cls, text, b] of items) {
-    if (b && b !== 'black') { const src = A(`bg/${b}.webp`); if (!bg.src.endsWith(src)) { await preload(src).catch(() => {}); bg.src = src; } bg.classList.add('on'); }
+    if (b && b !== 'black') {   // 'cg:xxx' 用 CG（进回想），别的是背景图
+      const isCg = b.startsWith('cg:'), src = isCg ? A(`cg/${b.slice(3)}.webp`) : A(`bg/${b}.webp`);
+      if (!bg.src.endsWith(src)) { await preload(src).catch(() => {}); bg.src = src; } bg.classList.add('on');
+      if (isCg) unlock('cgs', b.slice(3));
+    }
     else bg.classList.remove('on');
     await line(text, cls);
   }
