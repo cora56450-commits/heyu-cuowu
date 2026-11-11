@@ -1,17 +1,17 @@
 // 结局画面、‘楚门的世界’锁定画面、结局后效
-import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794359785';
-import { store, unlock } from '../store.js?v=1794359785';
-import { ENDINGS, ENDING_LINES, BUTTON_RETURNS } from '../config/endings.js?v=1794359785';
-import { madTier } from '../config/values.js?v=1794359785';
-import { userFigure } from '../game.js?v=1794359785';
-import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794359785';
-import { garble } from '../meta.js?v=1794359785';
+import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794401406';
+import { store, unlock } from '../store.js?v=1794401406';
+import { ENDINGS, ENDING_LINES, BUTTON_RETURNS } from '../config/endings.js?v=1794401406';
+import { madTier } from '../config/values.js?v=1794401406';
+import { userFigure } from '../game.js?v=1794401406';
+import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794401406';
+import { garble } from '../meta.js?v=1794401406';
 
 const waitClick = el => new Promise(r => el.addEventListener('click', r, { once: true }));
 
 export async function showEnding(id, s) {
   const e = ENDINGS[id]; const L = ENDING_LINES[id] || {};
-  import('../audio.js?v=1794359785').then(a => a.playBgm('meta'));
+  import('../audio.js?v=1794401406').then(a => a.playBgm('meta'));
   if (FILES[id]) loadAfterword(id);   // 先读好后日谈 / 字条，最后那一下点击时直接下载（楚门、前目的地）
   const tier = madTier(s?.madness || 0);
   const cg = h('img', { class: 'cg' + (e.glitch ? ' glitch' : ''), src: A(`cg/${e.cg}.webp`), alt: '' });
@@ -35,7 +35,7 @@ export async function showEnding(id, s) {
     cg.classList.add('on');   // 测试记录 18 §7：接着「门关上了……」就出结局 CG
   }
   // 1. 黑屏旁白（[类型, 文字] 的是别的样式，比如前目的地第 6 句的字条）
-  for (const p of L.pre || []) await (Array.isArray(p) ? line(p[1], p[0]) : line(p, 'narr'));
+  for (const p of L.pre || []) { if (Array.isArray(p) && p[2] === 'cg') { cg.classList.add('on'); await sleep(1200); } await (Array.isArray(p) ? line(p[1], p[0]) : line(p, 'narr')); }   // 前目的地：扎头发那句就出 CG（测试记录 21）
   // 2. user 的样子（结局差分 / 落灰）
   if (e.userSprite || id === 'godot') {
     const fig = id === 'godot' ? userFigure(s.outfit, true) : h('div', { class: 'user-fig' }, h('img', { src: A(`sprite/user/${e.userSprite}.webp`), alt: '' }));
@@ -56,7 +56,8 @@ export async function showEnding(id, s) {
   // 5.6 致敬原作的最后一句（结局致敬与改名 1110）：所有交代播完以后单独一句；楚门在锁屏前、前目的地在下载字条前、土拨鼠在回第 1 天前（都在这之后发生）
   if (L.homage) await line(L.homage, 'narr');
   // 5.7 后日谈（‘祖与占’）：标题之前
-  if (L.after?.length) { cg.classList.remove('on'); await sleep(900); await playAfter(scr, say, L.after, line); }
+  if (s?.name != null) store.set('lastName', s.name || '');   // 图鉴里重看后日谈时用
+  if (L.after?.length) { cg.classList.remove('on'); await sleep(900); await playAfter(scr, say, L.after, line, s?.name || ''); }
   // 6. 标题卡
   title.classList.add('on'); await sleep(1800);
   tap.classList.add('on');
@@ -65,9 +66,10 @@ export async function showEnding(id, s) {
 }
 
 // 后日谈：每句带背景（黑底 / 院子），图鉴里也能单独重看
-async function playAfter(host, say, items, line) {
+async function playAfter(host, say, items, line, name = store.get('lastName', '')) {
   const bg = h('img', { class: 'cg', alt: '' }); host.insertBefore(bg, say);
-  for (const [cls, text, b] of items) {
+  for (const [cls, text0, b] of items) {
+    const text = text0 === '{NAME_SENT}' ? (name ? `屏幕上是你的名字。一个字都没打错。` : '屏幕上是一个「你」字。') : text0;
     if (b && b !== 'black') {   // 'cg:xxx' 用 CG（进回想），别的是背景图
       const isCg = b.startsWith('cg:'), src = isCg ? A(`cg/${b.slice(3)}.webp`) : A(`bg/${b}.webp`);
       if (!bg.src.endsWith(src)) { await preload(src).catch(() => {}); bg.src = src; } bg.classList.add('on');
@@ -92,13 +94,13 @@ export async function showButtonReturn(offMs) {
   const n = (store.get('button_returns', 0) || 0) + 1; store.set('button_returns', n);
   const sc = BUTTON_RETURNS[n === 10 ? 5 : (n - 1) % (n > 10 ? 6 : 5)];
   const days = Math.floor(offMs / 86400e3);
-  const gone = days < 1 ? '一会儿' : days < 7 ? `${'一二三四五六'[days - 1]}天` : '很久';
+  const gone = days < 1 ? '一会儿' : days < 7 ? `${'一两三四五六'[days - 1]}天` : '很久';
   const say = h('div', { class: 'end-say' });
   const bg = h('img', { class: 'cg', src: A(`bg/${sc.bg}.webp`), alt: '' });
   const scr = showScreen('ending', h('div', {}, bg, say));
   await preload(A(`bg/${sc.bg}.webp`)).catch(() => {});
   const line = async (text, cls) => { say.className = 'end-say ' + cls; say.textContent = text; await sleep(60); say.classList.add('on'); await sleep(700); await waitClick(scr); say.classList.remove('on'); await sleep(450); };
-  await line(`你走了${gone}。`, 'narr');   // 第一句按离开时长；他不冷、不怨
+  if (sc !== BUTTON_RETURNS[0]) await line(`你走了${gone}。`, 'narr');   // 第一句按离开时长；他不冷、不怨。① 自己开头就是「你回来了。」、后面说天数，不重复（测试记录 21）
   bg.classList.add('on'); await sleep(900);
   for (const [cls, text] of sc.lines) await line(text.replace('{N}', gone), cls);
   bg.classList.remove('on'); await sleep(700);

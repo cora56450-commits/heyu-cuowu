@@ -1,25 +1,25 @@
 // 主循环：主界面、对话播放、行动点、时段推进、事件、结局判定
-import { h, $, A, sleep, showScreen, openOv, closeOv, toast, preload, modal } from './ui/dom.js?v=1794359785';
-import { getSettings, store, unlock, getGallery, organsOpen } from './store.js?v=1794359785';
-import { chat, ApiError } from './api.js?v=1794359785';
-import { pickBits } from './config/lore.js?v=1794359785';
-import { favAdd, favText, npcAfterTurn, npcBlock, villageKnowRule, queueHurt, queueKnow, takeKnow } from './npc.js?v=1794359785';
-import { KEY_EVENTS, ADULT_NOTE, buildSystem, summaryPrompt, phonePingPrompt, phoneChatPrompt } from './prompt.js?v=1794359785';
-import { normTurn, LineStreamer, looseJson, stripTags } from './parse.js?v=1794359785';
-import { AI_TAGS } from './config/values.js?v=1794359785';
-import { SLOTS, LOCATIONS, TOTAL_DAYS, AP_PER_SLOT, DUSK, NIGHT, heLocation, OUTFITS, STATS_EYE5, SPRITE_DIR, DEFAULT_EXPR, FIRST_LINE, EXPR, SPRITE_FIT, spriteBox, NPC_SPRITES, NPC_FIT, DUO, EXPR_FALLBACK, FEIGN_PATCH, PINCH, PINCH_BOX, VILLAGERS, NPC_PRESENCE, motherAway, locLocked } from './config/world.js?v=1794359785';
-import { DAILY, VILLAGE_OUTFIT_ASSIM, OUTSIDE_OUTFIT_ASSIM, WARM_STREAK, madTier } from './config/values.js?v=1794359785';
-import { ENDINGS, judgeFinal, MID, AFTERMATH, LOOP_LINE, COVER_OF } from './config/endings.js?v=1794359785';
-import { newRun, applyTags, saveRun, loadRun, clone, tierOf, knows, taText, phoneStage } from './state.js?v=1794359785';
-import { rollMeta, collectInjections, splitGarble, EXTRA_META, canExtraMeta, markExtraMeta, idleFor, touchActive } from './meta.js?v=1794359785';
-import { findCliches, CLICHES } from './config/style.js?v=1794359785';
-import { canonViolation, META_RE } from './config/canon.js?v=1794359785';
-import { DEMO, DEMO_LAST_DAY } from './config/demo.js?v=1794359785';
-import { memoAdd, memoDone, memoTick, apptMemoId } from './memo.js?v=1794359785';
-import * as P from './ui/panels.js?v=1794359785';
-import { runMinigame } from './ui/minigames.js?v=1794359785';
-import { openOrgan, organPuzzle } from './ui/organ.js?v=1794359785';
-import { showEnding, showLock } from './ui/ending.js?v=1794359785';
+import { h, $, A, sleep, showScreen, openOv, closeOv, toast, preload, modal } from './ui/dom.js?v=1794401406';
+import { getSettings, store, unlock, getGallery, organsOpen } from './store.js?v=1794401406';
+import { chat, ApiError } from './api.js?v=1794401406';
+import { pickBits } from './config/lore.js?v=1794401406';
+import { favAdd, favText, npcAfterTurn, npcBlock, villageKnowRule, queueHurt, queueKnow, takeKnow } from './npc.js?v=1794401406';
+import { KEY_EVENTS, ADULT_NOTE, buildSystem, summaryPrompt, phonePingPrompt, phoneChatPrompt } from './prompt.js?v=1794401406';
+import { normTurn, LineStreamer, looseJson, stripTags } from './parse.js?v=1794401406';
+import { AI_TAGS } from './config/values.js?v=1794401406';
+import { SLOTS, LOCATIONS, TOTAL_DAYS, AP_PER_SLOT, DUSK, NIGHT, heLocation, OUTFITS, STATS_EYE5, SPRITE_DIR, DEFAULT_EXPR, FIRST_LINE, EXPR, SPRITE_FIT, spriteBox, NPC_SPRITES, NPC_FIT, DUO, EXPR_FALLBACK, FEIGN_PATCH, PINCH, PINCH_BOX, VILLAGERS, NPC_PRESENCE, motherAway, locLocked } from './config/world.js?v=1794401406';
+import { DAILY, VILLAGE_OUTFIT_ASSIM, OUTSIDE_OUTFIT_ASSIM, WARM_STREAK, madTier } from './config/values.js?v=1794401406';
+import { ENDINGS, judgeFinal, MID, AFTERMATH, LOOP_LINE, COVER_OF } from './config/endings.js?v=1794401406';
+import { newRun, applyTags, saveRun, loadRun, clone, tierOf, knows, taText, phoneStage } from './state.js?v=1794401406';
+import { rollMeta, collectInjections, splitGarble, EXTRA_META, canExtraMeta, markExtraMeta, idleFor, touchActive } from './meta.js?v=1794401406';
+import { findCliches, CLICHES } from './config/style.js?v=1794401406';
+import { canonViolation, META_RE } from './config/canon.js?v=1794401406';
+import { DEMO, DEMO_LAST_DAY } from './config/demo.js?v=1794401406';
+import { memoAdd, memoDone, memoTick, apptMemoId } from './memo.js?v=1794401406';
+import * as P from './ui/panels.js?v=1794401406';
+import { runMinigame } from './ui/minigames.js?v=1794401406';
+import { openOrgan, organPuzzle } from './ui/organ.js?v=1794401406';
+import { showEnding, showLock } from './ui/ending.js?v=1794401406';
 
 export const G = { s: null, R: null, events: [], busy: false, last: null, backTitle: null };
 const SIZE_COST = { small: 1, medium: 2, large: 2 };   // 每个时段只有 2 点：一整段的大事就是 2 点
@@ -94,8 +94,8 @@ const HE_FIRST_AFTER = '昨晚你们越过了那条线。今天河有点别扭�
 
 export async function loadEvents() {
   // 发布版的 events.json 是编码过的（tools/build_dist.py），以 E1: 开头
-  const t = await fetch('data/events.json?v=1794359785').then(r => r.text());
-  const j = JSON.parse(t.startsWith('E1:') ? (await import('./_k.js?v=1794359785')).decode(t.slice(3)) : t);
+  const t = await fetch('data/events.json?v=1794401406').then(r => r.text());
+  const j = JSON.parse(t.startsWith('E1:') ? (await import('./_k.js?v=1794401406')).decode(t.slice(3)) : t);
   G.events = j.events;
   try { G.assets = new Set(Object.keys(await fetch('assets/manifest.json').then(r => r.json()))); } catch { G.assets = null; }
 }
@@ -106,6 +106,7 @@ export const hasAsset = p => !G.assets || G.assets.has(p);
 function bgFor(loc, slot) {
   const L = LOCATIONS[loc] || LOCATIONS.creek;
   const night = slot === NIGHT; const dusk = slot === DUSK;
+  if (night && loc === 'creek') return { src: A('bg/creek_dusk40.webp'), filter: 'brightness(.32) saturate(.45) sepia(.2) hue-rotate(195deg)' };   // 测试记录 21：溪岸没有夜景，用黄昏那张压暗（白天那张压暗了还像白天）
   const src = night && L.bg[1] ? L.bg[1] : L.bg[0];
   const filter = night && !L.bg[1] ? 'brightness(.38) saturate(.55) sepia(.25) hue-rotate(185deg)' : dusk ? 'sepia(.5) saturate(1.15) brightness(.78) hue-rotate(-12deg)' : 'none';   // 黄昏、夜里没有专门的图：滤镜加重，一眼看得出时段
   return { src: A(`bg/${src}.webp`), filter };
@@ -248,14 +249,14 @@ export function pickBgm() {
   else if (s.slot === NIGHT && ['he_room', 'room'].includes(s.loc) && (heLocation(s.day, s.slot) === s.loc || s.curEvent)) slot = 'night';
   if (s.curEvent === 'd40_question') slot = 'meta';
   if (s.phase === 'event' && G.eventBgm && G.eventBgm.ev === s.curEvent) slot = G.eventBgm.slot === 'none' ? null : G.eventBgm.slot;   // 事件自己定的 BGM（BGM 与固定小剧情 §1）
-  import('./audio.js?v=1794359785').then(a => a.playBgm(slot));
+  import('./audio.js?v=1794401406').then(a => a.playBgm(slot));
 }
 // 立绘：河在 sprite，其他人在 sprite2；两个人同时在画面上时河往左让
 // 事件 / 某一句切 BGM：daily / night / uneasy / meta / title / none（none = 渐弱到静音）
 function setEventBgm(slot) {
   const s = G.s; if (!s || !slot) return;
   G.eventBgm = { ev: s.curEvent, slot };
-  import('./audio.js?v=1794359785').then(a => a.playBgm(slot === 'none' ? null : slot));
+  import('./audio.js?v=1794401406').then(a => a.playBgm(slot === 'none' ? null : slot));
 }
 function charSrc(who, expr) {
   if (SPRITE_DIR[who]) {
@@ -396,7 +397,7 @@ export async function metaLine(id, force = false) {
   if (G.busy || G.inTurn || G.waitClick) { if (!G.metaQueue.includes(id)) G.metaQueue.push(id); return true; }
   markExtraMeta(s, id);
   const m = EXTRA_META[id];
-  import('./audio.js?v=1794359785').then(a => a.stutter()).catch(() => {});
+  import('./audio.js?v=1794401406').then(a => a.stutter()).catch(() => {});
   if (m.faint) {   // 一行很淡的字，2 秒后消失
     const f = h('div', { class: 'faint-line' }, m.faint); R.dialog.append(f); setTimeout(() => f.remove(), 2200); return true;
   }
@@ -1159,14 +1160,14 @@ async function miniAction(name) {
 // 器官图 = 河画的解剖图
 const ownedDrawings = () => { const g = getGallery(); return Object.keys(g.organs).filter(id => g.organs[id]); };
 async function giveDrawing(id, how) {
-  const { ORGANS } = await import('./config/world.js?v=1794359785');
+  const { ORGANS } = await import('./config/world.js?v=1794401406');
   const o = ORGANS.find(x => x.id === id); if (!o) return;
   unlock('organs', id);
   if (how === 'he') await playLines([{ speaker: '河', expr: 'shy', text: '……这个给你。画得不好。' }]);
   await openOrgan(id, ownedDrawings());
 }
 async function sketchbook() {
-  const { ORGANS } = await import('./config/world.js?v=1794359785');
+  const { ORGANS } = await import('./config/world.js?v=1794401406');
   const left = ORGANS.filter(o => !ownedDrawings().includes(o.id));
   if (!left.length) return spendLocal(1, [{ speaker: 'narration', text: '画本你都翻过了。每一页的线条都很细，标注写得很工整。' }]);
   const o = left[Math.floor(Math.random() * left.length)];
@@ -1176,7 +1177,7 @@ async function sketchbook() {
 }
 // 器官归位：十张画全给，拼完一次就全部解锁（回想、「河的画」）
 async function organsGame() {
-  const { ORGANS } = await import('./config/world.js?v=1794359785');
+  const { ORGANS } = await import('./config/world.js?v=1794401406');
   const first = !organsOpen();
   const res = await organPuzzle(ORGANS.map(o => o.id), hasAsset('ui/torso.webp'));
   if (res.success) {
@@ -2240,12 +2241,12 @@ export function loadReaction(s, n, prev) {
   return lines.length ? { lines, resent } : null;
 }
 // ———— 给河 / 牠梳头（给ClaudeCode_梳头_1111，台词在 方案与文本/梳头_河与牠_初稿_1111.md）————
-const COMB_RE = /梳|扎.{0,2}头发|束发|编.{0,2}辫|绑.{0,2}头发|解.{0,3}头发|摸.{0,3}头发/;
+const COMB_RE = /梳|扎.{0,2}头发|束发|编.{0,2}辫|绑.{0,2}头发|解.{0,3}头发|摸.{0,3}头发|头发.{0,6}(扎|梳|束|编|绑|理)|(梳|扎|束|编|绑).{0,4}头/;   // 测试记录 21：「把头发重新扎一下」也要认
 const cN = (text, k = {}) => ({ speaker: 'narration', text, ...k }), cH = (text, expr = 'normal') => ({ speaker: '河', expr, text }), cT = text => ({ speaker: '牠', expr: 'note', text });
 const COMB = {
   河_rash: { delta: { restraint: -1 }, lines: [cN('你的手指刚穿进他的头发，他就抓住了你的手腕。', { show: { 河: 'alert' } }), cN('抓得很紧。他没回头，呼吸乱了一下。'), cH('……别。', 'alert'), cN('过了很久，他才松开，把你的手放回你膝盖上，像放回一件不该碰的东西。')] },
   河_low: { lines: [cN('你的手刚碰到他的发尾，他就往旁边让开了。'), cH('……我自己来。', 'pout'), cN('他把布条解下来，重新扎了一遍，扎得比原来还紧。')] },
-  河_mid: { delta: { love: 1 }, lines: [cN('他没躲。你把那根米白布条解下来，头发一下子散开，垂到腰。'), cN('光从窗纸透进来，你才看清，黑头发底下那一层是墨绿的。'), cN('他坐得很直，一动不动，像在等人给他缝针。'), cH('……别扯。', 'shy'), cN('你用手指一点点把头发理顺，拢到一边，扎上。'), cH('左边高了。'), cN('他伸手摸了摸，手停在那个结上。'), cH('……就这样吧。', 'shy'), cN('那天他一直没有重扎。')] },
+  河_mid: { delta: { love: 1 }, lines: [cN('他没躲。你把那根米白布条解下来，头发一下子散开，垂到腰。'), cN('{COMB_LIGHT}'), cN('他坐得很直，一动不动，像在等人给他缝针。'), cH('……别扯。', 'shy'), cN('你用手指一点点把头发理顺，拢到一边，扎上。'), cH('左边高了。'), cN('他伸手摸了摸，手停在那个结上。'), cH('……就这样吧。', 'shy'), cN('那天他一直没有重扎。')] },
   河_high: { delta: { love: 1, restraint: 1 }, lines: [cN('他从抽屉里拿出一把木梳，递给你。'), cH('……梳吧。'), cN('你从发尾梳起。他背对着你，肩膀一点一点松下来。'), cH('小时候我妈也这样。', 'dazed'), cH('……后来我就自己扎了。'), cN('梳到最后，他没让你扎。他把布条放进你手心，合上你的手指。'), cH('先放你那儿。', 'shy')] },
   牠_low: { lines: [cN('你的手还没碰到，牠就攥住了你的手腕。牠的手很冷。'), cT('「不。」')] },
   牠_mid: { delta: { love: 1 }, lines: [cN('牠没拦你，只是抬起一只手，按住了脸前那一片头发。'), cT('「前，不。」'), cN('你从后面梳。头发很长，一直拖到地上，凉得像水。'), cN('梳着梳着，梳齿勾出来一截红线，又一截。还有几片干掉的花瓣，四瓣的，夹在头发里不知道多久了。'), cN('牠一直很安静。梳完了，牠把那几截红线一根一根收进袖子里。')] },
@@ -2272,7 +2273,8 @@ async function combAct(t) {
   const C = key === 'mad' ? { lines: [cN('牠把手缩了回去。'), cT('「不。」')] } : COMB[who + '_' + key];
   if (key !== 'mad') seen[who + '_' + key] = true;
   if (key === 'rash') s.f.comb_he_rash = true;
-  setBusy(true); try { await playLines(C.lines); } finally { setBusy(false); }
+  const lines = C.lines.map(l => l.text === '{COMB_LIGHT}' ? { ...l, text: s.slot >= DUSK ? '灯底下，你才看清，黑头发底下那一层是墨绿的。' : '光从窗纸透进来，你才看清，黑头发底下那一层是墨绿的。' } : l);   // 白天 / 夜里两种（测试记录 21）
+  setBusy(true); try { await playLines(lines); } finally { setBusy(false); }
   if (C.delta) applyTags(s, [], [], C.delta, { noCap: true });
   if (who === '河' && key === 'mid') s.c.combDusk = s.day;
   if (who === '河' && key === 'high') s.c.hairDown = s.day;
@@ -2339,9 +2341,10 @@ export async function continueRun(s, offlineMs, alertLine = null) {
   buildMain(); setScene(); refreshHud();
   if (alertLine) {   // 当面读档的反应（loadReaction 算好的几句）
     const R = typeof alertLine === 'string' ? { lines: [{ speaker: '河', expr: 'alert', text: alertLine, glitch: true }], resent: 2 } : alertLine;
-    if (R.resent) import('./audio.js?v=1794359785').then(a => a.stutter()).catch(() => {});
+    if (R.resent) import('./audio.js?v=1794401406').then(a => a.stutter()).catch(() => {});
     await playLines(R.lines);
-    if (R.resent) { addResent(s, R.resent, '当面读档'); s.meta.saidMeta = R.lines.filter(l => l.speaker === '河').map(l => l.text).join(''); }
+    // 测试记录 21：读档恢复的状态里今天的上限可能已经用完，当面读档不受上限
+    if (R.resent) { applyTags(s, [], [], { resent: R.resent }, { noCap: true }); s.meta.saidMeta = R.lines.filter(l => l.speaker === '河').map(l => l.text).join(''); }
     saveRun(s);
   }
   if (offlineMs >= 30 * 60e3) await wakeUp(offlineMs);
