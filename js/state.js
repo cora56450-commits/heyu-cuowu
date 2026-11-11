@@ -1,7 +1,7 @@
 // 一局游戏的状态、数值结算、存档 / 读档
-import { store } from './store.js?v=1794403888';
-import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, CAP_UP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN, OUTWARD_TAGS, NO_SCALE_HOPE } from './config/values.js?v=1794403888';
-import { AP_PER_SLOT } from './config/world.js?v=1794403888';
+import { store } from './store.js?v=1794407614';
+import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, CAP_UP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN, OUTWARD_TAGS, NO_SCALE_HOPE } from './config/values.js?v=1794407614';
+import { AP_PER_SLOT } from './config/world.js?v=1794407614';
 
 export function newRun(outfit = 'initial', loop = 0) {
   return {
@@ -80,8 +80,8 @@ export function applyTags(s, tags = [], heFlags = [], extra = null, opts = {}) {
 }
 
 // —— 存档 ——
-// 自动存档：auto；手动：slot1..3
-export const SLOT_IDS = ['auto', 'slot1', 'slot2', 'slot3'];
+// 自动存档：auto；手动：slot1..4（Cora 11/12：四个，名字可以自己起，存在 store 'slotNames'）
+export const SLOT_IDS = ['auto', 'slot1', 'slot2', 'slot3', 'slot4'];
 export function saveRun(s, id = 'auto') {
   s.savedAt = Date.now();
   store.set('save_' + id, s);

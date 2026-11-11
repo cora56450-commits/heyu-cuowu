@@ -666,3 +666,4 @@ body.compact .phone .memo { font-size: 19px; }
 .after-play .end-say.he::before { content: '河　'; color: #c98a7a; font-size: 20px; }
 .after-play .end-say.note { left: 420px; right: 420px; padding: 26px 20px; background: #e9dfcd; color: var(--ink); text-shadow: none; box-shadow: 4px 6px 0 rgba(0,0,0,.5); font-size: 24px; transform: rotate(-2deg); }
 body.calm #scr-lock .knot { animation: none; }
+#scr-title .cover-wrap.interlace { width: 782px; height: 828px; top: -108px; left: -48px; }   /* 前目的地十指相扣：放大约 15%，底边不动（Cora 11/12） */
