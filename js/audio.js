@@ -1,8 +1,10 @@
-// BGM：5 个播放位，场景切换时淡入淡出约 1.5 秒；文件放在 assets/bgm/<播放位>.mp3，没有就不响
+// BGM：8 个播放位，场景切换时淡入淡出约 1.5 秒；文件放在 assets/bgm/<播放位>.mp3（ambiguous 是 .m4a），没有就不响
 // title 标题 / daily 日常 / uneasy 不安（缝合、牠、后山）/ night 夜里和河独处 / meta meta 时刻与结局
-import { getSettings } from './store.js?v=1794428964';
+// ambiguous 暧昧（第一次、夜里在河的房间且河在、d21/r2/r5）/ joy 高兴（第 14 天桃花节）/ d40 第四十天的问题
+import { getSettings } from './store.js?v=1794430504';
 
-export const SLOTS = ['title', 'daily', 'uneasy', 'night', 'meta'];
+export const SLOTS = ['title', 'daily', 'uneasy', 'night', 'meta', 'ambiguous', 'joy', 'd40'];
+const EXT = { ambiguous: 'm4a' };   // 本机没有 mp3 编码器，暧昧转成 128k AAC
 const FADE = 1500;
 const tracks = {};   // slot → Audio
 let current = null, wanted = null, unlocked = false, dead = false;
@@ -10,7 +12,7 @@ let current = null, wanted = null, unlocked = false, dead = false;
 function vol() { const s = getSettings(); return s.bgmOn === false ? 0 : (s.volume ?? 0.7); }
 function track(slot) {
   if (!tracks[slot]) {
-    const a = new Audio(`assets/bgm/${slot}.mp3`); a.loop = true; a.volume = 0; a.preload = 'auto';
+    const a = new Audio(`assets/bgm/${slot}.${EXT[slot] || 'mp3'}`); a.loop = true; a.volume = 0; a.preload = 'auto';
     a.addEventListener('error', () => { a.dataset.missing = '1'; });
     tracks[slot] = a;
   }
