@@ -1,7 +1,7 @@
 // 解析 AI 输出：严格 JSON → 宽松提取 → 纯文本兜底；以及流式中途提取完整的 line 对象
-import { EXPR, CODE_ONLY_EXPR, ORGANS } from './config/world.js?v=1794410695';
+import { EXPR, CODE_ONLY_EXPR, ORGANS } from './config/world.js?v=1794420323';
 const ORGAN_BY_NAME = Object.fromEntries(ORGANS.map(o => [o.name, o.id]));
-import { AI_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794410695';
+import { AI_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794420323';
 
 export function looseJson(raw) {
   if (!raw) return null;

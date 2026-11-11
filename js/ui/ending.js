@@ -1,17 +1,17 @@
 // 结局画面、‘楚门的世界’锁定画面、结局后效
-import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794410695';
-import { store, unlock } from '../store.js?v=1794410695';
-import { ENDINGS, ENDING_LINES, BUTTON_RETURNS } from '../config/endings.js?v=1794410695';
-import { madTier } from '../config/values.js?v=1794410695';
-import { userFigure } from '../game.js?v=1794410695';
-import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794410695';
-import { garble } from '../meta.js?v=1794410695';
+import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794420323';
+import { store, unlock } from '../store.js?v=1794420323';
+import { ENDINGS, ENDING_LINES, BUTTON_RETURNS } from '../config/endings.js?v=1794420323';
+import { madTier } from '../config/values.js?v=1794420323';
+import { userFigure } from '../game.js?v=1794420323';
+import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794420323';
+import { garble } from '../meta.js?v=1794420323';
 
 const waitClick = el => new Promise(r => el.addEventListener('click', r, { once: true }));
 
 export async function showEnding(id, s) {
   const e = ENDINGS[id]; const L = ENDING_LINES[id] || {};
-  import('../audio.js?v=1794410695').then(a => a.playBgm('meta'));
+  import('../audio.js?v=1794420323').then(a => a.playBgm('meta'));
   if (FILES[id]) loadAfterword(id);   // 先读好后日谈 / 字条，最后那一下点击时直接下载（楚门、前目的地）
   const tier = madTier(s?.madness || 0);
   const cg = h('img', { class: 'cg' + (e.glitch ? ' glitch' : ''), src: A(`cg/${e.cg}.webp`), alt: '' });
@@ -50,7 +50,8 @@ export async function showEnding(id, s) {
   // 4. 牠的字条（‘前目的地’）
   if (L.note) await line(`「${L.note}」`, 'note');
   // 5. 河的最后一句（按疯神档位）
-  for (const t of L[tier] || []) await line(t, 'he');
+  const heLast = tier === 'mad' && L.madPetal ? [L.madPetal[s?.f?.petal] || L.madPetal[6]] : L[tier];   // 仲夏夜疯档按第 14 天选的花
+  for (const t of heLast || []) await line(t, 'he');
   // 5.5 结局交代（post：河那句之后、标题之前，和 pre 一样的黑屏旁白；借鉴机制与结局 §8）
   for (const p of L.post || []) await line(p, 'narr');
   // 5.6 致敬原作的最后一句（结局致敬与改名 1110）：所有交代播完以后单独一句；楚门在锁屏前、前目的地在下载字条前、土拨鼠在回第 1 天前（都在这之后发生）
@@ -92,7 +93,10 @@ export async function replayAfter(id) {
 // 前目的地后日谈 B：之后每次回来（只是过场：不读存档、不改存档，播完回封面）
 export async function showButtonReturn(offMs) {
   const n = (store.get('button_returns', 0) || 0) + 1; store.set('button_returns', n);
-  const sc = BUTTON_RETURNS[n === 10 ? 5 : (n - 1) % (n > 10 ? 6 : 5)];
+  // ①–⑤ 轮流；第 10 次固定 ⑥，之后 ⑥ 也进轮换；离开过 6 次以上（第 7 次起）⑦ 也进轮换
+  const pool = [0, 1, 2, 3, 4, ...(n > 10 ? [5] : []), ...(n >= 7 ? [6] : [])];
+  const sc = BUTTON_RETURNS[n === 10 ? 5 : n === 7 ? 6 : pool[(n - 1) % pool.length]];   // 第 7 次回来第一次出 ⑦
+  const cn = k => { const D = '零一二三四五六七八九'; return k < 10 ? D[k] : k < 20 ? '十' + (k % 10 ? D[k % 10] : '') : k < 100 ? D[Math.floor(k / 10)] + '十' + (k % 10 ? D[k % 10] : '') : String(k); };
   const days = Math.floor(offMs / 86400e3);
   const gone = days < 1 ? '一会儿' : days < 7 ? `${'一两三四五六'[days - 1]}天` : '很久';
   const say = h('div', { class: 'end-say' });
@@ -102,7 +106,7 @@ export async function showButtonReturn(offMs) {
   const line = async (text, cls) => { say.className = 'end-say ' + cls; say.textContent = text; await sleep(60); say.classList.add('on'); await sleep(700); await waitClick(scr); say.classList.remove('on'); await sleep(450); };
   if (sc !== BUTTON_RETURNS[0]) await line(`你走了${gone}。`, 'narr');   // 第一句按离开时长；他不冷、不怨。① 自己开头就是「你回来了。」、后面说天数，不重复（测试记录 21）
   bg.classList.add('on'); await sleep(900);
-  for (const [cls, text] of sc.lines) await line(text.replace('{N}', gone), cls);
+  for (const [cls, text] of sc.lines) await line(text.replace('{N}', gone).replace('{K} ', cn(n)).replace('{K}', cn(n)), cls);
   bg.classList.remove('on'); await sleep(700);
 }
 // UTF-8 带 BOM，Windows 记事本打开不乱码
@@ -147,7 +151,7 @@ export async function showAftermath(a) {
   const kids = [bg];
   let line = '';
   if (a.kind === 'fade') { const f = userFigure(a.outfit, false); f.firstChild.classList.add('fx-fade'); kids.push(f); line = '床上那具身体，已经不在了。'; }
-  if (a.kind === 'dust') { const f = h('div', { class: 'user-fig' }, h('img', { class: 'fx-dust', src: A('sprite/user/feign.webp'), alt: '' }), h('div', { class: 'dust-layer' })); kids.push(f); line = '……'; }   // 假死立绘 + 落灰（测试记录 17 §7）
+  if (a.kind === 'dust') { const f = h('div', { class: 'user-fig' }, h('img', { class: 'fx-dust', src: A('sprite/user/feign.webp'), alt: '' }), h('div', { class: 'dust-layer' })); kids.push(f); line = { god: '溪水涨过一回，没淹到你。', mad: '它的头发长了，我给它剪过了。' }[a.tier] || '窗开着。'; }   // 1112：按档换   // 假死立绘 + 落灰（测试记录 17 §7）
   if (a.kind === 'gone') line = '偏房里没有人。';
   if (a.kind === 'kept') { kids.push(userFigure(a.outfit, true)); line = '它还是你走的时候的样子。'; }   // ‘沉默的羔羊’：原样，不落灰、不变透明
   kids.push(h('div', { class: 'after-line' }, line));
