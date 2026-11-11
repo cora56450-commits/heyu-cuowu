@@ -464,7 +464,7 @@ body.calm #scr-title .cover-wrap.fall, body.calm #scr-title .cover-wrap.fall_blo
 #ov-outfit .namebar .go { min-width: 120px; height: 52px; font-size: 18px; letter-spacing: 6px; text-align: center; display: flex; align-items: center; justify-content: center; }
 /* 封面人物：头顶统一对齐到「海上钢琴师」那张（离上沿 31px）；「牠的手」往右挪一点 */
 #scr-title .cover-wrap.backtoback { top: 31px; }
-#scr-title .cover-wrap.ta_hand { top: 31px; left: 90px; }
+#scr-title .cover-wrap.ta_hand { top: 31px; left: 90px; }   /* 旧的前目的地封面，已不用 */
 .actions.choosing .list .btn { justify-content: center; text-align: center; }   /* 剧情选项：文字居中 */
 /* 结局：未达成的卡片点开看详细条件 */
 .gcard.has-how { cursor: pointer; }
