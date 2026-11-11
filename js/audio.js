@@ -3,7 +3,7 @@
 // ambiguous 暧昧（第一次、夜里在河的房间且河在、d21/r2/r5）/ joy 高兴（第 14 天桃花节）/ d40 第四十天的问题
 // sad 悲伤日常（门缝、铁皮盒、最后一夜按回答）/ sad_end 悲伤结局（6 个坏结局和它们的后效画面）
 // 短曲（XFADE 里的）不用 loop，快放完时另起一份从头淡入，交叉 2 秒，听不出接口
-import { getSettings } from './store.js?v=1794431322';
+import { getSettings } from './store.js?v=1794432554';
 
 export const SLOTS = ['title', 'daily', 'uneasy', 'night', 'meta', 'ambiguous', 'joy', 'd40', 'sad', 'sad_end'];
 const XFADE = { sad: 2000, sad_end: 2000 };
