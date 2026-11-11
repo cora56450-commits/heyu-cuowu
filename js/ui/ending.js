@@ -1,17 +1,17 @@
 // 结局画面、‘楚门的世界’锁定画面、结局后效
-import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794357522';
-import { store, unlock } from '../store.js?v=1794357522';
-import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794357522';
-import { madTier } from '../config/values.js?v=1794357522';
-import { userFigure } from '../game.js?v=1794357522';
-import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794357522';
-import { garble } from '../meta.js?v=1794357522';
+import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794358570';
+import { store, unlock } from '../store.js?v=1794358570';
+import { ENDINGS, ENDING_LINES } from '../config/endings.js?v=1794358570';
+import { madTier } from '../config/values.js?v=1794358570';
+import { userFigure } from '../game.js?v=1794358570';
+import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794358570';
+import { garble } from '../meta.js?v=1794358570';
 
 const waitClick = el => new Promise(r => el.addEventListener('click', r, { once: true }));
 
 export async function showEnding(id, s) {
   const e = ENDINGS[id]; const L = ENDING_LINES[id] || {};
-  import('../audio.js?v=1794357522').then(a => a.playBgm('meta'));
+  import('../audio.js?v=1794358570').then(a => a.playBgm('meta'));
   if (FILES[id]) loadAfterword(id);   // 先读好后日谈 / 字条，最后那一下点击时直接下载（楚门、前目的地）
   const tier = madTier(s?.madness || 0);
   const cg = h('img', { class: 'cg' + (e.glitch ? ' glitch' : ''), src: A(`cg/${e.cg}.webp`), alt: '' });
@@ -34,8 +34,8 @@ export async function showEnding(id, s) {
     ic.classList.remove('on'); await sleep(900); ic.remove();
     cg.classList.add('on');   // 测试记录 18 §7：接着「门关上了……」就出结局 CG
   }
-  // 1. 黑屏旁白
-  for (const p of L.pre || []) await line(p, 'narr');
+  // 1. 黑屏旁白（[类型, 文字] 的是别的样式，比如前目的地第 6 句的字条）
+  for (const p of L.pre || []) await (Array.isArray(p) ? line(p[1], p[0]) : line(p, 'narr'));
   // 2. user 的样子（结局差分 / 落灰）
   if (e.userSprite || id === 'godot') {
     const fig = id === 'godot' ? userFigure(s.outfit, true) : h('div', { class: 'user-fig' }, h('img', { src: A(`sprite/user/${e.userSprite}.webp`), alt: '' }));
@@ -55,6 +55,8 @@ export async function showEnding(id, s) {
   for (const p of L.post || []) await line(p, 'narr');
   // 5.6 致敬原作的最后一句（结局致敬与改名 1110）：所有交代播完以后单独一句；楚门在锁屏前、前目的地在下载字条前、土拨鼠在回第 1 天前（都在这之后发生）
   if (L.homage) await line(L.homage, 'narr');
+  // 5.7 后日谈（‘祖与占’）：标题之前
+  if (L.after?.length) { cg.classList.remove('on'); await sleep(900); await playAfter(scr, say, L.after, line); }
   // 6. 标题卡
   title.classList.add('on'); await sleep(1800);
   tap.classList.add('on');
@@ -62,6 +64,25 @@ export async function showEnding(id, s) {
   await new Promise(r => scr.addEventListener('click', () => { if (FILES[id]) downloadAfterword(s?.name, id); r(); }, { once: true }));   // 前目的地也下载，但不锁网页
 }
 
+// 后日谈：每句带背景（黑底 / 院子），图鉴里也能单独重看
+async function playAfter(host, say, items, line) {
+  const bg = h('img', { class: 'cg', alt: '' }); host.insertBefore(bg, say);
+  for (const [cls, text, b] of items) {
+    if (b && b !== 'black') { const src = A(`bg/${b}.webp`); if (!bg.src.endsWith(src)) { await preload(src).catch(() => {}); bg.src = src; } bg.classList.add('on'); }
+    else bg.classList.remove('on');
+    await line(text, cls);
+  }
+  bg.classList.remove('on'); await sleep(600); bg.remove();
+}
+export async function replayAfter(id) {
+  const L = ENDING_LINES[id]; if (!L?.after) return;
+  const say = h('div', { class: 'end-say' });
+  const scr = h('div', { id: 'ov-after', class: 'ov after-play', style: { background: '#000' } }, say);
+  document.querySelector('#overlays').append(scr);
+  const line = async (text, cls) => { say.className = 'end-say ' + cls; say.textContent = text; await sleep(60); say.classList.add('on'); await sleep(700); await waitClick(scr); say.classList.remove('on'); await sleep(450); };
+  await playAfter(scr, say, L.after, line);
+  scr.remove();
+}
 // UTF-8 带 BOM，Windows 记事本打开不乱码
 export function downloadAfterword(name = '', kind = 'truman') {
   try {

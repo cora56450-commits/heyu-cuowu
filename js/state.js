@@ -1,7 +1,7 @@
 // 一局游戏的状态、数值结算、存档 / 读档
-import { store } from './store.js?v=1794357522';
-import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, CAP_UP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN, OUTWARD_TAGS, NO_SCALE_HOPE } from './config/values.js?v=1794357522';
-import { AP_PER_SLOT } from './config/world.js?v=1794357522';
+import { store } from './store.js?v=1794358570';
+import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, CAP_UP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN, OUTWARD_TAGS, NO_SCALE_HOPE } from './config/values.js?v=1794358570';
+import { AP_PER_SLOT } from './config/world.js?v=1794358570';
 
 export function newRun(outfit = 'initial', loop = 0) {
   return {
@@ -26,6 +26,12 @@ export function applyTags(s, tags = [], heFlags = [], extra = null, opts = {}) {
   for (const grp of EXCLUSIVE_TAGS) { const hit = tags.filter(t => grp.includes(t)); if (hit.length > 1) tags = tags.filter(t => !grp.includes(t) || t === hit[0]); }
   if (tags.includes('想离开') && tags.some(t => OUTWARD_TAGS.includes(t))) tags = tags.filter(t => t !== '想离开');
   tags = tags.slice(0, MAX_TAGS_PER_TURN);
+  // 刷结局模式（问他走不走与刷数值 1111，Cora 定）：不用每天 ±3 点的上限，改成同一个标签一天最多算 3 次
+  if (opts.grind) {
+    const T = s.c.tagDay?.day === s.day ? s.c.tagDay : (s.c.tagDay = { day: s.day, n: {} });
+    tags = tags.filter(t => (T.n[t] || 0) < 3);
+    for (const t of tags) T.n[t] = (T.n[t] || 0) + 1;
+  }
   if (tags.some(t => t === '冷淡' || t === '拒绝' || t === '想离开')) (s.c ||= {}).negDay = s.day;   // 这一天有负面标签：明早怨恨不自动消
   if (tags.includes('承诺带他走')) (s.c ||= {}).promiseDay = s.day;   // 第 35–39 天：最近 3 天有没有给他准话
   const dc = {}, de = {};
@@ -59,7 +65,7 @@ export function applyTags(s, tags = [], heFlags = [], extra = null, opts = {}) {
   if (opts.scale != null && opts.scale !== 1 && hopeFull) dc.hope = (dc.hope || 0) + hopeFull * (1 - opts.scale);   // 1 点的小事 ×0.5（固定事件、选项不打折）
   if (extra) for (const [k, x] of Object.entries(extra)) add(opts.capExtra ? dc : de, k, x);
   // 每天上限：今天已经加了多少、减了多少
-  if (opts.noCap) { for (const [k, x] of Object.entries(dc)) add(de, k, x); for (const k in dc) delete dc[k]; }   // 固定剧情的选项：不受每天上限
+  if (opts.noCap || opts.grind) { for (const [k, x] of Object.entries(dc)) add(de, k, x); for (const k in dc) delete dc[k]; }   // 固定剧情的选项：不受每天上限
   if (!s.c.cap || s.c.cap.day !== s.day) s.c.cap = { day: s.day, up: {}, down: {} };
   const out = {};
   for (const k of VALUE_KEYS) {
