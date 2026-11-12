@@ -1,5 +1,5 @@
 // localStorage 封装：所有键统一加 gucun_ 前缀
-import { DEMO, DEMO_TAG } from './config/demo.js?v=1794485976';
+import { DEMO, DEMO_TAG } from './config/demo.js?v=1794491358';
 // 试玩版和完整版在同一个域名下（github.io），存档要分开，不然会互相覆盖
 // 带编号的完整版（Cowork 测试版 CW）也和正式完整版分开
 const P = DEMO ? 'gucun_demo_' : DEMO_TAG ? `gucun_${DEMO_TAG.toLowerCase()}_` : 'gucun_';
@@ -17,7 +17,7 @@ export const store = {
 export const DEFAULT_SETTINGS = {
   baseUrl: 'https://api.deepseek.com', apiKey: '', model: 'deepseek-flash', thinking: 'off',   // thinking：off / events（只在固定剧情开）/ all
   stream: true, jsonMode: true, timeout: 90, mock: false,
-  textSpeed: 40, autoDelay: 1.6, volume: 0.7, bgmOn: true, reduceMotion: false, adult: false,
+  textSpeed: 40, autoDelay: 1.6, volume: 0.7, bgmOn: true, sfxOn: true, sfxVolume: 0.6, reduceMotion: false, adult: false,
 };
 export function getSettings() { return { ...DEFAULT_SETTINGS, ...store.get('settings', {}) }; }
 export function saveSettings(s) { store.set('settings', s); }

@@ -1,6 +1,6 @@
 // 器官道具查看：CSS 3D 摇摆 + 拖动旋转 + 随角度移动的高光
-import { h, A, openOv, closeOv, toStage, sleep } from './dom.js?v=1794485976';
-import { ORGANS } from '../config/world.js?v=1794485976';
+import { h, A, openOv, closeOv, toStage, sleep } from './dom.js?v=1794491358';
+import { ORGANS } from '../config/world.js?v=1794491358';
 
 export function openOrgan(id, list) {
   list = list && list.length ? list : [id];
