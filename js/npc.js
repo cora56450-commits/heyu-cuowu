@@ -1,8 +1,8 @@
 // 村里人：隐藏好感三档（NPC隐藏好感三档_初稿_1111）+ 村里人也知道（中期与吃醋 1111 §四）
-import { LOCATIONS } from './config/world.js?v=1794584871';
-import { NPC_TIERS, npcTier, pickBits } from './config/lore.js?v=1794584871';
-import { knows } from './state.js?v=1794584871';
-import { toast } from './ui/dom.js?v=1794584871';
+import { LOCATIONS } from './config/world.js?v=1794586235';
+import { NPC_TIERS, npcTier, pickBits } from './config/lore.js?v=1794586235';
+import { knows } from './state.js?v=1794586235';
+import { toast } from './ui/dom.js?v=1794586235';
 
 export const NPC_LIST = ['养母', '满', '芳', '石', '衡'];
 const SPEAKER = { 石: '村民·男', 芳: '村民·女', 养母: '养母', 满: '满', 衡: '衡' };
@@ -113,13 +113,13 @@ export function takeKnow(s, present, heHere) {
 
 // 主线线索（第二轮测试者 B §7「村里人均谜语人」）：好感到「熟」及以上、被问到主线相关的事，每人可以说一条写好的线索，只说一次（s.c.clueSaid）
 export const CLUES = {
-  养母: '小河也是溪边捡回来的，那年才六七岁。',
+  养母: '小河也是溪边捡回来的，那年才六七岁。那天溪水很冷。',
   芳: '小河小时候往雾里走过一回，三天才回来，烧了半个月。',
-  满: '错的花（五瓣的）是从那边漏进来的；顺着它找，也许能找到回去的路。',
-  石: '他爹（老郭）换了肺以后，有时候不认得他了，笑起来停不下来。',
-  衡: '住满四十二天，就是这边的人了。这是规矩，不是我定的。',
+  满: '我老做一个梦，梦里有个会亮的东西，在一条很宽的路上跑。（满不知道那是车；被问是什么：「不知道。我又没见过。」）',
+  石: '我爹说，坡上那个的字，跟小河的越来越像了。',
+  衡: '住满四十二天，就是这边的人了。这是规矩，不是我定的。你不是第一个。（说完就收住）',
 };
-const MAIN_Q = /小河|河|雾|外面|那边|回去|出去|花|五瓣|规矩|四十二|老郭|你爹|肺|小时候|以前|怎么来|捡|为什么|秘密|怎么回事/;
+const MAIN_Q = /小河|河|雾|外面|那边|回去|出去|花|五瓣|规矩|四十二|老郭|你爹|肺|小时候|以前|怎么来|捡|为什么|秘密|怎么回事|狗|梦|字|写字|坡上|牠/;
 export function clueRule(s, req, present = []) {
   const text = String(req.text || ''); if (!text || !MAIN_Q.test(text)) return null;
   const here = (present || []).filter(n => CLUES[n] && npcTier(favOf(s, n)) >= 1 && !s.c.clueSaid?.[n]);
