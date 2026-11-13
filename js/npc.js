@@ -1,8 +1,8 @@
 // 村里人：隐藏好感三档（NPC隐藏好感三档_初稿_1111）+ 村里人也知道（中期与吃醋 1111 §四）
-import { LOCATIONS } from './config/world.js?v=1794586235';
-import { NPC_TIERS, npcTier, pickBits } from './config/lore.js?v=1794586235';
-import { knows } from './state.js?v=1794586235';
-import { toast } from './ui/dom.js?v=1794586235';
+import { LOCATIONS } from './config/world.js?v=1794587138';
+import { NPC_TIERS, npcTier, pickBits } from './config/lore.js?v=1794587138';
+import { knows } from './state.js?v=1794587138';
+import { toast } from './ui/dom.js?v=1794587138';
 
 export const NPC_LIST = ['养母', '满', '芳', '石', '衡'];
 const SPEAKER = { 石: '村民·男', 芳: '村民·女', 养母: '养母', 满: '满', 衡: '衡' };
@@ -115,7 +115,7 @@ export function takeKnow(s, present, heHere) {
 export const CLUES = {
   养母: '小河也是溪边捡回来的，那年才六七岁。那天溪水很冷。',
   芳: '小河小时候往雾里走过一回，三天才回来，烧了半个月。',
-  满: '我老做一个梦，梦里有个会亮的东西，在一条很宽的路上跑。（满不知道那是车；被问是什么：「不知道。我又没见过。」）',
+  满: '我老做一个梦，梦里有个会亮的东西，在一条很宽的路上跑。（满不知道那是车；被问是什么：「不知道。我又没见过。」说完可以加一句：「你别告诉小河哥，我跟他说过，他脸就不好看。」）',
   石: '我爹说，坡上那个的字，跟小河的越来越像了。',
   衡: '住满四十二天，就是这边的人了。这是规矩，不是我定的。你不是第一个。（说完就收住）',
 };
