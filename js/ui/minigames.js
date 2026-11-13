@@ -1,6 +1,6 @@
 // 三个小游戏（纯前端，不调用 AI，支持触屏）：数花瓣、牠的字条、拼图（弹窗拼贴）
-import { h, A, openOv, closeOv, sleep, toStage } from './dom.js?v=1794587138';
-import { garble } from '../meta.js?v=1794587138';
+import { h, A, openOv, closeOv, sleep, toStage } from './dom.js?v=1794595991';
+import { garble } from '../meta.js?v=1794595991';
 
 // 拼图用的照片（框按照片比例自动调整）
 export const PUZZLES = {
@@ -75,7 +75,7 @@ function flower(s) {
       closeOv('mini');
       if (ok) { s.c.flowerFound = (s.c.flowerFound || 0) + 1; s.f.flower_found = true; }
       res({ success: ok, lines: ok
-        ? [{ speaker: 'narration', text: '你找到了那朵五瓣的。' }, { speaker: 'narration', text: '在这里，它看起来反而像一个错误。' }, { speaker: 'narration', text: '你把它放进了口袋。第二天早上，它还没有谢。' }]
+        ? [{ speaker: 'narration', text: '你找到了那朵五瓣的。' }, { speaker: 'narration', text: '在这里，它看起来反而像一个错误。' }, { speaker: 'narration', text: '你把它放进了口袋。' }]
         : [{ speaker: 'narration', text: '花太多了。你数到一半就忘了数到哪。' }] });
     };
     const body = shell('数花瓣', '这里的花是四瓣或六瓣的。找出那朵不一样的。', () => finish(false));

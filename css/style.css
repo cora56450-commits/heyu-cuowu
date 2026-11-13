@@ -612,7 +612,8 @@ body.compact #ov-statshelp .how-text { font-size: 21px; line-height: 1.5; }
 .hud .appt-badge { background: rgba(255,250,240,.75); }
 /* 地图：说明栏、锁住的地点、「去这里」固定在底部、时段滤镜、地图上的手机 */
 #ov-map .side { bottom: 38px; }
-#ov-map .info { flex: 1; min-height: 0; }
+#ov-map .info { flex: 1; min-height: 0; overflow-y: auto; }
+#ov-map .side > :not(.info) { flex-shrink: 0; }   /* 1113 bug 7：手机 / 返回按钮不被挤掉，说明多了在说明区里滚 */
 #ov-map .info .grow { flex: 1; }
 #ov-map .info .go { flex: none; }
 .pin.locked { opacity: .55; filter: grayscale(1); }
