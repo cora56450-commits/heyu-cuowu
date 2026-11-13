@@ -1,11 +1,11 @@
 // 结局画面、‘楚门的世界’锁定画面、结局后效
-import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794595991';
-import { store, unlock } from '../store.js?v=1794595991';
-import { ENDINGS, ENDING_LINES, BUTTON_RETURNS } from '../config/endings.js?v=1794595991';
-import { madTier } from '../config/values.js?v=1794595991';
-import { userFigure } from '../game.js?v=1794595991';
-import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794595991';
-import { garble } from '../meta.js?v=1794595991';
+import { h, A, showScreen, sleep, confirmBox, preload } from './dom.js?v=1794598452';
+import { store, unlock } from '../store.js?v=1794598452';
+import { ENDINGS, ENDING_LINES, BUTTON_RETURNS } from '../config/endings.js?v=1794598452';
+import { madTier } from '../config/values.js?v=1794598452';
+import { userFigure } from '../game.js?v=1794598452';
+import { FILES, afterwordText, loadAfterword } from '../config/afterword.js?v=1794598452';
+import { garble } from '../meta.js?v=1794598452';
 
 // 结局 BGM：坏结局悲伤、忒修斯不安，其余 meta；后日谈开始时另切（两首悲伤 BGM §2）
 const END_BGM = { lambs: 'sad_end', godot: 'sad_end', departures: 'sad_end', gonegirl: 'sad_end', pianist: 'sad_end', fountain: 'sad_end', theseus: 'uneasy' };
@@ -14,7 +14,7 @@ const waitClick = el => new Promise(r => el.addEventListener('click', r, { once:
 
 export async function showEnding(id, s) {
   const e = ENDINGS[id]; const L = ENDING_LINES[id] || {};
-  import('../audio.js?v=1794595991').then(a => a.playBgm(END_BGM[id] || 'meta'));
+  import('../audio.js?v=1794598452').then(a => a.playBgm(END_BGM[id] || 'meta'));
   if (FILES[id]) loadAfterword(id);   // 先读好后日谈 / 字条，最后那一下点击时直接下载（楚门、前目的地）
   const tier = madTier(s?.madness || 0);
   const cg = h('img', { class: 'cg' + (e.glitch ? ' glitch' : ''), src: A(`cg/${e.cg}.webp`), alt: '' });
@@ -67,11 +67,17 @@ export async function showEnding(id, s) {
   tap.classList.add('on');
   // ‘楚门的世界’：最后这一下点击里触发下载（用户手势里，浏览器一般不拦）
   await new Promise(r => scr.addEventListener('click', () => { if (FILES[id]) downloadAfterword(s?.name, id); r(); }, { once: true }));   // 前目的地也下载，但不锁网页
+  // 真 Key 测试 1113：播完停一屏，不直接回标题（楚门接锁屏、土拨鼠回第 1 天，不停）
+  if (id === 'truman' || id === 'groundhog' || !s) return;
+  tap.classList.remove('on');
+  return new Promise(r => scr.append(h('div', { class: 'end-btns' },
+    h('button', { class: 'btn', onclick: e => { e.stopPropagation(); r('gallery'); } }, '去图鉴看'),
+    h('button', { class: 'btn', onclick: e => { e.stopPropagation(); r('title'); } }, '回标题'))));
 }
 
 // 后日谈：每句带背景（黑底 / 院子），图鉴里也能单独重看
 async function playAfter(host, say, items, line, name = store.get('lastName', ''), id = null) {
-  if (AFTER_BGM[id]) import('../audio.js?v=1794595991').then(a => a.playBgm(AFTER_BGM[id]));
+  if (AFTER_BGM[id]) import('../audio.js?v=1794598452').then(a => a.playBgm(AFTER_BGM[id]));
   const bg = h('img', { class: 'cg', alt: '' }); host.insertBefore(bg, say);
   for (const [cls, text0, b] of items) {
     const text = text0 === '{NAME_SENT}' ? (name ? `屏幕上是你的名字。一个字都没打错。` : '屏幕上是一个「你」字。') : text0;
@@ -91,7 +97,7 @@ export async function replayAfter(id) {
   const scr = h('div', { id: 'ov-after', class: 'ov after-play', style: { background: '#000' } }, say);
   document.querySelector('#overlays').append(scr);
   const line = async (text, cls) => { say.className = 'end-say ' + cls; say.textContent = text; await sleep(60); say.classList.add('on'); await sleep(700); await waitClick(scr); say.classList.remove('on'); await sleep(450); };
-  const au = await import('../audio.js?v=1794595991'), prev = au.nowPlaying();
+  const au = await import('../audio.js?v=1794598452'), prev = au.nowPlaying();
   await playAfter(scr, say, L.after, line, undefined, id);
   scr.remove(); au.playBgm(prev);   // 图鉴里重看完，回到原来的曲子
 }
@@ -127,7 +133,8 @@ export function downloadAfterword(name = '', kind = 'truman') {
 
 export function showLock() {
   // 楚门锁屏 1111：同心结挪到正中、64px；新图 ui/knot_tongxin.webp 没到之前用原来的结
-  const knot = h('img', { class: 'knot', src: A('ui/knot_tongxin.webp'), alt: '' });
+  const knot = h('img', { class: 'knot', src: A('ui/knot_tongxin.webp'), alt: '', draggable: 'false' });
+  knot.addEventListener('dragstart', e => e.preventDefault()); knot.addEventListener('contextmenu', e => e.preventDefault());   // 真 Key 测试 1113 §13：长按不变成拖图 / 存图
   knot.onerror = () => { knot.onerror = null; knot.src = A('ui/ap_empty.webp'); };
   const hint = h('div', { class: 'knot-hint' }, '攥紧了，就解得开。');
   setTimeout(() => hint.classList.add('on'), 20000);   // 进锁屏 20 秒后浮出
@@ -151,7 +158,7 @@ export function showLock() {
 
 // 结局后效：之后打开游戏时
 export async function showAftermath(a) {
-  import('../audio.js?v=1794595991').then(m => m.playBgm('sad_end', 0.5));   // 钢琴师 / 戈多 / 消失的爱人 / 羔羊的后效画面：悲伤结局，音量一半
+  import('../audio.js?v=1794598452').then(m => m.playBgm('sad_end', 0.5));   // 钢琴师 / 戈多 / 消失的爱人 / 羔羊的后效画面：悲伤结局，音量一半
   const bgId = a.kind === 'dust' ? ({ god: 'creek', mad: 'he_room' }[a.tier] || 'room_night') : 'room_night';   // 等待戈多：神档放回溪边、疯档搬到他屋里、中间留在偏房（测试记录 17 §10）
   const bg = h('img', { class: 'bg', src: A(`bg/${bgId}.webp`), alt: '', style: { position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(.7)' } });
   const kids = [bg];

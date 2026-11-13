@@ -1,27 +1,27 @@
 // 主循环：主界面、对话播放、行动点、时段推进、事件、结局判定
-import { h, $, A, sleep, showScreen, openOv, closeOv, toast, preload, modal } from './ui/dom.js?v=1794595991';
-import { getSettings, store, unlock, getGallery, organsOpen } from './store.js?v=1794595991';
-import { chat, ApiError } from './api.js?v=1794595991';
-import { pickBits } from './config/lore.js?v=1794595991';
-import { favAdd, favText, npcAfterTurn, npcBlock, villageKnowRule, queueHurt, queueKnow, takeKnow, clueRule, clueAfterTurn } from './npc.js?v=1794595991';
-import { KEY_EVENTS, ADULT_NOTE, buildSystem, summaryPrompt, phonePingPrompt, phoneChatPrompt } from './prompt.js?v=1794595991';
-import { normTurn, LineStreamer, looseJson, stripTags } from './parse.js?v=1794595991';
-import { AI_TAGS } from './config/values.js?v=1794595991';
-import { SLOTS, LOCATIONS, TOTAL_DAYS, AP_PER_SLOT, DUSK, NIGHT, heLocation, OUTFITS, STATS_EYE5, SPRITE_DIR, DEFAULT_EXPR, FIRST_LINE, EXPR, SPRITE_FIT, spriteBox, NPC_SPRITES, NPC_FIT, DUO, EXPR_FALLBACK, FEIGN_PATCH, PINCH, PINCH_BOX, VILLAGERS, NPC_PRESENCE, motherAway, locLocked } from './config/world.js?v=1794595991';
-import { DAILY, VILLAGE_OUTFIT_ASSIM, OUTSIDE_OUTFIT_ASSIM, WARM_STREAK, madTier } from './config/values.js?v=1794595991';
-import { ENDINGS, judgeFinal, MID, AFTERMATH, LOOP_LINE, COVER_OF, missedFor } from './config/endings.js?v=1794595991';
-import { newRun, applyTags, saveRun, loadRun, clone, tierOf, knows, taText, phoneStage } from './state.js?v=1794595991';
-import { rollMeta, collectInjections, splitGarble, EXTRA_META, canExtraMeta, markExtraMeta, idleFor, touchActive } from './meta.js?v=1794595991';
-import { findCliches, CLICHES } from './config/style.js?v=1794595991';
-import { canonViolation, META_RE } from './config/canon.js?v=1794595991';
-import { DEMO, DEMO_LAST_DAY, LOCKED_ENDINGS, LOCK_CODE } from './config/demo.js?v=1794595991';
-import { memoAdd, memoDone, memoTick, apptMemoId } from './memo.js?v=1794595991';
-import * as P from './ui/panels.js?v=1794595991';
-import { runMinigame } from './ui/minigames.js?v=1794595991';
-import { openOrgan, organPuzzle } from './ui/organ.js?v=1794595991';
-import { showEnding, showLock } from './ui/ending.js?v=1794595991';
+import { h, $, A, sleep, showScreen, openOv, closeOv, toast, preload, modal } from './ui/dom.js?v=1794598452';
+import { getSettings, store, unlock, getGallery, organsOpen } from './store.js?v=1794598452';
+import { chat, ApiError } from './api.js?v=1794598452';
+import { pickBits } from './config/lore.js?v=1794598452';
+import { favAdd, favText, npcAfterTurn, npcBlock, villageKnowRule, queueHurt, queueKnow, takeKnow, clueRule, clueAfterTurn } from './npc.js?v=1794598452';
+import { KEY_EVENTS, ADULT_NOTE, buildSystem, summaryPrompt, phonePingPrompt, phoneChatPrompt } from './prompt.js?v=1794598452';
+import { normTurn, LineStreamer, looseJson, stripTags } from './parse.js?v=1794598452';
+import { AI_TAGS } from './config/values.js?v=1794598452';
+import { SLOTS, LOCATIONS, TOTAL_DAYS, AP_PER_SLOT, DUSK, NIGHT, heLocation, OUTFITS, STATS_EYE5, SPRITE_DIR, DEFAULT_EXPR, FIRST_LINE, EXPR, SPRITE_FIT, spriteBox, NPC_SPRITES, NPC_FIT, DUO, EXPR_FALLBACK, FEIGN_PATCH, PINCH, PINCH_BOX, VILLAGERS, NPC_PRESENCE, motherAway, locLocked } from './config/world.js?v=1794598452';
+import { DAILY, VILLAGE_OUTFIT_ASSIM, OUTSIDE_OUTFIT_ASSIM, WARM_STREAK, madTier } from './config/values.js?v=1794598452';
+import { ENDINGS, judgeFinal, MID, AFTERMATH, LOOP_LINE, COVER_OF, missedFor } from './config/endings.js?v=1794598452';
+import { newRun, applyTags, saveRun, loadRun, clone, tierOf, knows, taText, phoneStage } from './state.js?v=1794598452';
+import { rollMeta, collectInjections, splitGarble, EXTRA_META, canExtraMeta, markExtraMeta, idleFor, touchActive } from './meta.js?v=1794598452';
+import { findCliches, CLICHES } from './config/style.js?v=1794598452';
+import { canonViolation, META_RE } from './config/canon.js?v=1794598452';
+import { DEMO, DEMO_LAST_DAY, LOCKED_ENDINGS, LOCK_CODE } from './config/demo.js?v=1794598452';
+import { memoAdd, memoDone, memoTick, apptMemoId } from './memo.js?v=1794598452';
+import * as P from './ui/panels.js?v=1794598452';
+import { runMinigame } from './ui/minigames.js?v=1794598452';
+import { openOrgan, organPuzzle } from './ui/organ.js?v=1794598452';
+import { showEnding, showLock } from './ui/ending.js?v=1794598452';
 
-const sfx = n => import('./audio.js?v=1794595991').then(a => a.playSfx(n));   // 点击音效
+const sfx = n => import('./audio.js?v=1794598452').then(a => a.playSfx(n));   // 点击音效
 export const G = { s: null, R: null, events: [], busy: false, last: null, backTitle: null };
 const SIZE_COST = { small: 1, medium: 2, large: 2 };   // 每个时段只有 2 点：一整段的大事就是 2 点
 const HISTORY_KEEP = 12;
@@ -35,7 +35,7 @@ function goreAllowed(s) {
 const GORE_HOLD = '今天已经写过内脏、血或缝合了。这一轮不要再写这些，也不要让河主动说起内脏或画；就算玩家问起，也只一笔带过、岔开，不说出器官名字，不描写。把注意力放在人、日常和你们之间。';
 const DRAWINGS_HIDDEN = '河的解剖画还没给「你」看过：被问起就收起来、岔开，不说画的是什么。';
 // 一个时段的最后一件事：让 AI 把场景收住，不要停在河刚问完一句话
-const LAST_ACTION_NOTE = '这是这个时段的最后一件事。写完这件事以后把场景收住（河说完话、各自去忙、或者自然地分开），最后一条不要是等玩家回答的问题。如果这件事是在等人，等到了以后至少写两三句你们之间的来往再收住，不要人一进门就结束。';
+const LAST_ACTION_NOTE = '这是这个时段的最后一件事。写完这件事以后把场景收住（河说完话、各自去忙、或者自然地分开），最后一条不要是等玩家回答的问题，也不要停在悬着的动作上（抓住、拉住、挡住「你」，或者谁在等「你」开口）：这类动作写了就要在这一段里写完它的结果。如果这件事是在等人，等到了以后至少写两三句你们之间的来往再收住，不要人一进门就结束。';
 const PLACE_WORDS = [['he_room', /河的房间|他的房间|他屋/], ['room', /偏房|我的房间|我屋|我那屋|回屋/], ['yard', /养母家|院子|回家/], ['creek', /溪/], ['ta_house', /牠的屋|缝者|牠那/], ['fields', /田|晒场/], ['peach', /桃花林/], ['tomb', /后山|古墓/], ['border', /村界|雾/], ['path', /石径|村里转/]];
 const placeIn = t => (PLACE_WORDS.find(([, re]) => re.test(t)) || [])[0];
 const isLockedLoc = id => locLocked(G.s, id);
@@ -112,8 +112,8 @@ const HE_FIRST_AFTER = '昨晚你们越过了那条线。今天河有点别扭�
 
 export async function loadEvents() {
   // 发布版的 events.json 是编码过的（tools/build_dist.py），以 E1: 开头
-  const t = await fetch('data/events.json?v=1794595991').then(r => r.text());
-  const j = JSON.parse(t.startsWith('E1:') ? (await import('./_k.js?v=1794595991')).decode(t.slice(3)) : t);
+  const t = await fetch('data/events.json?v=1794598452').then(r => r.text());
+  const j = JSON.parse(t.startsWith('E1:') ? (await import('./_k.js?v=1794598452')).decode(t.slice(3)) : t);
   G.events = j.events;
   if (LOCKED_ENDINGS.length) G.events = G.events.filter(e => e.id !== 'ta_first');   // 锁结局的版本：牠的「第一次」关掉（它是给‘祖与占’准备的）
   try { G.assets = new Set(Object.keys(await fetch('assets/manifest.json').then(r => r.json()))); } catch { G.assets = null; }
@@ -272,14 +272,14 @@ export function pickBgm() {
   else if (s.slot === NIGHT && ['he_room', 'room'].includes(s.loc) && (heLocation(s.day, s.slot) === s.loc || s.curEvent)) slot = 'night';
   if (s.curEvent === 'd40_question') slot = 'd40';
   if (s.phase === 'event' && G.eventBgm && G.eventBgm.ev === s.curEvent) slot = G.eventBgm.slot === 'none' ? null : G.eventBgm.slot;   // 事件自己定的 BGM（BGM 与固定小剧情 §1）
-  import('./audio.js?v=1794595991').then(a => a.playBgm(slot));
+  import('./audio.js?v=1794598452').then(a => a.playBgm(slot));
 }
 // 立绘：河在 sprite，其他人在 sprite2；两个人同时在画面上时河往左让
 // 事件 / 某一句切 BGM：daily / night / uneasy / meta / title / none（none = 渐弱到静音）
 function setEventBgm(slot) {
   const s = G.s; if (!s || !slot) return;
   G.eventBgm = { ev: s.curEvent, slot };
-  import('./audio.js?v=1794595991').then(a => a.playBgm(slot === 'none' ? null : slot));
+  import('./audio.js?v=1794598452').then(a => a.playBgm(slot === 'none' ? null : slot));
 }
 function charSrc(who, expr) {
   if (SPRITE_DIR[who]) {
@@ -423,7 +423,7 @@ export async function metaLine(id, force = false) {
   if (G.busy || G.inTurn || G.waitClick) { if (!G.metaQueue.includes(id)) G.metaQueue.push(id); return true; }
   markExtraMeta(s, id);
   const m = EXTRA_META[id];
-  import('./audio.js?v=1794595991').then(a => a.stutter()).catch(() => {});
+  import('./audio.js?v=1794598452').then(a => a.stutter()).catch(() => {});
   if (m.faint) {   // 一行很淡的字，2 秒后消失
     const f = h('div', { class: 'faint-line' }, m.faint); R.dialog.append(f); setTimeout(() => f.remove(), 2200); return true;
   }
@@ -574,7 +574,9 @@ async function playQueue(q, opts) {
   }
   G.R.next.classList.add('hidden');
 }
-function loadingText() { G.R.name.classList.add('hidden'); G.R.text.className = 'text narr'; G.R.text.replaceChildren(h('span', { class: 'loading-dots' })); }
+const WAIT_LINES = ['风从溪那边吹过来。', '远处有人在劈柴。', '桃花落了一瓣。', '水声没有停。', '有只鸡在院墙外面叫了一声。', '雾在山口那里，没有动。'];
+// 等 AI 的时候（真 Key 测试 1113：十几秒画面不动）：省略号呼吸，等久了淡出一行环境旁白
+function loadingText() { G.R.name.classList.add('hidden'); G.R.text.className = 'text narr'; G.R.text.replaceChildren(h('span', { class: 'loading-dots' }), h('span', { class: 'loading-wait' }, WAIT_LINES[Math.floor(Math.random() * WAIT_LINES.length)])); }
 
 // ———————————————————— 行动面板 ————————————————————
 let choiceResolver = null;
@@ -927,7 +929,7 @@ export async function doTurn(req) {
     if (G.R.chars?.he) setSprite('河', warmTag);
   }
   G.lastDropped = dropped.map(d => ({ speaker: d.l.speaker, text: d.l.text, why: d.why }));   // 调试用：这一轮删了什么、为什么
-  if (getSettings().debug && dropped.length) console.log('dropped', G.lastDropped);
+  if (getSettings().debug && dropped.length) for (const d of dropped) console.log(`dropped｜${d.why}｜${d.l?.speaker || ''}：${d.l?.text || ''}`);
   s.meta.cliche = findCliches(played);
   // 设定锁 §3：流式播出去的收不回来，不整轮重写；删得多（≥3 行，或删完只剩不到 2 行）就在下一轮提醒一次
   const fixable = dropped.filter(d => !d.meta);
@@ -1039,6 +1041,7 @@ async function compressHistory(s) {
 // 重新生成：回滚到这轮之前，再来一次（记录下来，meta 会用）
 async function regenerate() {
   if (G.busy || !G.last) return;
+  if (!store.get('regen_warned')) { store.set('regen_warned', 1); toast('再点一次「重来」：这一段会重写一遍。他可能会察觉。'); return; }   // 真 Key 测试 1113 §11：第一次点先提示
   const { req, snapshot } = G.last;
   restore(G.s, snapshot);
   G.s.meta.rerolls++; G.s.meta.rerolledRecent = true;
@@ -1165,12 +1168,24 @@ async function afterTurn(turn, req) {
   saveRun(s);
   refreshHud();
   if (req.free && req.spent) flashCost(req.spent);   // HUD 刷新之后再闪，不然会被刷掉
+  // 真 Key 测试 1113 §1：点数用完，AI 却停在钩子上（河的问句、抓住 / 拉住 / 挡住「你」）→ 留 1 点接话，一个时段只留一次
+  if (s.ap <= 0 && req.kind === 'action' && !turn?.skipped && s.c.hookAt !== s.day * 4 + s.slot && hookEnd(turn?.played)) {
+    s.c.hookAt = s.day * 4 + s.slot; s.ap = 1;
+    s.lastSugg = [{ text: '回他一句', cost: 1 }];
+    saveRun(s); refreshHud();
+  }
   if (s.ap <= 0) {   // 点数用完：读完最后一句点一下，收尾旁白自己走，不用再点（之前要多点两下）
     renderActions('none'); await sleep(300); await waitAdvance();
     await showLine({ speaker: 'narration', text: SLOT_CLOSE[s.slot] || '时间过去了。' }); G.R.next.classList.add('hidden'); await sleep(1100);
     return endSlot();
   }
   renderActions('free');
+}
+function hookEnd(played) {
+  const ls = (played || []).filter(l => l.text); if (!ls.length) return false;
+  const last = ls[ls.length - 1], tail = ls.slice(-2);
+  if (last.speaker === '河' && /[？?]\s*$|吗。?$|呢。?$/.test(last.text)) return true;
+  return tail.some(l => l.speaker === 'narration' && /(抓住|拉住|拽住|攥住|挡住|拦住|按住)[^。]{0,6}(你|胳膊|手腕|袖子)|等你(开口|回答|说)|[，。]等你。?$/.test(l.text)) && !/松开|放开|松了手/.test(last.text);
 }
 async function spendLocal(cost, lines) {
   const s = G.s;
@@ -1220,14 +1235,14 @@ async function miniAction(name) {
 // 器官图 = 河画的解剖图
 const ownedDrawings = () => { const g = getGallery(); return Object.keys(g.organs).filter(id => g.organs[id]); };
 async function giveDrawing(id, how) {
-  const { ORGANS } = await import('./config/world.js?v=1794595991');
+  const { ORGANS } = await import('./config/world.js?v=1794598452');
   const o = ORGANS.find(x => x.id === id); if (!o) return;
   unlock('organs', id);
   if (how === 'he') await playLines([{ speaker: '河', expr: 'shy', text: '……这个给你。画得不好。' }]);
   await openOrgan(id, ownedDrawings());
 }
 async function sketchbook() {
-  const { ORGANS } = await import('./config/world.js?v=1794595991');
+  const { ORGANS } = await import('./config/world.js?v=1794598452');
   const left = ORGANS.filter(o => !ownedDrawings().includes(o.id));
   if (!left.length) return spendLocal(1, [{ speaker: 'narration', text: '画本你都翻过了。每一页的线条都很细，标注写得很工整。' }]);
   const o = left[Math.floor(Math.random() * left.length)];
@@ -1237,7 +1252,7 @@ async function sketchbook() {
 }
 // 器官归位：十张画全给，拼完一次就全部解锁（回想、「河的画」）
 async function organsGame() {
-  const { ORGANS } = await import('./config/world.js?v=1794595991');
+  const { ORGANS } = await import('./config/world.js?v=1794598452');
   const first = !organsOpen();
   const res = await organPuzzle(ORGANS.map(o => o.id), hasAsset('ui/torso.webp'));
   if (res.success) {
@@ -1260,7 +1275,7 @@ async function leaveVillage() {
     return triggerEnding('gonegirl');
   }
   const stopped = MID.heStops(s);
-  const req = { kind: 'action', text: '往雾里走，想离开村子', cost: 2, note: stopped ? '河追上来，拦住了玩家。按越界规则写，不写占有。' : '雾把路绕了回来，玩家又走回了村界。河不在。' };
+  const req = { kind: 'action', text: '往雾里走，想离开村子', cost: 2, last: s.ap - 2 <= 0, note: stopped ? '河追上来，拦住了玩家。按越界规则写，不写占有。这一段要写完：他拦住以后说了什么、「你」跟他往回走到村界、他松开手，写到这里为止，不要停在他刚抓住「你」的那一下。' : '雾把路绕了回来，玩家又走回了村界。河不在。' };
   await afterTurn(await doTurn(req), req);
 }
 
@@ -1859,7 +1874,15 @@ export async function runEvent(ev, opts = {}) {
     await playLines(expandLines(c.lines || []));
   }
   if (ev.special === 'final') return finalJudge();
-  if (ev.scene) await doTurn({ kind: 'event', event: ev, keepSprite: opts.keepSprite });
+  if (s.evCache && s.evCache.id !== ev.id) s.evCache = null;
+  let fixedEnd0 = false;   // 重放的 AI 段最后一句已经点过了
+  if (ev.scene) {   // 真 Key 测试 1113 §5：事件里 AI 写过的段落存进存档，读档直接重放，不再调 AI（不然重写的段落和后面的选项、结局对不上）
+    if (s.evCache?.scene?.length) { await playLines(s.evCache.scene.map(l => ({ ...l, ai: true }))); fixedEnd0 = true; }
+    else {
+      const t0 = await doTurn({ kind: 'event', event: ev, keepSprite: opts.keepSprite });
+      if (t0?.played?.length && !t0.skipped) { s.evCache = { id: ev.id, scene: t0.played.map(({ speaker, name, expr, text }) => ({ speaker, ...(name ? { name } : {}), ...(expr ? { expr } : {}), text })) }; saveRun(s); }
+    }
+  }
   if (ev.special?.startsWith('minigame:')) {
     const name = ev.special.split(':')[1];
     const res = name === 'organs' ? await organsGame() : await runMinigame(name, s);
@@ -1903,7 +1926,7 @@ export async function runEvent(ev, opts = {}) {
   }
   const tail = ev.endLines ? expandLines(ev.endLines) : [];   // AI 那段、选项之后再接的固定台词（认路结尾给手机、第 6 天「你会走吗」）
   if (tail.length) {
-    if (!fixedEnd && (ev.scene || choices?.length)) await waitAdvance();   // AI 写的最后一句先让玩家读完，不被固定台词立刻盖掉
+    if (!fixedEnd && (ev.scene || choices?.length) && !(fixedEnd0 && !choices?.length)) await waitAdvance();   // AI 写的最后一句先让玩家读完，不被固定台词立刻盖掉
     await playLines(tail); fixedEnd = true;
   }
   Object.assign(s.f, ev.set || {});
@@ -1921,7 +1944,7 @@ export async function runEvent(ev, opts = {}) {
   markDone(s, ev);
   // 事件最后是 AI 写的段落（流式播放，最后一句不等点击）或选项结果时，才在这里等一下点击；
   // 只有固定台词的事件（比如衡的初见），最后一句在 playLines 里已经点过了，再等一次会像「点了没反应」
-  if ((ev.scene || choices?.length || ev.special) && !fixedEnd) await waitAdvance();
+  if ((ev.scene || choices?.length || ev.special) && !fixedEnd && !(fixedEnd0 && !choices?.length && !ev.special)) await waitAdvance();
   G.R.next.classList.add('hidden');
   showCG(null);
   if (ev.trigger === 'offline') return; // 离线事件不占时段
@@ -2121,14 +2144,14 @@ async function d40Choose(ev) {
     await heSays(meta.rewinds === 1 ? '再选一次。' : '再选一次。……求你了。');
   }
 }
-function clearPinch() { import('./audio.js?v=1794595991').then(a => a.stopHeartbeat()); G.R?.pinch?.remove(); if (G.R) G.R.pinch = null; $('#scr-main')?.classList.remove('pinching'); }
+function clearPinch() { import('./audio.js?v=1794598452').then(a => a.stopHeartbeat()); G.R?.pinch?.remove(); if (G.R) G.R.pinch = null; $('#scr-main')?.classList.remove('pinching'); }
 // 选项浮在河身上，他的手捏住想要的那个；别的选项上停 1.5 秒他会说「……不是那个。」
 function pinchChoice(choices, wanted, level) {
   const R = G.R; clearPinch(); renderActions('none');
   return new Promise(res => {
     let said = false, hoverTimer = null, touchedOnce = new Set();
     const notThat = () => { if (said) return; said = true; showLine({ speaker: '河', expr: 'pinch', text: '……不是那个。' }); };
-    import('./audio.js?v=1794595991').then(a => a.startHeartbeat(level));   // 带血框出现：心跳一直响到点下选项，一次比一次快（点击音效 §2b）
+    import('./audio.js?v=1794598452').then(a => a.startHeartbeat(level));   // 带血框出现：心跳一直响到点下选项，一次比一次快（点击音效 §2b）
     const opts = choices.map((c, i) => {
       const b = h('button', { class: 'pinch-opt' + (i === wanted ? ' bleed lv' + level : '') }, c.text);
       if (i !== wanted) {
@@ -2138,7 +2161,7 @@ function pinchChoice(choices, wanted, level) {
       b.addEventListener('click', e => {
         // 手机上第一次点别的选项先不生效
         if (i !== wanted && e.pointerType === 'touch' && !touchedOnce.has(i)) { touchedOnce.add(i); notThat(); return; }
-        clearTimeout(hoverTimer); import('./audio.js?v=1794595991').then(a => { a.stopHeartbeat(); a.playSfx('choose'); }); res(i);
+        clearTimeout(hoverTimer); import('./audio.js?v=1794598452').then(a => { a.stopHeartbeat(); a.playSfx('choose'); }); res(i);
       });
       return b;
     });
@@ -2168,7 +2191,7 @@ function pinchChoice(choices, wanted, level) {
   });
 }
 
-function markDone(s, ev) { if (!s.done.includes(ev.id)) s.done.push(ev.id); s.curEvent = null; saveRun(s); }
+function markDone(s, ev) { if (!s.done.includes(ev.id)) s.done.push(ev.id); s.curEvent = null; s.evCache = null; saveRun(s); }
 
 // ———————————————————— 离线回来 ————————————————————
 export async function wakeUp(ms) {
@@ -2312,17 +2335,18 @@ export async function triggerEnding(id) {
   if (firstTime && COVER_OF[id]) store.set('cover', COVER_OF[id]);
   store.set('lastEnding', id);
   closeOv('map'); G.R = null;
-  await showEnding(id, s);
+  const go = await showEnding(id, s);
   if (id === 'truman') return showLock();
   if (id === 'groundhog') {
     store.del('after');
     const miss = missedFor(s), missLine = miss.length ? `差了一点的是：${miss.join('、')}。` : null;   // 第二轮测试者 B §8：连着打出土拨鼠太挫败，告诉玩家差在哪几项
     if (!store.get('groundhog_hint')) { store.set('groundhog_hint', 1); await P.blackLines(['没有走到想去的地方。……也许下一次。', ...(missLine ? [missLine] : [])], { faint: true }); }   // 只在第一次打出时（数值与台词排查 §4）
     else if (missLine) await P.blackLines([missLine], { faint: true });
-    const n = newRun(s.outfit, (s.loop || 0) + 1);
+    const n = newRun(s.outfit, (s.loop || 0) + 1); n.name = s.name || '';   // 名字带进新一轮（真 Key 测试 1113 §13）
     return startRun(n);
   }
   G.backTitle();
+  if (go === 'gallery') P.openGallery();
 }
 
 // ———————————————————— 开局 ————————————————————
@@ -2458,7 +2482,7 @@ const CN = '零一二三四五六七八九';
 export function cnNum(n) { if (n < 10) return CN[n]; if (n < 20) return '十' + (n % 10 ? CN[n % 10] : ''); if (n < 100) return CN[Math.floor(n / 10)] + '十' + (n % 10 ? CN[n % 10] : ''); return String(n); }
 // 读档前把上一局流程留下的状态全部复位
 export function resetFlow() {
-  import('./audio.js?v=1794595991').then(a => a.stopHeartbeat());   // 心跳中途读档 / 回标题也要停
+  import('./audio.js?v=1794598452').then(a => a.stopHeartbeat());   // 心跳中途读档 / 回标题也要停
   G.gen = (G.gen || 0) + 1;
   G.busy = false; G.inTurn = false; G.waitClick = null; choiceResolver = null; G.endingSlot = false;
   G.firstCg = null; G.taAfterWait = null; G.forceAuto = false; G.persuade = false; G.eventBgm = null; G.typing = false; G.metaQueue = [];
@@ -2470,7 +2494,7 @@ export async function continueRun(s, offlineMs, alertLine = null) {
   buildMain(); setScene(); refreshHud();
   if (alertLine) {   // 当面读档的反应（loadReaction 算好的几句）
     const R = typeof alertLine === 'string' ? { lines: [{ speaker: '河', expr: 'alert', text: alertLine, glitch: true }], resent: 2 } : alertLine;
-    if (R.resent) import('./audio.js?v=1794595991').then(a => a.stutter()).catch(() => {});
+    if (R.resent) import('./audio.js?v=1794598452').then(a => a.stutter()).catch(() => {});
     await playLines(R.lines);
     // 测试记录 21：读档恢复的状态里今天的上限可能已经用完，当面读档不受上限
     if (R.resent) { applyTags(s, [], [], { resent: R.resent }, { noCap: true }); s.meta.saidMeta = R.lines.filter(l => l.speaker === '河').map(l => l.text).join(''); }
