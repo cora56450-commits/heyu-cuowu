@@ -1,6 +1,6 @@
 // 器官道具查看：CSS 3D 摇摆 + 拖动旋转 + 随角度移动的高光
-import { h, A, openOv, closeOv, toStage, sleep } from './dom.js?v=1794598452';
-import { ORGANS } from '../config/world.js?v=1794598452';
+import { h, A, openOv, closeOv, toStage, sleep } from './dom.js?v=1794602144';
+import { ORGANS } from '../config/world.js?v=1794602144';
 
 export function openOrgan(id, list) {
   list = list && list.length ? list : [id];
@@ -77,7 +77,28 @@ export function organPuzzle(owned, hasTorso) {
     }
     const tray = h('div', { class: 'tray' });
     const ov = h('div', { class: 'solid' }, h('div', { class: 'cap' }, '和他一起看画', h('small', {}, '把每一张放回它该在的地方。')), body, tray,
-      h('button', { class: 'close-x', onclick: () => { closeOv('mini'); res({ success: false, lines: [] }); } }, '×'));
+      h('button', { class: 'close-x', onclick: () => askQuit() }, '×'));
+    // A-8（1113 晚）：没摆完点 × 先确认一次（防误触，规则不变）
+    const quit = () => { closeOv('mini'); res({ success: false, lines: [] }); };
+    let quitBox = null;
+    const askQuit = () => {
+      if (placed.size >= owned.length) return quit();
+      if (quitBox) return;
+      quitBox = h('div', { style: { position: 'absolute', inset: '0', zIndex: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(11,9,7,.55)' } },
+        h('div', { class: 'modal paper', style: { minWidth: '420px', textAlign: 'center' } }, h('div', { style: { fontSize: '22px', letterSpacing: '1px', padding: '6px 0 4px' } }, '先不放了？这个下午就过去了。'),
+          h('div', { class: 'list', style: { marginTop: '18px' } },
+            h('button', { class: 'btn', onclick: () => { quitBox.remove(); quitBox = null; } }, '再放一会儿'),
+            h('button', { class: 'btn', onclick: () => quit() }, '先不放了'))));
+      ov.append(quitBox);
+    };
+    // 第一次放错（一局小游戏一次）：河说一句，之后只弹回
+    let wrongSaid = false;
+    const sayWrong = id => {
+      if (wrongSaid) return; wrongSaid = true;
+      const b = h('div', { style: { position: 'absolute', left: '50%', bottom: '36px', transform: 'translateX(-50%)', zIndex: 20, padding: '10px 22px', background: 'rgba(20,16,12,.82)', color: '#efe6d8', fontSize: '21px', letterSpacing: '1px', borderRadius: '4px', pointerEvents: 'none', transition: 'opacity .6s', whiteSpace: 'nowrap' } },
+        '河：' + (id === 'heart' ? '「……那是心。它不在那儿。」' : '「不是那里。……再看看。」'));
+      ov.append(b); setTimeout(() => { b.style.opacity = '0'; setTimeout(() => b.remove(), 700); }, 3200);
+    };
     openOv('mini', ov);
     for (const id of owned) {
       const img = h('img', { class: 'piece', src: A(`organ/${id}.webp`), alt: '', draggable: 'false' });
@@ -108,7 +129,7 @@ export function organPuzzle(owned, hasTorso) {
             await sleep(900); closeOv('mini');
             res({ success: true, lines: [{ speaker: '河', expr: 'smile', text: '……都在该在的地方。' }] });
           }
-        } else { img.style.transition = 'transform .35s cubic-bezier(.3,1.4,.5,1)'; img.style.transform = ''; }   // 放错了：弹回原位
+        } else { if (cx > X && cx < X + W && cy > Y && cy < Y + H) sayWrong(id); img.style.transition = 'transform .35s cubic-bezier(.3,1.4,.5,1)'; img.style.transform = ''; }   // 放错了：弹回原位（落在身体上才算放错）
       };
       img.addEventListener('pointerup', up); img.addEventListener('pointercancel', up);
     }

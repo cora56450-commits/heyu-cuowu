@@ -1,7 +1,7 @@
 // 一局游戏的状态、数值结算、存档 / 读档
-import { store } from './store.js?v=1794598452';
-import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, CAP_UP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN, OUTWARD_TAGS, NO_SCALE_HOPE } from './config/values.js?v=1794598452';
-import { AP_PER_SLOT } from './config/world.js?v=1794598452';
+import { store } from './store.js?v=1794602144';
+import { INITIAL, INITIAL_MADNESS, TAGS, HE_FLAGS, WARM_STREAK, VALUE_KEYS, madTier, DAILY_CAP, CAP_UP, EXCLUSIVE_TAGS, MAX_TAGS_PER_TURN, OUTWARD_TAGS, NO_SCALE_HOPE } from './config/values.js?v=1794602144';
+import { AP_PER_SLOT } from './config/world.js?v=1794602144';
 
 export function newRun(outfit = 'initial', loop = 0) {
   return {
@@ -26,14 +26,17 @@ export function applyTags(s, tags = [], heFlags = [], extra = null, opts = {}) {
   for (const grp of EXCLUSIVE_TAGS) { const hit = tags.filter(t => grp.includes(t)); if (hit.length > 1) tags = tags.filter(t => !grp.includes(t) || t === hit[0]); }
   if (tags.includes('想离开') && tags.some(t => OUTWARD_TAGS.includes(t))) tags = tags.filter(t => t !== '想离开');
   tags = tags.slice(0, MAX_TAGS_PER_TURN);
+  // 河不在场（1113 晚 A-3，Cora 定「迷雾」）：他没看见、没听见的事不改他的数值。标签照常计数，只有同化生效
+  const absent = !!opts.absent;
+  if (absent) heFlags = [];
   // 刷结局模式（问他走不走与刷数值 1111，Cora 定）：不用每天 ±3 点的上限，改成同一个标签一天最多算 3 次
   if (opts.grind) {
     const T = s.c.tagDay?.day === s.day ? s.c.tagDay : (s.c.tagDay = { day: s.day, n: {} });
     tags = tags.filter(t => (T.n[t] || 0) < 3);
     for (const t of tags) T.n[t] = (T.n[t] || 0) + 1;
   }
-  if (tags.some(t => t === '冷淡' || t === '拒绝' || t === '想离开')) (s.c ||= {}).negDay = s.day;   // 这一天有负面标签：明早怨恨不自动消
-  if (tags.includes('承诺带他走')) (s.c ||= {}).promiseDay = s.day;   // 第 35–39 天：最近 3 天有没有给他准话
+  if (!absent && tags.some(t => t === '冷淡' || t === '拒绝' || t === '想离开')) (s.c ||= {}).negDay = s.day;   // 这一天有负面标签：明早怨恨不自动消
+  if (!absent && tags.includes('承诺带他走')) (s.c ||= {}).promiseDay = s.day;   // 第 35–39 天：最近 3 天有没有给他准话
   const dc = {}, de = {};
   const add = (o, k, x) => { o[k] = (o[k] || 0) + x; };
   let warm = false;
@@ -42,7 +45,7 @@ export function applyTags(s, tags = [], heFlags = [], extra = null, opts = {}) {
     if (t === WARM_STREAK.tag) warm = true;
     for (const [k, x] of Object.entries(m)) {
       if (k === 'counter') s.c[x] = (s.c[x] || 0) + 1;
-      else if (k === 'madness') s.madness += x;
+      else if (k === 'madness') { if (!absent) s.madness += x; }
       else add(dc, k, x);
     }
     if (t === '提到外面' && s.v.hope < 30) add(dc, 'resent', 1);   // 他还不信你的时候，听你说外面只会更羡慕
@@ -58,9 +61,10 @@ export function applyTags(s, tags = [], heFlags = [], extra = null, opts = {}) {
     }
   }
   // 回避型依恋：连续热烈回应
-  if (warm) { s.c.warmStreak = (s.c.warmStreak || 0) + 1; WARM_STREAK.apply(s.c.warmStreak, dc); }
+  if (absent) { for (const k in dc) if (k !== 'assim') delete dc[k]; }
+  else if (warm) { s.c.warmStreak = (s.c.warmStreak || 0) + 1; WARM_STREAK.apply(s.c.warmStreak, dc); }
   else if (tags.length) s.c.warmStreak = Math.max(0, (s.c.warmStreak || 0) - WARM_STREAK.decay);
-  const hopeFull = tags.filter(t => NO_SCALE_HOPE.includes(t)).reduce((x, t) => x + (TAGS[t]?.hope || 0), 0);   // 说外面的希望不打五折
+  const hopeFull = absent ? 0 : tags.filter(t => NO_SCALE_HOPE.includes(t)).reduce((x, t) => x + (TAGS[t]?.hope || 0), 0);   // 说外面的希望不打五折
   if (opts.scale != null && opts.scale !== 1) for (const k in dc) dc[k] *= opts.scale;
   if (opts.scale != null && opts.scale !== 1 && hopeFull) dc.hope = (dc.hope || 0) + hopeFull * (1 - opts.scale);   // 1 点的小事 ×0.5（固定事件、选项不打折）
   if (extra) for (const [k, x] of Object.entries(extra)) add(opts.capExtra ? dc : de, k, x);
