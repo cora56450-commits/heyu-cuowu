@@ -31,7 +31,8 @@ export function closeOv(id) { const o = $('#ov-' + id); if (o) o.remove(); }
 export function topOv() { const o = $('#overlays'); return o.lastElementChild; }
 
 export function toast(msg, ms = 2400) {
-  const d = h('div', {}, msg); $('#toast').append(d); setTimeout(() => d.remove(), ms);
+  const faint = typeof ms === 'object' && ms?.faint; if (typeof ms === 'object') ms = 2400;   // toast(文字, { faint: true })：很淡的一行（好感跨档）
+  const d = h('div', faint ? { style: { opacity: 0.55, fontSize: '0.9em' } } : {}, msg); $('#toast').append(d); setTimeout(() => d.remove(), ms);
 }
 export function scale() { return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--s')) || 1; }
 // 屏幕坐标 → 舞台坐标

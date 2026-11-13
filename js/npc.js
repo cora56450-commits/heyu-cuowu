@@ -1,7 +1,8 @@
 // 村里人：隐藏好感三档（NPC隐藏好感三档_初稿_1111）+ 村里人也知道（中期与吃醋 1111 §四）
-import { LOCATIONS } from './config/world.js?v=1794491358';
-import { NPC_TIERS, npcTier, pickBits } from './config/lore.js?v=1794491358';
-import { knows } from './state.js?v=1794491358';
+import { LOCATIONS } from './config/world.js?v=1794584871';
+import { NPC_TIERS, npcTier, pickBits } from './config/lore.js?v=1794584871';
+import { knows } from './state.js?v=1794584871';
+import { toast } from './ui/dom.js?v=1794584871';
 
 export const NPC_LIST = ['养母', '满', '芳', '石', '衡'];
 const SPEAKER = { 石: '村民·男', 芳: '村民·女', 养母: '养母', 满: '满', 衡: '衡' };
@@ -17,8 +18,11 @@ export function favAdd(s, who, n) {
     n = Math.min(n, DAY_CAP - (D.add[who] || 0)); if (n <= 0) return;
     D.add[who] = (D.add[who] || 0) + n;
   }
+  const before = npcTier(F[who] || 0);
   F[who] = Math.max(0, Math.min(100, (F[who] || 0) + n));
+  if (npcTier(F[who]) > before && TIER_HINT[who]) toast(TIER_HINT[who], { faint: true });   // 跨档那一次浮一个淡提示（干活不加同化 1113）
 }
+const TIER_HINT = { 芳: '芳跟你熟了一点。', 石: '石不躲着你了。', 养母: '养母多看了你一眼。', 衡: '衡记住你的名字了。' };
 export const favOf = (s, who) => s.c.npcFav?.[who] || 0;
 export function favText(s) { return NPC_LIST.map(n => `${n}${favOf(s, n)}`).join(' '); }
 
@@ -105,4 +109,26 @@ export function takeKnow(s, present, heHere) {
   if (!q) return null;
   s.c.knowQ = Q.filter(x => x !== q);
   return { who: q.who, lines: KNOW_LINES[q.key] || [] };
+}
+
+// 主线线索（第二轮测试者 B §7「村里人均谜语人」）：好感到「熟」及以上、被问到主线相关的事，每人可以说一条写好的线索，只说一次（s.c.clueSaid）
+export const CLUES = {
+  养母: '小河也是溪边捡回来的，那年才六七岁。',
+  芳: '小河小时候往雾里走过一回，三天才回来，烧了半个月。',
+  满: '错的花（五瓣的）是从那边漏进来的；顺着它找，也许能找到回去的路。',
+  石: '他爹（老郭）换了肺以后，有时候不认得他了，笑起来停不下来。',
+  衡: '住满四十二天，就是这边的人了。这是规矩，不是我定的。',
+};
+const MAIN_Q = /小河|河|雾|外面|那边|回去|出去|花|五瓣|规矩|四十二|老郭|你爹|肺|小时候|以前|怎么来|捡|为什么|秘密|怎么回事/;
+export function clueRule(s, req, present = []) {
+  const text = String(req.text || ''); if (!text || !MAIN_Q.test(text)) return null;
+  const here = (present || []).filter(n => CLUES[n] && npcTier(favOf(s, n)) >= 1 && !s.c.clueSaid?.[n]);
+  const who = here.find(n => NAMED[n].test(text)) || (here.length === 1 ? here[0] : null);
+  if (!who) return null;
+  return { who, rule: `「你」问到了主线上的事，${who}和「你」已经熟了：这一轮${who}可以说出这一条（上面「不说 / 不知道」里和它冲突的，这一次例外），用${who}自己的口气，可以换说法，事实不能变，也不要多加：「${CLUES[who]}」说完就收住，不追加别的秘密。` };
+}
+export function clueAfterTurn(s, who, played = []) {
+  if (!who) return;
+  const said = played.some(l => who === '石' ? l.speaker === '村民·男' && l.name !== '禾' : l.speaker === SPEAKER[who]);
+  if (said) (s.c.clueSaid ||= {})[who] = s.day;
 }
