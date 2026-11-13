@@ -691,3 +691,6 @@ body.calm .loading-dots { animation: none; }
 /* B-5（1113 晚）：右上角「地图 / 数值 / 菜单」在浅色背景上看不清——图标和字加一圈深色描边，不加底板 */
 .icon-btn { text-shadow: -1px 0 #1a1410, 1px 0 #1a1410, 0 -1px #1a1410, 0 1px #1a1410, 0 0 6px rgba(0,0,0,.75); }
 .icon-btn img { filter: drop-shadow(1px 0 0 rgba(20,16,12,.8)) drop-shadow(-1px 0 0 rgba(20,16,12,.8)) drop-shadow(0 1px 0 rgba(20,16,12,.8)) drop-shadow(0 -1px 0 rgba(20,16,12,.8)) drop-shadow(0 1px 4px rgba(0,0,0,.5)); }
+
+/* 测试记录 33：行动列表底部「↓ 还有 N 条」 */
+.actions .more-hint { margin-top: -22px; height: 16px; font-size: 12px; line-height: 16px; text-align: center; color: var(--paper); text-shadow: 0 1px 2px #000, 0 0 4px #000; pointer-events: none; position: relative; z-index: 1; }

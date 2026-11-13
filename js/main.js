@@ -1,14 +1,14 @@
 // 启动：缩放、读设置、离线判定、标题画面
-import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794602144';
-import { store, getSettings, saveSettings, getGallery, endingsOpen } from './store.js?v=1794602144';
-import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, installTitleMeta, hasAsset } from './game.js?v=1794602144';
-import { newRun, loadRun, hasActiveRun, saveRun, SLOT_IDS } from './state.js?v=1794602144';
-import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794602144';
-import { MID } from './config/endings.js?v=1794602144';
-import { madTier } from './config/values.js?v=1794602144';
-import * as P from './ui/panels.js?v=1794602144';
-import { DEMO, DEMO_KEY, DEMO_BASE, DEMO_LAST_DAY, DEMO_TAG, TEST_BUILD } from './config/demo.js?v=1794602144';
-import { showLock, showAftermath, showButtonReturn } from './ui/ending.js?v=1794602144';
+import { h, A, $, showScreen, modal, confirmBox, closeOv, toast } from './ui/dom.js?v=1794603908';
+import { store, getSettings, saveSettings, getGallery, endingsOpen } from './store.js?v=1794603908';
+import { G, loadEvents, startRun, continueRun, triggerEnding, playerReturned, startIdleWatch, installTitleMeta, hasAsset } from './game.js?v=1794603908';
+import { newRun, loadRun, hasActiveRun, saveRun, SLOT_IDS } from './state.js?v=1794603908';
+import { readLastActive, touchActive, installActivity, installCopyHook } from './meta.js?v=1794603908';
+import { MID } from './config/endings.js?v=1794603908';
+import { madTier } from './config/values.js?v=1794603908';
+import * as P from './ui/panels.js?v=1794603908';
+import { DEMO, DEMO_KEY, DEMO_BASE, DEMO_LAST_DAY, DEMO_TAG, TEST_BUILD } from './config/demo.js?v=1794603908';
+import { showLock, showAftermath, showButtonReturn } from './ui/ending.js?v=1794603908';
 
 // 1280×720 等比缩放，四周黑边
 function fit() {
@@ -47,7 +47,7 @@ document.getElementById('rotate-go')?.addEventListener('click', async () => {
 // 键盘推进对话
 addEventListener('keydown', e => {
   if (e.target.matches('input,textarea')) return;
-  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794602144').then(m => m.advance()); }
+  if ((e.key === ' ' || e.key === 'Enter') && G.R && !$('#overlays').children.length) { e.preventDefault(); import('./game.js?v=1794603908').then(m => m.advance()); }
 });
 
 // 打开网页时算出来的离线时长，等玩家点「继续」时用（放在 G 上：读档列表那条路也要拿得到，测试记录 17）
@@ -55,7 +55,7 @@ G.bootOffline = 0;
 
 function showTitle() {
   G.R = null; G.s = null;
-  import('./audio.js?v=1794602144').then(a => a.playBgm('title'));
+  import('./audio.js?v=1794603908').then(a => a.playBgm('title'));
   for (const o of [...$('#overlays').children]) o.remove();
   const active = hasActiveRun();
   const items = [
@@ -67,7 +67,7 @@ function showTitle() {
   const orn = hasAsset('ui/menu_ornament.webp');
   const menu = h('nav', { class: 'menu' + (orn ? ' has-orn' : ''), 'aria-label': '主菜单' }, items.map(([label, f, dis], i) => h('button', {
     class: i === (active ? 1 : 0) ? 'sel' : '', disabled: dis,
-    onclick: e => { import('./audio.js?v=1794602144').then(a => a.playSfx('ping')); const b = e.currentTarget; b.classList.remove('tug'); void b.offsetWidth; b.classList.add('tug'); setTimeout(() => { b.classList.remove('tug'); f(); }, 260); },
+    onclick: e => { import('./audio.js?v=1794603908').then(a => a.playSfx('ping')); const b = e.currentTarget; b.classList.remove('tug'); void b.offsetWidth; b.classList.add('tug'); setTimeout(() => { b.classList.remove('tug'); f(); }, 260); },
     onmouseenter: e => { if (e.currentTarget.disabled) return; for (const b of menu.children) b.classList.remove('sel'); e.currentTarget.classList.add('sel'); },
   }, h('i', { class: 'orn l' }), label, h('i', { class: 'orn r' }))));
   showScreen('title', h('div', {},
@@ -79,7 +79,7 @@ function showTitle() {
     h('div', { class: 'credit' }, DEMO ? `试玩版 · 前 ${DEMO_LAST_DAY} 天　·　虚拟剧情演绎　·　仅供测试，请勿外传` : '虚拟剧情演绎　·　制作不易，请勿倒卖')));
 }
 // 封面：跟着「最近一次」打出的结局变（store 'cover'）；素材没到之前用河「冷视」立绘
-import { COVERS } from './config/endings.js?v=1794602144';
+import { COVERS } from './config/endings.js?v=1794603908';
 export { COVERS };
 // 点封面出一句（结局文案与封面 1112）：time = 按本地时间说早上好 / 下午好 / 晚上好（楚门的空河水）
 const COVER_SAY = { fall_blood: { text: '河　「……不必原谅我。」' }, palm: { text: '河　「……你的手，是热的。」' }, backtoback: { text: '「我，也，在。」', note: true },
@@ -227,7 +227,7 @@ function otherTabOpen() {
 let tabChannel = null;
 function showElsewhere() {
   G.blocked = true;
-  import('./audio.js?v=1794602144').then(a => a.stopAll()).catch(() => {});   // 被接管的页面不能还在放音乐，不然两边的 BGM 叠在一起
+  import('./audio.js?v=1794603908').then(a => a.stopAll()).catch(() => {});   // 被接管的页面不能还在放音乐，不然两边的 BGM 叠在一起
   for (const o of [...$('#overlays').children]) o.remove();
   // 测试记录 7 #A：忘了关的后台页面也会把人卡在这里，所以给一个「在这里继续」：通知另一边停下，这边重新进
   const take = () => { try { tabChannel?.postMessage('takeover'); sessionStorage.setItem('gucun_takeover', '1'); } catch {} location.reload(); };

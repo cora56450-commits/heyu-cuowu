@@ -1,6 +1,6 @@
 // 三个小游戏（纯前端，不调用 AI，支持触屏）：数花瓣、牠的字条、拼图（弹窗拼贴）
-import { h, A, openOv, closeOv, sleep, toStage } from './dom.js?v=1794602144';
-import { garble } from '../meta.js?v=1794602144';
+import { h, A, openOv, closeOv, sleep, toStage } from './dom.js?v=1794603908';
+import { garble } from '../meta.js?v=1794603908';
 
 // 拼图用的照片（框按照片比例自动调整）
 export const PUZZLES = {
@@ -150,7 +150,18 @@ async function puzzle(s, cfg) {
       if (ok) s.f[cfg.flag] = true;
       res({ success: ok, lines: [{ speaker: 'narration', text: ok ? cfg.done : cfg.fail }] });
     };
-    const body = shell('拼图', '拖动窗口，把照片拼回去。', () => finish(false));
+    // 测试记录 33：点 × 先确认一次（规则不变：放弃照旧扣 1 点、一天一次）
+    let quitBox = null;
+    const askQuit = () => {
+      if (quitBox) return; const ov = body.parentElement;
+      quitBox = h('div', { style: { position: 'absolute', inset: '0', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(11,9,7,.55)' } },
+        h('div', { class: 'modal paper', style: { minWidth: '420px', textAlign: 'center' } }, h('div', { style: { fontSize: '22px', letterSpacing: '1px', padding: '6px 0 4px' } }, /ta/.test(cfg.flag) ? '先不拼了？照片会收回去。' : '先不拼了？今天不会再翻开它。'),
+          h('div', { class: 'list', style: { marginTop: '18px' } },
+            h('button', { class: 'btn', onclick: () => { quitBox.remove(); quitBox = null; } }, '再拼一会儿'),
+            h('button', { class: 'btn', onclick: () => finish(false) }, '先不拼了'))));
+      ov.append(quitBox);
+    };
+    const body = shell('拼图', '拖动窗口，把照片拼回去。', () => askQuit());
     const FH = Math.min(550, 600 * ratio), FW = FH / ratio, FX = (1280 - FW) / 2, FY = 100 + (550 - FH) / 2, COLS = 3, ROWS = 3;
     const cw = FW / COLS, ch = FH / ROWS;
     const frame = h('div', { class: 'puzzle-frame', style: { left: FX + 'px', top: FY + 'px', width: FW + 'px', height: FH + 'px' } });
@@ -160,7 +171,7 @@ async function puzzle(s, cfg) {
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
       const pic = h('div', { class: 'pic', style: { width: cw + 'px', height: ch + 'px', backgroundImage: `url(${A(cfg.img)})`, backgroundSize: `${FW}px ${FH}px`, backgroundPosition: `${-c * cw}px ${-r * ch}px` } });
       // 窗口宽度跟着照片块走（测试报告：标题太长把窗口撑宽，右边一截灰）
-      const win = h('div', { class: 'win98', style: { width: (cw + 2 * PAD) + 'px' } }, h('div', { class: 'tb' }, h('span', {}, `${cfg.title} (${r * COLS + c + 1}/${COLS * ROWS})`), h('b', {}, '×')), pic);
+      const win = h('div', { class: 'win98', style: { width: (cw + 2 * PAD) + 'px' } }, h('div', { class: 'tb' }, h('span', {}, `${r * COLS + c + 1}/${COLS * ROWS} · ${cfg.title}`), h('b', {}, '×')), pic);
       // 随机散开（避开中间的框）
       let x, y;
       do { x = 20 + Math.random() * (1280 - cw - 60); y = 90 + Math.random() * (720 - ch - 140); }
