@@ -1,6 +1,6 @@
 // 器官道具查看：CSS 3D 摇摆 + 拖动旋转 + 随角度移动的高光
-import { h, A, openOv, closeOv, toStage, sleep } from './dom.js?v=1794603908';
-import { ORGANS } from '../config/world.js?v=1794603908';
+import { h, A, openOv, closeOv, toStage, sleep } from './dom.js?v=1794653836';
+import { ORGANS } from '../config/world.js?v=1794653836';
 
 export function openOrgan(id, list) {
   list = list && list.length ? list : [id];
@@ -85,7 +85,7 @@ export function organPuzzle(owned, hasTorso) {
       if (placed.size >= owned.length) return quit();
       if (quitBox) return;
       quitBox = h('div', { style: { position: 'absolute', inset: '0', zIndex: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(11,9,7,.55)' } },
-        h('div', { class: 'modal paper', style: { minWidth: '420px', textAlign: 'center' } }, h('div', { style: { fontSize: '22px', letterSpacing: '1px', padding: '6px 0 4px' } }, '先不放了？这个下午就过去了。'),
+        h('div', { class: 'modal paper', style: { minWidth: '420px', textAlign: 'center' } }, h('div', { style: { fontSize: '22px', letterSpacing: '1px', padding: '6px 0 4px', color: 'var(--ink)' } }, '先不放了？这个下午就过去了。'),
           h('div', { class: 'list', style: { marginTop: '18px' } },
             h('button', { class: 'btn', onclick: () => { quitBox.remove(); quitBox = null; } }, '再放一会儿'),
             h('button', { class: 'btn', onclick: () => quit() }, '先不放了'))));

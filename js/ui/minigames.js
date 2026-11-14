@@ -1,6 +1,6 @@
 // 三个小游戏（纯前端，不调用 AI，支持触屏）：数花瓣、牠的字条、拼图（弹窗拼贴）
-import { h, A, openOv, closeOv, sleep, toStage } from './dom.js?v=1794603908';
-import { garble } from '../meta.js?v=1794603908';
+import { h, A, openOv, closeOv, sleep, toStage } from './dom.js?v=1794653836';
+import { garble } from '../meta.js?v=1794653836';
 
 // 拼图用的照片（框按照片比例自动调整）
 export const PUZZLES = {
@@ -155,7 +155,7 @@ async function puzzle(s, cfg) {
     const askQuit = () => {
       if (quitBox) return; const ov = body.parentElement;
       quitBox = h('div', { style: { position: 'absolute', inset: '0', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(11,9,7,.55)' } },
-        h('div', { class: 'modal paper', style: { minWidth: '420px', textAlign: 'center' } }, h('div', { style: { fontSize: '22px', letterSpacing: '1px', padding: '6px 0 4px' } }, /ta/.test(cfg.flag) ? '先不拼了？照片会收回去。' : '先不拼了？今天不会再翻开它。'),
+        h('div', { class: 'modal paper', style: { minWidth: '420px', textAlign: 'center' } }, h('div', { style: { fontSize: '22px', letterSpacing: '1px', padding: '6px 0 4px', color: 'var(--ink)' } }, /ta/.test(cfg.flag) ? '先不拼了？照片会收回去。' : '先不拼了？今天不会再翻开它。'),
           h('div', { class: 'list', style: { marginTop: '18px' } },
             h('button', { class: 'btn', onclick: () => { quitBox.remove(); quitBox = null; } }, '再拼一会儿'),
             h('button', { class: 'btn', onclick: () => finish(false) }, '先不拼了'))));

@@ -1,13 +1,13 @@
 // 调试：全通存档（?debug=1 时设置页里有按钮）
 // 1. 图鉴全解锁（结局、CG、器官）  2. 三个手动存档位放关键节点，自动存档不动
-import { store, getGallery } from './store.js?v=1794603908';
-import { ENDINGS } from './config/endings.js?v=1794603908';
-import { ORGANS } from './config/world.js?v=1794603908';
-import { newRun, saveRun } from './state.js?v=1794603908';
+import { store, getGallery } from './store.js?v=1794653836';
+import { ENDINGS } from './config/endings.js?v=1794653836';
+import { ORGANS } from './config/world.js?v=1794653836';
+import { newRun, saveRun } from './state.js?v=1794653836';
 
 
 export async function unlockAll() {
-  const { STORY_CGS } = await import('./ui/panels.js?v=1794603908');   // 和「回想」用同一张表，新加的 CG 自动跟上
+  const { STORY_CGS } = await import('./ui/panels.js?v=1794653836');   // 和「回想」用同一张表，新加的 CG 自动跟上
   const g = getGallery(); const now = Date.now();
   for (const [id, e] of Object.entries(ENDINGS)) { g.endings[id] ||= now; if (e.cg) g.cgs[e.cg] ||= now; }
   for (const id of STORY_CGS) g.cgs[id] ||= now;
@@ -17,7 +17,7 @@ export async function unlockAll() {
 }
 
 async function eventsBefore(day, slot) {
-  const { G } = await import('./game.js?v=1794603908'); const events = G.events;
+  const { G } = await import('./game.js?v=1794653836'); const events = G.events;
   return events.filter(e => !e.trigger && (e.day < day || (e.day === day && e.slot < slot))).map(e => e.id);
 }
 

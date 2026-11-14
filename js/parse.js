@@ -1,7 +1,7 @@
 // 解析 AI 输出：严格 JSON → 宽松提取 → 纯文本兜底；以及流式中途提取完整的 line 对象
-import { EXPR, CODE_ONLY_EXPR, ORGANS } from './config/world.js?v=1794603908';
+import { EXPR, CODE_ONLY_EXPR, ORGANS } from './config/world.js?v=1794653836';
 const ORGAN_BY_NAME = Object.fromEntries(ORGANS.map(o => [o.name, o.id]));
-import { AI_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794603908';
+import { AI_TAGS, MAX_TAGS_PER_TURN } from './config/values.js?v=1794653836';
 
 export function looseJson(raw) {
   if (!raw) return null;
@@ -22,7 +22,11 @@ export function normLine(l) {
   let sp = String(l.speaker || 'narration').trim();
   if (/^(旁白|narrator|系统)$/i.test(sp)) sp = 'narration';
   if (sp === '我' || sp === '玩家') sp = '你';
-  const text = stripTags(l.text).trim();
+  sp = { tra: '牠', ta: '牠', 它: '牠', 白头发的人: '牠', mother: '养母', 妈: '养母', 母亲: '养母', heng: '衡', man: '满', he: '河' }[/^[a-z]+$/i.test(sp) ? sp.toLowerCase() : sp] || sp;   // 测试记录 34：speaker 写成别名（tra、mother……）的认回来，不然整句被删
+  let text = stripTags(l.text).trim();
+  // 测试记录 34：坏格式里漏出来的符号不上画面——开头的 : , } ] 去掉，去完不到 2 个字就丢
+  const bare = text.replace(/^[\s:,}\]]+/, '');
+  if (bare !== text) { text = bare.trim(); if ([...text].length < 2) return null; }
   if (!text) return null;
   sp = sp.replace(/^村民[·・.\-\s]?(男|女)$/, '村民·$1');
   const out = { speaker: SPEAKERS.has(sp) || sp.length <= 3 ? sp : 'narration', text };
@@ -52,7 +56,13 @@ export function normTurn(raw) {
   if (!j || !Array.isArray(j.lines)) {
     const rescued = raw ? scanLines(raw) : [];
     if (rescued.length) return { ok: 'rescued', lines: rescued, tags: [], action_size: 'small', suggestions: [], he_flags: [] };
-    // 兜底：把纯文本当旁白
+    // 测试记录 34：键名写坏了（空的、乱的）的 lines——每个对象里按「前一个字符串值是谁、后一个是台词」硬取
+    const pairs = [...String(raw || '').matchAll(/\{\s*"[^"]{0,10}"\s*:\s*"([^"]{0,12})"\s*,\s*"[^"]{0,10}"\s*:\s*"((?:[^"\\]|\\.)*)"/g)]
+      .map(m => normLine({ speaker: m[1].trim() || 'narration', text: m[2].replace(/\\n/g, ' ').replace(/\\"/g, '"').replace(/\\\\/g, '\\') })).filter(Boolean);
+    if (pairs.length >= 2) return { ok: 'rescued', lines: pairs, tags: [], action_size: 'small', suggestions: [], he_flags: [] };
+    // 带 JSON 符号又救不回来：不当旁白播，交给 doTurn 悄悄重试一次
+    if (/[{\[]|"\s*:/.test(raw || '')) return { ok: false, retry: true, lines: [{ speaker: 'narration', text: '……' }], tags: [], action_size: 'small', suggestions: [], he_flags: [] };
+    // 兜底：真的纯文本才当旁白
     const txt = stripTags(raw || '').replace(/[{}\[\]"]/g, '').split(/\n+/).map(s => s.trim()).filter(Boolean).slice(0, 6);
     return { ok: false, lines: txt.length ? txt.map(t => ({ speaker: 'narration', text: t.slice(0, 120) })) : [{ speaker: 'narration', text: '……' }], tags: [], action_size: 'small', suggestions: [], he_flags: [] };
   }

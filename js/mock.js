@@ -25,7 +25,7 @@ export async function mockChat(o) {
     out = { lines, tags: t ? [t] : [], action_size: free ? 'small' : pick(['small', 'medium', 'large']), action_count: free ? free[1].trim().split(/\s+/).length : 1, suggestions: [0, 1, 2].map(() => ({ text: pick(SUGG), cost: 1 + Math.floor(Math.random() * 3) })), he_flags: [], appointment, cg: null };
   }
   if (globalThis.__mockNext) { out = globalThis.__mockNext; globalThis.__mockNext = null; }   // 测试用：指定下一次 AI 返回什么
-  const s = JSON.stringify(out);
+  const s = typeof out === 'string' ? out : JSON.stringify(out);   // 字符串原样返回（测坏格式用）
   let full = '';
   for (let i = 0; i < s.length; i += 12) { full += s.slice(i, i + 12); o.onDelta?.(s.slice(i, i + 12), full); await new Promise(r => setTimeout(r, 15)); }
   return s;

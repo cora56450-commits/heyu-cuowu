@@ -1,6 +1,6 @@
 // OpenAI 兼容 /chat/completions 调用：流式 + 错误分类 + JSON 模式自动降级
-import { getSettings, saveSettings } from './store.js?v=1794603908';
-import { mockChat } from './mock.js?v=1794603908';
+import { getSettings, saveSettings } from './store.js?v=1794653836';
+import { mockChat } from './mock.js?v=1794653836';
 
 export class ApiError extends Error {
   constructor(kind, msg, detail) { super(msg); this.kind = kind; this.detail = detail; }
@@ -12,10 +12,15 @@ const MSG = {
   rate: '请求太频繁了（429），等一下再试。',
   server: '服务商那边出错了，稍后重试。',
   timeout: '等太久没有回应，超时了。',
+  netOnce: '网络断了一下。点「重试」再来一次，这一步不会多扣点。',
   network: '连不上服务商。可能是网络问题，也可能是服务商不允许浏览器直接调用（跨域 / CORS）。可以在设置里换成你自己的代理地址。',
   format: '返回的内容格式不对。',
   bad: '请求被拒绝了（400）。可能是模型名写错了。',
 };
+
+// 测试记录 34：断网第一次只说「网络断了一下」；连着失败 2 次才给跨域 / 代理那段说明（测试连接时直接给）
+let netFails = 0;
+const netErr = (o, e) => new ApiError('network', ++netFails >= 2 || o.test ? MSG.network : MSG.netOnce, String(e));
 
 function endpoint(base) {
   base = (base || '').trim().replace(/\/+$/, '');
@@ -52,7 +57,7 @@ export async function chat(o) {
   } catch (e) {
     clearTimeout(timer);
     if (ctrl.signal.aborted) throw new ApiError('timeout', MSG.timeout);
-    throw new ApiError('network', MSG.network, String(e));
+    throw netErr(o, e);
   }
   if (!res.ok) {
     clearTimeout(timer);
@@ -73,7 +78,7 @@ export async function chat(o) {
       const j = await res.json();
       const t = j?.choices?.[0]?.message?.content;
       if (typeof t !== 'string') throw new ApiError('format', MSG.format, JSON.stringify(j).slice(0, 300));
-      o.onDelta?.(t, t);
+      o.onDelta?.(t, t); netFails = 0;
       return t;
     }
     const reader = res.body.getReader(); const dec = new TextDecoder();
@@ -96,16 +101,16 @@ export async function chat(o) {
       }
     }
     if (!full) throw new ApiError('format', MSG.format + '（空回复）');
-    return full;
+    netFails = 0; return full;
   } catch (e) {
     if (e instanceof ApiError) throw e;
     if (ctrl.signal.aborted) throw new ApiError('timeout', MSG.timeout);
-    throw new ApiError('network', MSG.network, String(e));
+    throw netErr(o, e);
   } finally { clearTimeout(timer); }
 }
 
 // 测试连接
 export async function testConnection() {
-  const t = await chat({ messages: [{ role: 'system', content: '只输出 JSON。' }, { role: 'user', content: '输出 {"ok":true}' }], stream: false, maxTokens: 20 });
+  const t = await chat({ messages: [{ role: 'system', content: '只输出 JSON。' }, { role: 'user', content: '输出 {"ok":true}' }], stream: false, maxTokens: 20, test: true });
   return t;
 }
